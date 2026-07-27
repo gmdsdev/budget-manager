@@ -1,0 +1,3 @@
+{
+  "extends": "@budget-manager/config/tsconfig.base.json"
+}

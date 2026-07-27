@@ -1,0 +1,24 @@
+{
+  "name": "@budget-manager/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@budget-manager/db": "workspace:*",
+    "@budget-manager/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@budget-manager/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}
