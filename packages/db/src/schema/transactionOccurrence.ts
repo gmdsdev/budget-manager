@@ -11,7 +11,7 @@ import { user } from "./auth";
 import { categories } from "./category";
 import { creditCards } from "./creditCard";
 import { creditCardBills } from "./creditCardBill";
-import { financialAccounts } from "./financialAccount";
+import { wallets } from "./wallet";
 import {
   transactionKindEnum,
   transactionStatusEnum,
@@ -48,12 +48,9 @@ export const transactionOccurrences = pgTable(
       onDelete: "set null",
     }),
 
-    financialAccountId: uuid("financial_account_id").references(
-      () => financialAccounts.id,
-      {
-        onDelete: "set null",
-      },
-    ),
+    walletId: uuid("wallet_id").references(() => wallets.id, {
+      onDelete: "set null",
+    }),
 
     creditCardId: uuid("credit_card_id").references(() => creditCards.id, {
       onDelete: "set null",
@@ -78,8 +75,8 @@ export const transactionOccurrences = pgTable(
       .defaultNow(),
   },
   (table) => [
-    index("transaction_occurrences_financial_account_idx").on(
-      table.financialAccountId,
+    index("transaction_occurrences_wallet_idx").on(
+      table.walletId,
       table.occurrenceDate,
     ),
     index("transaction_occurrences_card_idx").on(

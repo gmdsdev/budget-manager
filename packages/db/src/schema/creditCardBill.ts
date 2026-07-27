@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 import { creditCards } from "./creditCard";
-import { financialAccounts } from "./financialAccount";
+import { wallets } from "./wallet";
 
 /**
  * Enums
@@ -41,12 +41,9 @@ export const creditCardBills = pgTable(
       .references(() => creditCards.id, { onDelete: "cascade" }),
 
     // Account selected to pay this bill
-    billingFinancialAccountId: uuid("billing_financial_account_id").references(
-      () => financialAccounts.id,
-      {
-        onDelete: "set null",
-      },
-    ),
+    billingWalletId: uuid("billing_wallet_id").references(() => wallets.id, {
+      onDelete: "set null",
+    }),
 
     // Statement period
     periodStart: date("period_start").notNull(),

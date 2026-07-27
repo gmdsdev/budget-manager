@@ -12,7 +12,7 @@ import { user } from "./auth";
 /**
  * Enums
  */
-export const financialAccountTypeEnum = pgEnum("financial_account_type", [
+export const walletTypeEnum = pgEnum("wallet_type", [
   "checking",
   "savings",
   "investments",
@@ -20,16 +20,16 @@ export const financialAccountTypeEnum = pgEnum("financial_account_type", [
 ]);
 
 /**
- * Financial Accounts
+ * Wallets
  */
-export const financialAccounts = pgTable("financial_accounts", {
+export const wallets = pgTable("wallets", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 
   name: text("name").notNull(),
-  type: financialAccountTypeEnum("type").notNull(),
+  type: walletTypeEnum("type").notNull(),
 
   currencyCode: text("currency_code").notNull().default("BRL"),
 

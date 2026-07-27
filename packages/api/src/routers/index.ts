@@ -1,3 +1,4 @@
+import { walletRouter } from "../modules/wallet/routes";
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { todoRouter } from "./todo";
 
@@ -12,5 +13,6 @@ export const appRouter = router({
     };
   }),
   todo: todoRouter,
+  wallet: walletRouter,
 });
 export type AppRouter = typeof appRouter;

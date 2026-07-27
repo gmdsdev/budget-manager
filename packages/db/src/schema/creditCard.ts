@@ -8,7 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
-import { financialAccounts } from "./financialAccount";
+import { wallets } from "./wallet";
 
 /**
  * Credit cards
@@ -30,12 +30,13 @@ export const creditCards = pgTable("credit_cards", {
   // Day of month when payment is due
   dueDay: smallint("due_day").notNull(),
 
-  // Default financial account used to pay card bills
-  defaultBillingFinancialAccountId: uuid(
-    "default_billing_financial_account_id",
-  ).references(() => financialAccounts.id, {
-    onDelete: "set null",
-  }),
+  // Default wallet used to pay card bills
+  defaultBillingWalletId: uuid("default_billing_wallet_id").references(
+    () => wallets.id,
+    {
+      onDelete: "set null",
+    },
+  ),
 
   currencyCode: text("currency_code").notNull().default("BRL"),
 

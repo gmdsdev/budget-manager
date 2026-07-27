@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@budget-manager/config": "workspace:*",
+    "@budget-manager/schemas": "workspace:*",
     "hono": "catalog:",
     "typescript": "catalog:"
   }

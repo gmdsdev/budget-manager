@@ -10,7 +10,7 @@ import {
 import { user } from "./auth";
 import { categories } from "./category";
 import { creditCards } from "./creditCard";
-import { financialAccounts } from "./financialAccount";
+import { wallets } from "./wallet";
 
 /**
  * Enums
@@ -48,12 +48,9 @@ export const transactionTemplates = pgTable("transaction_templates", {
     onDelete: "set null",
   }),
 
-  defaultAccountId: uuid("default_account_id").references(
-    () => financialAccounts.id,
-    {
-      onDelete: "set null",
-    },
-  ),
+  defaultAccountId: uuid("default_account_id").references(() => wallets.id, {
+    onDelete: "set null",
+  }),
 
   defaultCreditCardId: uuid("default_credit_card_id").references(
     () => creditCards.id,
@@ -62,11 +59,12 @@ export const transactionTemplates = pgTable("transaction_templates", {
     },
   ),
 
-  defaultBillingFinancialAccountId: uuid(
-    "default_billing_financial_account_id",
-  ).references(() => financialAccounts.id, {
-    onDelete: "set null",
-  }),
+  defaultBillingWalletId: uuid("default_billing_wallet_id").references(
+    () => wallets.id,
+    {
+      onDelete: "set null",
+    },
+  ),
 
   notes: text("notes"),
   isActive: boolean("is_active").notNull().default(true),

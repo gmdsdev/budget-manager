@@ -5,6 +5,6 @@ export * from "./transactionOccurrence";
 export * from "./recurrenceRule";
 export * from "./creditCard";
 export * from "./creditCardBill";
-export * from "./financialAccount";
+export * from "./wallet";
 export * from "./category";
 export {};
