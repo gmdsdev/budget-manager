@@ -10,7 +10,7 @@
     "cssVariables": true,
     "prefix": ""
   },
-  "iconLibrary": "lucide",
+  "iconLibrary": "remixicon",
   "aliases": {
     "components": "@budget-manager/ui/components",
     "utils": "@budget-manager/ui/lib/utils",
@@ -18,7 +18,8 @@
     "lib": "@budget-manager/ui/lib",
     "ui": "@budget-manager/ui/components"
   },
-  "menuColor": "default",
+  "menuColor": "default-translucent",
   "menuAccent": "subtle",
-  "registries": {}
+  "registries": {},
+  "rtl": false
 }
