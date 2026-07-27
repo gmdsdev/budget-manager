@@ -1,0 +1,97 @@
+import {
+  pgTable,
+  pgEnum,
+  uuid,
+  text,
+  integer,
+  smallint,
+  boolean,
+  timestamp,
+  date,
+  uniqueIndex,
+  index,
+} from "drizzle-orm/pg-core";
+import { user } from "./auth";
+import { financialAccounts } from "./financialAccount";
+import { categories } from "./category";
+import {
+  transactionKindEnum,
+  transactionStatusEnum,
+  transactionTemplates,
+} from "./transactionTemplate";
+import { creditCardBills } from "./creditCardBill";
+import { creditCards } from "./creditCard";
+
+/**
+ * Real transaction occurrences
+ * This replaces TransactionsAccounts + TransactionsCreditCards.
+ */
+export const transactionOccurrences = pgTable(
+  "transaction_occurrences",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+
+    templateId: uuid("template_id").references(() => transactionTemplates.id, {
+      onDelete: "set null",
+    }),
+
+    kind: transactionKindEnum("kind").notNull(),
+    status: transactionStatusEnum("status")
+      .notNull()
+      .default("waiting_payment"),
+
+    name: text("name").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+
+    occurrenceDate: date("occurrence_date").notNull(),
+
+    categoryId: uuid("category_id").references(() => categories.id, {
+      onDelete: "set null",
+    }),
+
+    financialAccountId: uuid("financial_account_id").references(
+      () => financialAccounts.id,
+      {
+        onDelete: "set null",
+      },
+    ),
+
+    creditCardId: uuid("credit_card_id").references(() => creditCards.id, {
+      onDelete: "set null",
+    }),
+
+    creditCardBillId: uuid("credit_card_bill_id").references(
+      () => creditCardBills.id,
+      {
+        onDelete: "set null",
+      },
+    ),
+
+    notes: text("notes"),
+
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("transaction_occurrences_financial_account_idx").on(
+      table.financialAccountId,
+      table.occurrenceDate,
+    ),
+    index("transaction_occurrences_card_idx").on(
+      table.creditCardId,
+      table.occurrenceDate,
+    ),
+    index("transaction_occurrences_bill_idx").on(table.creditCardBillId),
+    index("transaction_occurrences_template_idx").on(table.templateId),
+    index("transaction_occurrences_status_idx").on(table.status),
+  ],
+);
