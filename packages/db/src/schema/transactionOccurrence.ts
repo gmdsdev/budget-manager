@@ -1,26 +1,22 @@
 import {
-  pgTable,
-  pgEnum,
-  uuid,
-  text,
-  integer,
-  smallint,
-  boolean,
-  timestamp,
   date,
-  uniqueIndex,
   index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
-import { financialAccounts } from "./financialAccount";
 import { categories } from "./category";
+import { creditCards } from "./creditCard";
+import { creditCardBills } from "./creditCardBill";
+import { financialAccounts } from "./financialAccount";
 import {
   transactionKindEnum,
   transactionStatusEnum,
   transactionTemplates,
 } from "./transactionTemplate";
-import { creditCardBills } from "./creditCardBill";
-import { creditCards } from "./creditCard";
 
 /**
  * Real transaction occurrences

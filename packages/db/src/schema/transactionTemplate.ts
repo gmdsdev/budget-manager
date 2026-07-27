@@ -1,20 +1,16 @@
 import {
-  pgTable,
-  pgEnum,
-  uuid,
-  text,
-  integer,
-  smallint,
   boolean,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
   timestamp,
-  date,
-  uniqueIndex,
-  index,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
-import { financialAccounts } from "./financialAccount";
 import { categories } from "./category";
 import { creditCards } from "./creditCard";
+import { financialAccounts } from "./financialAccount";
 
 /**
  * Enums
