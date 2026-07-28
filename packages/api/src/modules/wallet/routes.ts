@@ -6,7 +6,7 @@ import { protectedProcedure, router } from "../../index";
 
 export const walletRouter = router({
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.services.wallet.getAll();
+    return await ctx.services.wallet.getAll({ userId: ctx.session.user.id });
   }),
 
   create: protectedProcedure

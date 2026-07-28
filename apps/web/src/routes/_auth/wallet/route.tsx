@@ -1,3 +1,5 @@
+import ListWalletsPage from "@/modules/wallet/pages/list-wallets.page";
+import { WalletDto } from "@budget-manager/schemas";
 import { trpc } from "@/utils/trpc";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -11,14 +13,7 @@ function RouteComponent() {
 
   if (isLoading) return <div>Loading...</div>;
 
-  return (
-    <div>
-      <h1>Wallets</h1>
-      <ul>
-        {data?.map((wallet) => (
-          <li key={wallet.id}>{wallet.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
+  if (!data?.length) return <div>No wallets found</div>;
+
+  return <ListWalletsPage wallets={data as unknown as WalletDto[]} />;
 }

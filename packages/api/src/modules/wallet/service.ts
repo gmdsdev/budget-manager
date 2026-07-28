@@ -4,8 +4,8 @@ import type { WalletRepository } from "./repository";
 export class WalletService {
   constructor(private readonly repository: WalletRepository) {}
 
-  async getAll() {
-    return await this.repository.getAll();
+  async getAll({ userId }: { userId: string }) {
+    return await this.repository.getAll({ userId });
   }
 
   async create({

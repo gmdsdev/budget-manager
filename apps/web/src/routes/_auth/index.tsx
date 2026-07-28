@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { trpc } from "@/utils/trpc";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_auth/")({
   component: HomeComponent,
 });
 

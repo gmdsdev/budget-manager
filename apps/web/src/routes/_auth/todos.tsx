@@ -17,7 +17,7 @@ import { trpc } from "@/utils/trpc";
 
 type TodoId = number;
 
-export const Route = createFileRoute("/todos")({
+export const Route = createFileRoute("/_auth/todos")({
   component: TodosRoute,
 });
 

@@ -1,13 +1,24 @@
 import type { Db } from "@budget-manager/db";
 import { wallets } from "@budget-manager/db/schema/wallet";
-import type { CreateWalletDto } from "@budget-manager/schemas";
+import type { CreateWalletDto, WalletDto } from "@budget-manager/schemas";
 import { and, eq } from "drizzle-orm";
 
 export class WalletRepository {
   constructor(private readonly db: Db) {}
 
-  async getAll() {
-    return await this.db.select().from(wallets);
+  async getAll({ userId }: { userId: string }): Promise<WalletDto[]> {
+    return this.db
+      .select({
+        id: wallets.id,
+        name: wallets.name,
+        type: wallets.type,
+        balance: wallets.currentBalanceCents,
+        currency: wallets.currencyCode,
+        createdAt: wallets.createdAt,
+        updatedAt: wallets.updatedAt,
+      })
+      .from(wallets)
+      .where(eq(wallets.userId, userId));
   }
 
   async create({

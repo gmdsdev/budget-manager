@@ -20,7 +20,9 @@ function AuthLayout() {
   return (
     <>
       <Header />
-      <Outlet />
+      <div className="container mx-auto">
+        <Outlet />
+      </div>
     </>
   );
 }
