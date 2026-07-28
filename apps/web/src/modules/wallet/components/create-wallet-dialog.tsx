@@ -9,13 +9,42 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
-import { useAccountForm } from "../hooks/use-account-form";
+import { useWalletForm } from "../hooks/use-wallet-form";
 import { WalletFormFields } from "./wallet-form-fields";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { trpc } from "@/utils/trpc";
+import { toast } from "sonner";
+import { useState } from "react";
 
 const FORM_ID = "create-wallet-form";
 
 export function CreateWalletDialog() {
-  const form = useAccountForm();
+  const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+
+    if (!nextOpen) {
+      form.reset();
+    }
+  }
+
+  const createMutation = useMutation(
+    trpc.wallet.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Wallet created successfully");
+        handleOpenChange(false);
+        queryClient.invalidateQueries(trpc.wallet.getAll.queryFilter());
+      },
+    }),
+  );
+
+  const form = useWalletForm({
+    onSubmit: (values) => {
+      createMutation.mutate(values);
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,7 +53,7 @@ export function CreateWalletDialog() {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button>Create Wallet</Button>} />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>

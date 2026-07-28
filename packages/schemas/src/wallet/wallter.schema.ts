@@ -7,9 +7,16 @@ export enum WalletType {
   CASH = "cash",
 }
 
+export const WalletTypeLabelMap: Record<WalletType, string> = {
+  [WalletType.CHECKING]: "Checking",
+  [WalletType.SAVINGS]: "Savings",
+  [WalletType.INVESTMENTS]: "Investments",
+  [WalletType.CASH]: "Cash",
+};
+
 export const WalletSchema = z.object({
   id: z.uuid(),
-  name: z.string().min(1),
+  name: z.string().min(1, "Name is required"),
   type: z.enum(Object.values(WalletType)),
   balance: z.number(),
   currency: z.string().min(1),
@@ -19,7 +26,12 @@ export const WalletSchema = z.object({
 
 export type WalletDto = z.infer<typeof WalletSchema>;
 
-export const CreateWalletSchema = WalletSchema.omit({ id: true });
+export const CreateWalletSchema = WalletSchema.pick({
+  name: true,
+  type: true,
+  balance: true,
+  currency: true,
+});
 
 export type CreateWalletDto = z.infer<typeof CreateWalletSchema>;
 
