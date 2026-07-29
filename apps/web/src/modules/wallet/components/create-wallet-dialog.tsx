@@ -15,6 +15,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/utils/trpc";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useCreateWalletMutation } from "../mutations/use-wallet-mutation";
 
 const FORM_ID = "create-wallet-form";
 
@@ -30,19 +31,15 @@ export function CreateWalletDialog() {
     }
   }
 
-  const createMutation = useMutation(
-    trpc.wallet.create.mutationOptions({
-      onSuccess: () => {
-        toast.success("Wallet created successfully");
-        handleOpenChange(false);
-        queryClient.invalidateQueries(trpc.wallet.getAll.queryFilter());
-      },
-    }),
-  );
+  const createMutation = useCreateWalletMutation();
 
   const form = useWalletForm({
     onSubmit: (values) => {
-      createMutation.mutate(values);
+      createMutation.mutate(values, {
+        onSuccess: () => {
+          handleOpenChange(false);
+        },
+      });
     },
   });
 

@@ -31,6 +31,7 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     state: {
       columnVisibility: {
+        id: false,
         currency: false,
       },
     },

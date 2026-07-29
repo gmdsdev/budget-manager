@@ -12,8 +12,14 @@ import {
 } from "@budget-manager/ui/components/dropdown-menu";
 import { Button } from "@budget-manager/ui/components/button";
 import { MoreHorizontalIcon } from "lucide-react";
+import { DeleteWalletDialog } from "../delete-wallet-dialog";
+import { useState } from "react";
 
 export const columns: ColumnDef<WalletDto>[] = [
+  {
+    accessorKey: "id",
+    header: "ID",
+  },
   {
     accessorKey: "name",
     header: "Name",
@@ -57,23 +63,42 @@ export const columns: ColumnDef<WalletDto>[] = [
     header: "",
     size: 0,
     cell: ({ row }) => {
+      const [open, setOpen] = useState(false);
+      const walletId = row.getValue("id");
+
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button variant="ghost" size="icon" className="size-8">
-                <MoreHorizontalIcon />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            }
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" size="icon" className="size-8">
+                  <MoreHorizontalIcon />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Edit</DropdownMenuItem>
+              <DropdownMenuItem>Duplicate</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                className="text-destructive"
+                onClick={() => {
+                  setOpen(true);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DeleteWalletDialog
+            walletId={walletId}
+            open={open}
+            setOpen={setOpen}
           />
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Duplicate</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        </>
       );
     },
   },
