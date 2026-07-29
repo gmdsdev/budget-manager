@@ -12,6 +12,7 @@ import { Skeleton } from "@budget-manager/ui/components/skeleton";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import { authClient } from "@/lib/auth-client";
+import { invalidateSessionCache } from "@/lib/session";
 
 export default function UserMenu() {
   const navigate = useNavigate();
@@ -42,10 +43,11 @@ export default function UserMenu() {
           <DropdownMenuItem
             variant="destructive"
             onClick={() => {
-              authClient.signOut({
+              void authClient.signOut({
                 fetchOptions: {
                   onSuccess: () => {
-                    navigate({
+                    invalidateSessionCache();
+                    void navigate({
                       to: "/",
                     });
                   },

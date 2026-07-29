@@ -67,7 +67,8 @@ export const creditCardBills = pgTable(
       .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
-      .defaultNow(),
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => [
     uniqueIndex("credit_card_bills_unique_cycle").on(
@@ -77,5 +78,7 @@ export const creditCardBills = pgTable(
     ),
     index("credit_card_bills_card_idx").on(table.creditCardId),
     index("credit_card_bills_status_idx").on(table.status),
+    index("credit_card_bills_user_id_idx").on(table.userId),
+    index("credit_card_bills_billing_wallet_idx").on(table.billingWalletId),
   ],
 );

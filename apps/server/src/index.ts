@@ -29,6 +29,15 @@ app.use(
     createContext: (_opts, context) => {
       return createContext({ context });
     },
+    onError({ error, path, type, input }) {
+      if (error.code === "INTERNAL_SERVER_ERROR") {
+        console.error(`[trpc] ${type} ${path ?? "<no-path>"}`, {
+          input,
+          error,
+          cause: error.cause,
+        });
+      }
+    },
   }),
 );
 

@@ -11,7 +11,9 @@ export const env = createEnv({
   client: {
     VITE_SERVER_URL: serverUrlSchema,
   },
-  runtimeEnv: (import.meta as any).env,
+  runtimeEnv: (import.meta as ImportMeta & {
+    env: Record<string, string | undefined>;
+  }).env,
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,
 });

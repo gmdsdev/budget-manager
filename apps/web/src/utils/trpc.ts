@@ -1,9 +1,19 @@
+import { getErrorMessage, isUnauthorizedError } from "@/utils/error-message";
 import type { AppRouter } from "@budget-manager/api/routers/index";
 import { env } from "@budget-manager/env/web";
-import { QueryCache, QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { toast } from "sonner";
+
+declare module "@tanstack/react-query" {
+  interface Register {
+    mutationMeta: {
+      errorMessage?: string;
+      suppressErrorToast?: boolean;
+    };
+  }
+}
 
 function getServerUrl(url: string) {
   const normalized = url.endsWith("/") ? url.slice(0, -1) : url;
@@ -33,16 +43,35 @@ function getServerUrl(url: string) {
   return `http://localhost:3000${normalized}`;
 }
 export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      retry: (failureCount, error) =>
+        !isUnauthorizedError(error) && failureCount < 2,
+    },
+  },
+
   queryCache: new QueryCache({
     onError: (error, query) => {
-      toast.error(error.message, {
+      toast.error(getErrorMessage(error), {
         action: {
-          label: "retry",
+          label: "Retry",
           onClick: () => {
-            query.invalidate();
+            void query.invalidate();
           },
         },
       });
+    },
+  }),
+
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _onMutateResult, mutation) => {
+      if (mutation.meta?.suppressErrorToast) {
+        return;
+      }
+
+      toast.error(mutation.meta?.errorMessage ?? getErrorMessage(error));
     },
   }),
 });

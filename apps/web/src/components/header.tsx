@@ -38,7 +38,6 @@ export default function Header() {
   const links = [
     { to: "/", label: "Home" },
     { to: "/dashboard", label: "Dashboard" },
-    { to: "/todos", label: "Todos" },
     { to: "/wallet", label: "Wallet" },
   ] as const;
 
@@ -67,7 +66,7 @@ export default function Header() {
                 </NavigationMenuContent>
               </NavigationMenuItem> */}
             {links.map((link) => (
-              <NavigationMenuItem>
+              <NavigationMenuItem key={link.to}>
                 <NavigationMenuLink
                   className={navigationMenuTriggerStyle()}
                   render={<Link to={link.to}>{link.label}</Link>}

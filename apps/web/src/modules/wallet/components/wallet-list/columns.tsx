@@ -1,121 +1,47 @@
-"use client";
-
-import { ColumnDef } from "@tanstack/react-table";
-import { WalletCurrencyLabelMap, WalletDto } from "@budget-manager/schemas";
-
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@budget-manager/ui/components/dropdown-menu";
-import { Button } from "@budget-manager/ui/components/button";
-import { MoreHorizontalIcon } from "lucide-react";
-import { DeleteWalletDialog } from "../delete-wallet-dialog";
-import { useState } from "react";
-import { EditWalletDialog } from "../edit-wallet-dialog";
-import { formatFromCents } from "@budget-manager/ui/lib/currency";
+  WalletCurrencyLabelMap,
+  WalletTypeLabelMap,
+  type WalletCurrency,
+} from "@budget-manager/schemas";
+import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { WalletRow } from "../../types";
+import { WalletRowActions } from "./wallet-row-actions";
 
-export const columns: ColumnDef<WalletDto>[] = [
-  {
-    accessorKey: "id",
-    header: "ID",
-  },
+export const walletColumns: ColumnDef<WalletRow>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    size: 10000,
   },
   {
     accessorKey: "type",
     header: "Type",
-    cell: ({ row }) => {
-      return (
-        <div>
-          {row.original.type.charAt(0).toUpperCase() +
-            row.original.type.slice(1)}
-        </div>
-      );
-    },
+    cell: ({ row }) => WalletTypeLabelMap[row.original.type],
   },
   {
     accessorKey: "currencyCode",
     header: "Currency",
-    size: 100,
     cell: ({ row }) => {
-      return <div>{WalletCurrencyLabelMap[row.original.currencyCode]}</div>;
+      const code = row.original.currencyCode;
+
+      return WalletCurrencyLabelMap[code as WalletCurrency] ?? code;
     },
   },
   {
     accessorKey: "openingBalanceCents",
-    header: "Opening Balance",
-    size: 100,
-    cell: ({ row }) => {
-      const openingBalanceCents = parseFloat(
-        row.getValue("openingBalanceCents"),
-      );
-      const currencyCode = row.original.currencyCode;
-
-      const formatted = formatFromCents(openingBalanceCents, currencyCode);
-
-      return <div className="text-right">{formatted}</div>;
-    },
+    header: () => <span className="block text-right">Opening Balance</span>,
+    cell: ({ row }) => (
+      <span className="block text-right tabular-nums">
+        {formatMinorUnits(
+          row.original.openingBalanceCents,
+          row.original.currencyCode,
+        )}
+      </span>
+    ),
   },
   {
     id: "actions",
-    header: "",
-    size: 0,
-    cell: ({ row }) => {
-      const [openEditDialog, setOpenEditDialog] = useState(false);
-      const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-      const walletId = row.original.id;
-
-      return (
-        <>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="ghost" size="icon" className="size-8">
-                  <MoreHorizontalIcon />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  setOpenEditDialog(true);
-                }}
-              >
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                className="text-destructive"
-                onClick={() => {
-                  setOpenDeleteDialog(true);
-                }}
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <EditWalletDialog
-            wallet={row.original}
-            open={openEditDialog}
-            setOpen={setOpenEditDialog}
-          />
-
-          <DeleteWalletDialog
-            walletId={walletId}
-            open={openDeleteDialog}
-            setOpen={setOpenDeleteDialog}
-          />
-        </>
-      );
-    },
+    header: () => <span className="sr-only">Actions</span>,
+    cell: ({ row }) => <WalletRowActions wallet={row.original} />,
   },
 ];

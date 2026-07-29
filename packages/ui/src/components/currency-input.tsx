@@ -1,63 +1,99 @@
-"use client";
-
 import * as React from "react";
 
+import {
+  formatMinorUnits,
+  MONEY_MAX_MINOR_UNITS,
+  parseMinorUnits,
+} from "@budget-manager/money";
 import { Input } from "./input";
-import { formatFromCents, parseToCents } from "../lib/currency";
+
+function isDigit(character: string | undefined) {
+  return character !== undefined && character >= "0" && character <= "9";
+}
+
+function digitsBefore(text: string, caret: number) {
+  let count = 0;
+
+  for (let index = 0; index < caret && index < text.length; index++) {
+    if (isDigit(text[index])) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+function offsetAfterDigit(text: string, n: number) {
+  if (n <= 0) {
+    const first = text.search(/\d/);
+
+    return first === -1 ? text.length : first;
+  }
+
+  let seen = 0;
+
+  for (let index = 0; index < text.length; index++) {
+    if (isDigit(text[index]) && ++seen === n) {
+      return index + 1;
+    }
+  }
+
+  return text.length;
+}
+
+export type CurrencyInputProps = Omit<
+  React.ComponentProps<typeof Input>,
+  "value" | "defaultValue" | "onChange" | "type" | "inputMode"
+> & {
+  value: number;
+  onValueChange: (value: number) => void;
+  currencyCode: string;
+  allowNegative?: boolean;
+  maxValue?: number;
+};
 
 export function CurrencyInput({
   value,
-  onChange,
-  onBlur,
-  className,
-  placeholder = "0.00",
-  currencyCode = "USD",
+  onValueChange,
+  currencyCode,
+  allowNegative = false,
+  maxValue = MONEY_MAX_MINOR_UNITS,
   ...props
-}: Omit<React.ComponentProps<typeof Input>, "value" | "onChange"> & {
-  value: number;
-  onChange: (value: number) => void;
-  currencyCode: string;
-}) {
-  const [displayValue, setDisplayValue] = React.useState(() =>
-    formatFromCents(value, currencyCode),
-  );
-
-  const lastEmitted = React.useRef({ value, currencyCode });
-
-  React.useEffect(() => {
-    if (
-      value !== lastEmitted.current.value ||
-      currencyCode !== lastEmitted.current.currencyCode
-    ) {
-      lastEmitted.current = { value, currencyCode };
-      setDisplayValue(formatFromCents(value, currencyCode));
-    }
-  }, [value, currencyCode]);
+}: CurrencyInputProps) {
+  const display = formatMinorUnits(value, currencyCode);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const input = event.currentTarget;
+    const element = event.currentTarget;
+    const typed = element.value;
+    const caret = element.selectionEnd ?? typed.length;
+    const targetDigits = digitsBefore(typed, caret);
 
-    const cents = parseToCents(input.value);
-    const formatted = formatFromCents(cents, currencyCode);
+    const parsed = parseMinorUnits(typed, { allowNegative });
+    const rejected =
+      Math.abs(parsed) > maxValue || !Number.isSafeInteger(parsed);
+    const next = rejected ? value : parsed;
+    const nextDisplay = formatMinorUnits(next, currencyCode);
 
-    lastEmitted.current = { value: cents, currencyCode };
-    setDisplayValue(formatted);
-    onChange(cents);
+    element.value = nextDisplay;
 
-    requestAnimationFrame(() => {
-      const position = formatted.length;
-      input.setSelectionRange(position, position);
-    });
+    const position = offsetAfterDigit(
+      nextDisplay,
+      rejected ? targetDigits - 1 : targetDigits,
+    );
+    element.setSelectionRange(position, position);
+
+    if (next !== value) {
+      onValueChange(next);
+    }
   }
 
   return (
     <Input
       {...props}
-      value={displayValue}
+      value={display}
       onChange={handleChange}
-      onBlur={onBlur}
-      inputMode="numeric"
-      placeholder={placeholder}
+      inputMode={allowNegative ? "text" : "numeric"}
+      autoComplete="off"
     />
   );
 }

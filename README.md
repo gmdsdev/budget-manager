@@ -35,8 +35,31 @@ This project uses PostgreSQL with Drizzle ORM.
 3. Apply the schema to your database:
 
 ```bash
-bun run db:push
+bun run db:migrate
 ```
+
+### Migrations, not push
+
+Schema changes go through generated migrations in `packages/db/drizzle`:
+
+```bash
+# after editing packages/db/src/schema/*
+bun run db:generate   # writes the next drizzle/NNNN_*.sql
+# review the generated SQL, then
+bun run db:migrate
+```
+
+`bun run db:generate` should report **no changes** immediately after a migrate —
+that is the check that the snapshot and the database agree.
+
+`bun run db:push` is kept for throwaway/scratch databases only. Do not run it
+against a database that holds data: `push` applies a diff without recording it in
+`drizzle/meta/_journal.json`, so the snapshot silently drifts out of step with
+reality and later migrations are generated against the wrong baseline.
+
+Review generated SQL before applying it. Drizzle-kit's `text` → enum diffs in
+particular are sometimes emitted as `DROP COLUMN` + `ADD COLUMN`, which would
+discard the column's data instead of casting it.
 
 Then, run the development server:
 
@@ -116,10 +139,13 @@ budget-manager/
 - `bun run build`: Build all applications
 - `bun run dev:web`: Start only the web application
 - `bun run dev:server`: Start only the server
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run db:push`: Push schema changes to database
-- `bun run db:generate`: Generate database client/types
-- `bun run db:migrate`: Run database migrations
+- `bun run check-types`: Check TypeScript types across all packages
+- `bun run lint`: Lint the whole workspace (ESLint, one flat config at the root)
+- `bun run lint:fix`: Lint and auto-fix
+- `bun run test`: Run tests across all packages
+- `bun run db:generate`: Generate a migration from schema changes
+- `bun run db:migrate`: Apply pending migrations
+- `bun run db:push`: Diff the schema straight onto the database — scratch databases only, see Database Setup
 - `bun run db:studio`: Open database studio UI
 - `bun run deploy:setup`: Link this repo to a Vercel project (first-time setup)
 - `bun run dev:vercel`: Run the Vercel Services dev environment locally

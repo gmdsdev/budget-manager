@@ -1,4 +1,4 @@
-import { WalletFormDto, WalletType } from "@budget-manager/schemas";
+import { WalletCurrency, WalletType } from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -10,15 +10,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useWalletForm } from "../hooks/use-wallet-form";
 import { useCreateWalletMutation } from "../mutations/use-wallet-mutation";
 import { WalletFormFields } from "./wallet-form-fields";
 
-const FORM_ID = "create-wallet-form";
-
 export function CreateWalletDialog() {
   const [open, setOpen] = useState(false);
+  const formId = useId();
+
+  const createMutation = useCreateWalletMutation();
+
+  const form = useWalletForm({
+    defaultValues: {
+      name: "",
+      type: WalletType.CHECKING,
+      currencyCode: WalletCurrency.BRL,
+      openingBalanceCents: 0,
+    },
+    onSubmit: async (values) => {
+      await createMutation.mutateAsync(values);
+      handleOpenChange(false);
+    },
+  });
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
@@ -28,28 +42,10 @@ export function CreateWalletDialog() {
     }
   }
 
-  const createMutation = useCreateWalletMutation();
-
-  const form = useWalletForm({
-    defaultValues: {
-      name: "",
-      type: WalletType.CHECKING,
-      currencyCode: "BRL",
-      openingBalanceCents: 0,
-    } as WalletFormDto,
-    onSubmit: (values) => {
-      createMutation.mutate(values, {
-        onSuccess: () => {
-          handleOpenChange(false);
-        },
-      });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    form.handleSubmit();
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void form.handleSubmit();
   };
 
   return (
@@ -63,15 +59,28 @@ export function CreateWalletDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <form id={FORM_ID} onSubmit={handleSubmit}>
+        <form id={formId} onSubmit={handleSubmit}>
           <WalletFormFields form={form} />
         </form>
 
         <DialogFooter>
           <DialogClose render={<Button variant="outline">Cancel</Button>} />
-          <Button type="submit" form={FORM_ID}>
-            Save changes
-          </Button>
+          <form.Subscribe
+            selector={(state) => ({
+              canSubmit: state.canSubmit,
+              isSubmitting: state.isSubmitting,
+            })}
+          >
+            {({ canSubmit, isSubmitting }) => (
+              <Button
+                type="submit"
+                form={formId}
+                disabled={!canSubmit || isSubmitting}
+              >
+                {isSubmitting ? "Creating…" : "Create wallet"}
+              </Button>
+            )}
+          </form.Subscribe>
         </DialogFooter>
       </DialogContent>
     </Dialog>

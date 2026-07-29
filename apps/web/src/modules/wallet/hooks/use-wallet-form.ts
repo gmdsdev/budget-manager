@@ -1,22 +1,18 @@
-import {
-  WalletFormDto,
-  WalletFormSchema,
-  WalletDto,
-  WalletType,
-} from "@budget-manager/schemas";
+import { type WalletFormDto, WalletFormSchema } from "@budget-manager/schemas";
 import { useForm } from "@tanstack/react-form";
 
 export function useWalletForm({
   onSubmit,
   defaultValues,
 }: {
-  onSubmit: (values: WalletFormDto) => void;
+  onSubmit: (values: WalletFormDto) => Promise<unknown>;
   defaultValues: WalletFormDto;
 }) {
   return useForm({
     defaultValues,
     onSubmit: ({ value }) => onSubmit(value),
     validators: {
+      onBlur: WalletFormSchema,
       onSubmit: WalletFormSchema,
     },
   });

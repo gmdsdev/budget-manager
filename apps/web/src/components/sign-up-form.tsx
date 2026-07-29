@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import z from "zod";
 
 import { authClient } from "@/lib/auth-client";
+import { invalidateSessionCache } from "@/lib/session";
 
 import Loader from "./loader";
 
@@ -35,7 +36,8 @@ export default function SignUpForm({
         },
         {
           onSuccess: () => {
-            navigate({
+            invalidateSessionCache();
+            void navigate({
               to: "/dashboard",
             });
             toast.success("Sign up successful");
@@ -67,7 +69,7 @@ export default function SignUpForm({
         onSubmit={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          form.handleSubmit();
+          void form.handleSubmit();
         }}
         className="space-y-4"
       >

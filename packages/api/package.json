@@ -9,21 +9,21 @@
       "default": "./src/*.ts"
     }
   },
-  "scripts": {},
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
   "dependencies": {
     "@budget-manager/auth": "workspace:*",
     "@budget-manager/db": "workspace:*",
     "@budget-manager/env": "workspace:*",
+    "@budget-manager/schemas": "workspace:*",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
-    "@types/pg": "catalog:",
-    "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@budget-manager/config": "workspace:*",
-    "@budget-manager/schemas": "workspace:*",
     "hono": "catalog:",
     "typescript": "catalog:"
   }

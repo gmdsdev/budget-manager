@@ -10,6 +10,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@budget-manager/money": "workspace:*",
     "zod": "^4.1.13"
   },
   "devDependencies": {

@@ -1,3 +1,7 @@
+import {
+  MONEY_MAX_MINOR_UNITS,
+  MONEY_MIN_MINOR_UNITS,
+} from "@budget-manager/money";
 import { z } from "zod";
 
 export enum WalletType {
@@ -34,13 +38,28 @@ export const WalletCurrencyLabelMap: Record<WalletCurrency, string> = {
   [WalletCurrency.CNY]: "CNY - Chinese Yuan",
 };
 
+export const WALLET_NAME_MAX_LENGTH = 120;
+
+export const MoneyMinorUnitsSchema = z
+  .number()
+  .int("Must be a whole number")
+  .min(MONEY_MIN_MINOR_UNITS)
+  .max(MONEY_MAX_MINOR_UNITS);
+
 export const WalletSchema = z.object({
   id: z.uuid(),
-  name: z.string().min(1, "Name is required"),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name is required")
+    .max(
+      WALLET_NAME_MAX_LENGTH,
+      `Name must be ${WALLET_NAME_MAX_LENGTH} characters or fewer`,
+    ),
   type: z.enum(Object.values(WalletType)),
-  openingBalanceCents: z.number(),
-  currentBalanceCents: z.number(),
+  openingBalanceCents: MoneyMinorUnitsSchema,
   currencyCode: z.enum(Object.values(WalletCurrency)),
+  isArchived: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

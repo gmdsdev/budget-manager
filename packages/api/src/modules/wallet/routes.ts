@@ -1,14 +1,25 @@
-import { DeleteWalletSchema, WalletFormSchema } from "@budget-manager/schemas";
-import z from "zod";
 import { protectedProcedure, router } from "../../index";
+import {
+  CreateWalletInput,
+  ListWalletsInput,
+  UpdateWalletInput,
+  WalletIdInput,
+} from "./validators";
 
 export const walletRouter = router({
-  getAll: protectedProcedure.query(async ({ ctx }) => {
-    return await ctx.services.wallet.getAll({ userId: ctx.session.user.id });
-  }),
+  getAll: protectedProcedure
+    .input(ListWalletsInput)
+    .query(async ({ input, ctx }) => {
+      return await ctx.services.wallet.getAll({
+        userId: ctx.session.user.id,
+        includeArchived: input.includeArchived,
+        limit: input.limit,
+        offset: input.offset,
+      });
+    }),
 
   create: protectedProcedure
-    .input(WalletFormSchema)
+    .input(CreateWalletInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.wallet.create({
         userId: ctx.session.user.id,
@@ -17,17 +28,37 @@ export const walletRouter = router({
     }),
 
   update: protectedProcedure
-    .input(WalletFormSchema.extend({ id: z.uuid() }))
+    .input(UpdateWalletInput)
     .mutation(async ({ input, ctx }) => {
+      const { id, ...patch } = input;
+
       return await ctx.services.wallet.update({
+        id,
+        userId: ctx.session.user.id,
+        patch,
+      });
+    }),
+
+  archive: protectedProcedure
+    .input(WalletIdInput)
+    .mutation(async ({ input, ctx }) => {
+      return await ctx.services.wallet.archive({
         id: input.id,
         userId: ctx.session.user.id,
-        wallet: input,
+      });
+    }),
+
+  unarchive: protectedProcedure
+    .input(WalletIdInput)
+    .mutation(async ({ input, ctx }) => {
+      return await ctx.services.wallet.unarchive({
+        id: input.id,
+        userId: ctx.session.user.id,
       });
     }),
 
   delete: protectedProcedure
-    .input(DeleteWalletSchema)
+    .input(WalletIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.wallet.delete({
         id: input.id,

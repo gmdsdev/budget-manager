@@ -1,0 +1,17 @@
+{
+  "name": "@budget-manager/money",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@budget-manager/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

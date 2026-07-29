@@ -1,18 +1,21 @@
-import Header from "@/components/header";
+import { RouteError } from "@/components/route-error";
 import { ThemeProvider } from "@/components/theme-provider";
 import type { trpc } from "@/utils/trpc";
 import { Toaster } from "@budget-manager/ui/components/sonner";
 import { TooltipProvider } from "@budget-manager/ui/components/tooltip";
 import type { QueryClient } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
   HeadContent,
   Outlet,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { lazy, Suspense } from "react";
 
 import "../index.css";
+
+const Devtools = import.meta.env.DEV
+  ? lazy(() => import("@/components/devtools"))
+  : null;
 
 export interface RouterAppContext {
   trpc: typeof trpc;
@@ -21,6 +24,7 @@ export interface RouterAppContext {
 
 export const Route = createRootRouteWithContext<RouterAppContext>()({
   component: RootComponent,
+  errorComponent: RouteError,
   head: () => ({
     meta: [
       {
@@ -57,8 +61,11 @@ function RootComponent() {
           <Toaster richColors />
         </TooltipProvider>
       </ThemeProvider>
-      <TanStackRouterDevtools position="bottom-left" />
-      <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
+      {Devtools ? (
+        <Suspense fallback={null}>
+          <Devtools />
+        </Suspense>
+      ) : null}
     </>
   );
 }

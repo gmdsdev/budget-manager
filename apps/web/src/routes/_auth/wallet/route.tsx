@@ -1,11 +1,14 @@
+import { RouteError } from "@/components/route-error";
 import ListWalletsPage from "@/modules/wallet/pages/list-wallets.page";
-import { WalletDto } from "@budget-manager/schemas";
-import { trpc } from "@/utils/trpc";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_auth/wallet")({
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(
+      context.trpc.wallet.getAll.queryOptions(),
+    ),
   component: RouteComponent,
+  errorComponent: RouteError,
 });
 
 function RouteComponent() {

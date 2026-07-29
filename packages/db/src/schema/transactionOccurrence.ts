@@ -72,11 +72,16 @@ export const transactionOccurrences = pgTable(
       .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
-      .defaultNow(),
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => [
     index("transaction_occurrences_wallet_idx").on(
       table.walletId,
+      table.occurrenceDate,
+    ),
+    index("transaction_occurrences_user_date_idx").on(
+      table.userId,
       table.occurrenceDate,
     ),
     index("transaction_occurrences_card_idx").on(

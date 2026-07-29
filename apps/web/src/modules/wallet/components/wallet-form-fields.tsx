@@ -1,7 +1,17 @@
-import { Field, FieldGroup } from "@budget-manager/ui/components/field";
+import {
+  WalletCurrency,
+  WalletCurrencyLabelMap,
+  WalletType,
+  WalletTypeLabelMap,
+} from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@budget-manager/ui/components/field";
 import { Input } from "@budget-manager/ui/components/input";
-import { Label } from "@budget-manager/ui/components/label";
 import {
   Select,
   SelectContent,
@@ -9,134 +19,154 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@budget-manager/ui/components/select";
-import { UseWalletFormReturnType } from "../hooks/use-wallet-form";
-import {
-  WalletCurrency,
-  WalletCurrencyLabelMap,
-  WalletType,
-  WalletTypeLabelMap,
-} from "@budget-manager/schemas";
+import { useSelector } from "@tanstack/react-form";
+import type { UseWalletFormReturnType } from "../hooks/use-wallet-form";
+
+const WALLET_TYPE_ITEMS = Object.values(WalletType).map((type) => ({
+  label: WalletTypeLabelMap[type],
+  value: type,
+}));
+
+const WALLET_CURRENCY_ITEMS = Object.values(WalletCurrency).map((currency) => ({
+  label: WalletCurrencyLabelMap[currency],
+  value: currency,
+}));
+
+function OpeningBalanceField({ form }: { form: UseWalletFormReturnType }) {
+  const currencyCode = useSelector(
+    form.store,
+    (state) => state.values.currencyCode,
+  );
+
+  return (
+    <form.Field name="openingBalanceCents">
+      {(field) => {
+        const invalid = !field.state.meta.isValid;
+        const errorId = `${field.name}-error`;
+
+        return (
+          <Field data-invalid={invalid}>
+            <FieldLabel htmlFor={field.name}>Opening Balance</FieldLabel>
+            <CurrencyInput
+              id={field.name}
+              name={field.name}
+              value={field.state.value}
+              currencyCode={currencyCode}
+              onValueChange={field.handleChange}
+              onBlur={field.handleBlur}
+              aria-invalid={invalid || undefined}
+              aria-describedby={invalid ? errorId : undefined}
+            />
+            <FieldError id={errorId} errors={field.state.meta.errors} />
+          </Field>
+        );
+      }}
+    </form.Field>
+  );
+}
 
 export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
   return (
     <FieldGroup>
       <form.Field name="name">
-        {(field) => (
-          <Field>
-            <Label htmlFor={field.name}>Name</Label>
-            <Input
-              id={field.name}
-              name={field.name}
-              type="text"
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-              className={
-                field.state.meta.errors.length > 0 ? "border-destructive" : ""
-              }
-            />
-            {field.state.meta.errors.map((error) => (
-              <p key={error?.message} className="text-destructive">
-                {error?.message}
-              </p>
-            ))}
-          </Field>
-        )}
+        {(field) => {
+          const invalid = !field.state.meta.isValid;
+          const errorId = `${field.name}-error`;
+
+          return (
+            <Field data-invalid={invalid}>
+              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+              <Input
+                id={field.name}
+                name={field.name}
+                type="text"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(event) => field.handleChange(event.target.value)}
+                aria-invalid={invalid || undefined}
+                aria-describedby={invalid ? errorId : undefined}
+              />
+              <FieldError id={errorId} errors={field.state.meta.errors} />
+            </Field>
+          );
+        }}
       </form.Field>
 
       <form.Field name="type">
-        {(field) => (
-          <Field>
-            <Label htmlFor={field.name}>Type</Label>
-            <Select
-              items={Object.values(WalletType).map((type) => ({
-                label: WalletTypeLabelMap[type],
-                value: type,
-              }))}
-              id={field.name}
-              name={field.name}
-              value={field.state.value}
-              onValueChange={(value) => field.handleChange(value as WalletType)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(WalletType).map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {WalletTypeLabelMap[type]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {field.state.meta.errors.map((error) => (
-              <p key={error?.message} className="text-destructive">
-                {error?.message}
-              </p>
-            ))}
-          </Field>
-        )}
+        {(field) => {
+          const invalid = !field.state.meta.isValid;
+          const errorId = `${field.name}-error`;
+
+          return (
+            <Field data-invalid={invalid}>
+              <FieldLabel htmlFor={field.name}>Type</FieldLabel>
+              <Select
+                items={WALLET_TYPE_ITEMS}
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onValueChange={(value) =>
+                  field.handleChange(value as WalletType)
+                }
+              >
+                <SelectTrigger
+                  aria-invalid={invalid || undefined}
+                  aria-describedby={invalid ? errorId : undefined}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WALLET_TYPE_ITEMS.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError id={errorId} errors={field.state.meta.errors} />
+            </Field>
+          );
+        }}
       </form.Field>
 
       <form.Field name="currencyCode">
-        {(field) => (
-          <Field>
-            <Label htmlFor={field.name}>Currency</Label>
-            <Select
-              items={Object.values(WalletCurrency).map((currency) => ({
-                label: WalletCurrencyLabelMap[currency],
-                value: currency,
-              }))}
-              id={field.name}
-              name={field.name}
-              value={field.state.value}
-              onValueChange={(value) =>
-                field.handleChange(value as WalletCurrency)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(WalletCurrency).map((currency) => (
-                  <SelectItem key={currency} value={currency}>
-                    {WalletCurrencyLabelMap[currency]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {field.state.meta.errors.map((error) => (
-              <p key={error?.message} className="text-destructive">
-                {error?.message}
-              </p>
-            ))}
-          </Field>
-        )}
+        {(field) => {
+          const invalid = !field.state.meta.isValid;
+          const errorId = `${field.name}-error`;
+
+          return (
+            <Field data-invalid={invalid}>
+              <FieldLabel htmlFor={field.name}>Currency</FieldLabel>
+              <Select
+                items={WALLET_CURRENCY_ITEMS}
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onValueChange={(value) =>
+                  field.handleChange(value as WalletCurrency)
+                }
+              >
+                <SelectTrigger
+                  aria-invalid={invalid || undefined}
+                  aria-describedby={invalid ? errorId : undefined}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WALLET_CURRENCY_ITEMS.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError id={errorId} errors={field.state.meta.errors} />
+            </Field>
+          );
+        }}
       </form.Field>
 
-      <form.Field name="openingBalanceCents">
-        {(field) => (
-          <Field>
-            <Label htmlFor={field.name}>Opening Balance</Label>
-            <CurrencyInput
-              id={field.name}
-              name={field.name}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(value) => field.handleChange(Number(value))}
-              currencyCode={form.getFieldValue("currencyCode")}
-              className={
-                field.state.meta.errors.length > 0 ? "border-destructive" : ""
-              }
-            />
-            {field.state.meta.errors.map((error) => (
-              <p key={error?.message} className="text-destructive">
-                {error?.message}
-              </p>
-            ))}
-          </Field>
-        )}
-      </form.Field>
+      <OpeningBalanceField form={form} />
     </FieldGroup>
   );
 }

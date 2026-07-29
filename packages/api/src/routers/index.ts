@@ -1,6 +1,5 @@
-import { walletRouter } from "../modules/wallet/routes";
+import { walletRouter } from "../modules/wallet";
 import { protectedProcedure, publicProcedure, router } from "../index";
-import { todoRouter } from "./todo";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -12,7 +11,6 @@ export const appRouter = router({
       user: ctx.session.user,
     };
   }),
-  todo: todoRouter,
   wallet: walletRouter,
 });
 export type AppRouter = typeof appRouter;

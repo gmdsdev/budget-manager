@@ -1,3 +1,4 @@
+import type { WalletCurrency } from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -7,65 +8,50 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
-import { useState } from "react";
+import { useId } from "react";
 import { useWalletForm } from "../hooks/use-wallet-form";
-import {
-  useCreateWalletMutation,
-  useUpdateWalletMutation,
-} from "../mutations/use-wallet-mutation";
+import { useUpdateWalletMutation } from "../mutations/use-wallet-mutation";
+import type { WalletRow } from "../types";
 import { WalletFormFields } from "./wallet-form-fields";
-import { WalletDto, WalletFormDto } from "@budget-manager/schemas";
-
-const FORM_ID = "create-wallet-form";
 
 export function EditWalletDialog({
   wallet,
   open,
-  setOpen,
+  onOpenChange,
 }: {
-  wallet: WalletDto;
+  wallet: WalletRow;
   open: boolean;
-  setOpen: (open: boolean) => void;
+  onOpenChange: (open: boolean) => void;
 }) {
+  const formId = useId();
+  const updateMutation = useUpdateWalletMutation();
+
+  const form = useWalletForm({
+    defaultValues: {
+      name: wallet.name,
+      type: wallet.type,
+      openingBalanceCents: wallet.openingBalanceCents,
+      currencyCode: wallet.currencyCode as WalletCurrency,
+    },
+    onSubmit: async (values) => {
+      await updateMutation.mutateAsync({ ...values, id: wallet.id });
+      handleOpenChange(false);
+    },
+  });
+
   function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
+    onOpenChange(nextOpen);
 
     if (!nextOpen) {
       form.reset();
     }
   }
 
-  const updateMutation = useUpdateWalletMutation();
-
-  const form = useWalletForm({
-    defaultValues: {
-      id: wallet.id,
-      name: wallet.name,
-      type: wallet.type,
-      openingBalanceCents: wallet.openingBalanceCents,
-      currencyCode: wallet.currencyCode,
-    } as WalletFormDto & { id: string },
-    onSubmit: (values) => {
-      updateMutation.mutate(
-        {
-          ...values,
-          id: wallet.id,
-        },
-        {
-          onSuccess: () => {
-            handleOpenChange(false);
-          },
-        },
-      );
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    form.handleSubmit();
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void form.handleSubmit();
   };
 
   return (
@@ -73,18 +59,33 @@ export function EditWalletDialog({
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Edit Wallet</DialogTitle>
-          <DialogDescription>Edit the wallet details.</DialogDescription>
+          <DialogDescription>
+            Update the details for “{wallet.name}”.
+          </DialogDescription>
         </DialogHeader>
 
-        <form id={FORM_ID} onSubmit={handleSubmit}>
+        <form id={formId} onSubmit={handleSubmit}>
           <WalletFormFields form={form} />
         </form>
 
         <DialogFooter>
           <DialogClose render={<Button variant="outline">Cancel</Button>} />
-          <Button type="submit" form={FORM_ID}>
-            Save changes
-          </Button>
+          <form.Subscribe
+            selector={(state) => ({
+              canSubmit: state.canSubmit,
+              isSubmitting: state.isSubmitting,
+            })}
+          >
+            {({ canSubmit, isSubmitting }) => (
+              <Button
+                type="submit"
+                form={formId}
+                disabled={!canSubmit || isSubmitting}
+              >
+                {isSubmitting ? "Saving…" : "Save changes"}
+              </Button>
+            )}
+          </form.Subscribe>
         </DialogFooter>
       </DialogContent>
     </Dialog>

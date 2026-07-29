@@ -1,1 +1,1 @@
-export * from "./wallet/wallter.schema";
+export * from "./wallet/wallet.schema";

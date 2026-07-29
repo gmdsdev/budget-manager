@@ -1,6 +1,5 @@
 import { db } from "@budget-manager/db";
-import { WalletService } from "./modules/wallet/service";
-import { WalletRepository } from "./modules/wallet/repository";
+import { WalletRepository, WalletService } from "./modules/wallet";
 
 const walletRepository = new WalletRepository(db);
 

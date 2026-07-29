@@ -1,12 +1,10 @@
-import { createDb } from "@budget-manager/db";
+import { db as sharedDb, type Db } from "@budget-manager/db";
 import * as schema from "@budget-manager/db/schema/auth";
 import { env } from "@budget-manager/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
-export function createAuth() {
-  const db = createDb();
-
+export function createAuth(db: Db = sharedDb) {
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",

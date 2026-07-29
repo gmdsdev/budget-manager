@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
+    "@budget-manager/money": "workspace:*",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/ibm-plex-sans": "^5.3.0",
     "@remixicon/react": "^4.9.0",

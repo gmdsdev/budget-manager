@@ -1,6 +1,7 @@
 import {
   boolean,
   date,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -57,9 +58,11 @@ export const recurrenceRules = pgTable(
       .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
-      .defaultNow(),
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => [
     uniqueIndex("recurrence_rules_template_unique").on(table.templateId),
+    index("recurrence_rules_user_id_idx").on(table.userId),
   ],
 );
