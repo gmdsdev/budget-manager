@@ -1,7 +1,5 @@
-import {
-  CreateWalletSchema,
-  DeleteWalletSchema,
-} from "@budget-manager/schemas";
+import { DeleteWalletSchema, WalletFormSchema } from "@budget-manager/schemas";
+import z from "zod";
 import { protectedProcedure, router } from "../../index";
 
 export const walletRouter = router({
@@ -10,9 +8,19 @@ export const walletRouter = router({
   }),
 
   create: protectedProcedure
-    .input(CreateWalletSchema)
+    .input(WalletFormSchema)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.wallet.create({
+        userId: ctx.session.user.id,
+        wallet: input,
+      });
+    }),
+
+  update: protectedProcedure
+    .input(WalletFormSchema.extend({ id: z.uuid() }))
+    .mutation(async ({ input, ctx }) => {
+      return await ctx.services.wallet.update({
+        id: input.id,
         userId: ctx.session.user.id,
         wallet: input,
       });

@@ -1,4 +1,3 @@
-import { WalletFormDto, WalletType } from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -12,14 +11,24 @@ import {
 } from "@budget-manager/ui/components/dialog";
 import { useState } from "react";
 import { useWalletForm } from "../hooks/use-wallet-form";
-import { useCreateWalletMutation } from "../mutations/use-wallet-mutation";
+import {
+  useCreateWalletMutation,
+  useUpdateWalletMutation,
+} from "../mutations/use-wallet-mutation";
 import { WalletFormFields } from "./wallet-form-fields";
+import { WalletDto, WalletFormDto } from "@budget-manager/schemas";
 
 const FORM_ID = "create-wallet-form";
 
-export function CreateWalletDialog() {
-  const [open, setOpen] = useState(false);
-
+export function EditWalletDialog({
+  wallet,
+  open,
+  setOpen,
+}: {
+  wallet: WalletDto;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}) {
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
 
@@ -28,21 +37,28 @@ export function CreateWalletDialog() {
     }
   }
 
-  const createMutation = useCreateWalletMutation();
+  const updateMutation = useUpdateWalletMutation();
 
   const form = useWalletForm({
     defaultValues: {
-      name: "",
-      type: WalletType.CHECKING,
-      currency: "BRL",
-      openingBalanceCents: 0,
-    } as WalletFormDto,
+      id: wallet.id,
+      name: wallet.name,
+      type: wallet.type,
+      openingBalanceCents: wallet.openingBalanceCents,
+      currency: wallet.currency,
+    } as WalletFormDto & { id: string },
     onSubmit: (values) => {
-      createMutation.mutate(values, {
-        onSuccess: () => {
-          handleOpenChange(false);
+      updateMutation.mutate(
+        {
+          ...values,
+          id: wallet.id,
         },
-      });
+        {
+          onSuccess: () => {
+            handleOpenChange(false);
+          },
+        },
+      );
     },
   });
 
@@ -54,13 +70,10 @@ export function CreateWalletDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button>Create Wallet</Button>} />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Create Wallet</DialogTitle>
-          <DialogDescription>
-            Create a new wallet to start tracking your finances.
-          </DialogDescription>
+          <DialogTitle>Edit Wallet</DialogTitle>
+          <DialogDescription>Edit the wallet details.</DialogDescription>
         </DialogHeader>
 
         <form id={FORM_ID} onSubmit={handleSubmit}>

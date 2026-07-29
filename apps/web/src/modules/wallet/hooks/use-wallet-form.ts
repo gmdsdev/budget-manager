@@ -1,29 +1,23 @@
 import {
-  CreateWalletDto,
-  CreateWalletSchema,
+  WalletFormDto,
+  WalletFormSchema,
+  WalletDto,
   WalletType,
 } from "@budget-manager/schemas";
 import { useForm } from "@tanstack/react-form";
 
 export function useWalletForm({
   onSubmit,
+  defaultValues,
 }: {
-  onSubmit: (values: CreateWalletDto) => void;
+  onSubmit: (values: WalletFormDto) => void;
+  defaultValues: WalletFormDto;
 }) {
-  const defaultValues: CreateWalletDto = {
-    name: "",
-    type: WalletType.CHECKING,
-    currency: "BRL",
-    balance: 0,
-  };
-
   return useForm({
     defaultValues,
-    onSubmit: ({ value }) => {
-      onSubmit(value);
-    },
+    onSubmit: ({ value }) => onSubmit(value),
     validators: {
-      onSubmit: CreateWalletSchema,
+      onSubmit: WalletFormSchema,
     },
   });
 }

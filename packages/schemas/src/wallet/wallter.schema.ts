@@ -18,7 +18,8 @@ export const WalletSchema = z.object({
   id: z.uuid(),
   name: z.string().min(1, "Name is required"),
   type: z.enum(Object.values(WalletType)),
-  balance: z.number(),
+  openingBalanceCents: z.number(),
+  currentBalanceCents: z.number(),
   currency: z.string().min(1),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -26,21 +27,14 @@ export const WalletSchema = z.object({
 
 export type WalletDto = z.infer<typeof WalletSchema>;
 
-export const CreateWalletSchema = WalletSchema.pick({
+export const WalletFormSchema = WalletSchema.pick({
   name: true,
   type: true,
-  balance: true,
+  openingBalanceCents: true,
   currency: true,
 });
 
-export type CreateWalletDto = z.infer<typeof CreateWalletSchema>;
-
-export const UpdateWalletSchema = WalletSchema.omit({
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type UpdateWalletDto = z.infer<typeof UpdateWalletSchema>;
+export type WalletFormDto = z.infer<typeof WalletFormSchema>;
 
 export const DeleteWalletSchema = WalletSchema.pick({ id: true });
 

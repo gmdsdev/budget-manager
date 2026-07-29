@@ -1,4 +1,4 @@
-import type { CreateWalletDto } from "@budget-manager/schemas";
+import type { WalletFormDto } from "@budget-manager/schemas";
 import type { WalletRepository } from "./repository";
 
 export class WalletService {
@@ -8,14 +8,20 @@ export class WalletService {
     return await this.repository.getAll({ userId });
   }
 
-  async create({
+  async create({ userId, wallet }: { userId: string; wallet: WalletFormDto }) {
+    return await this.repository.create({ userId, wallet });
+  }
+
+  async update({
+    id,
     userId,
     wallet,
   }: {
+    id: string;
     userId: string;
-    wallet: CreateWalletDto;
+    wallet: WalletFormDto;
   }) {
-    return await this.repository.create({ userId, wallet });
+    return await this.repository.update({ id, userId, wallet });
   }
 
   async delete({ id, userId }: { id: string; userId: string }) {

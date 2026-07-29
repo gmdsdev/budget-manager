@@ -1,6 +1,6 @@
 import type { Db } from "@budget-manager/db";
 import { wallets } from "@budget-manager/db/schema/wallet";
-import type { CreateWalletDto } from "@budget-manager/schemas";
+import type { WalletFormDto } from "@budget-manager/schemas";
 import { and, asc, eq } from "drizzle-orm";
 
 export class WalletRepository {
@@ -12,7 +12,8 @@ export class WalletRepository {
         id: wallets.id,
         name: wallets.name,
         type: wallets.type,
-        balance: wallets.currentBalanceCents,
+        openingBalanceCents: wallets.openingBalanceCents,
+        currentBalanceCents: wallets.currentBalanceCents,
         currency: wallets.currencyCode,
         createdAt: wallets.createdAt,
         updatedAt: wallets.updatedAt,
@@ -22,13 +23,25 @@ export class WalletRepository {
       .orderBy(asc(wallets.name));
   }
 
-  async create({
+  async update({
+    id,
     userId,
     wallet,
   }: {
+    id: string;
     userId: string;
-    wallet: CreateWalletDto;
+    wallet: WalletFormDto;
   }) {
+    return await this.db
+      .update(wallets)
+      .set({
+        ...wallet,
+        userId,
+      })
+      .where(and(eq(wallets.id, id), eq(wallets.userId, userId)));
+  }
+
+  async create({ userId, wallet }: { userId: string; wallet: WalletFormDto }) {
     return await this.db.insert(wallets).values({
       ...wallet,
       userId,

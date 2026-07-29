@@ -14,6 +14,7 @@ import { Button } from "@budget-manager/ui/components/button";
 import { MoreHorizontalIcon } from "lucide-react";
 import { DeleteWalletDialog } from "../delete-wallet-dialog";
 import { useState } from "react";
+import { EditWalletDialog } from "../edit-wallet-dialog";
 
 export const columns: ColumnDef<WalletDto>[] = [
   {
@@ -43,17 +44,20 @@ export const columns: ColumnDef<WalletDto>[] = [
     size: 100,
   },
   {
-    accessorKey: "balance",
-    header: "Balance",
+    accessorKey: "openingBalanceCents",
+    header: "Opening Balance",
     size: 100,
     cell: ({ row }) => {
-      const balance = parseFloat(row.getValue("balance"));
+      const openingBalanceCents = parseFloat(
+        row.getValue("openingBalanceCents"),
+      );
       const currency = String(row.getValue("currency"));
 
       const formatted = new Intl.NumberFormat("en-US", {
         style: "currency",
+        minimumFractionDigits: 2,
         currency: currency,
-      }).format(balance);
+      }).format(openingBalanceCents / 100);
 
       return <div>{formatted}</div>;
     },
@@ -63,8 +67,9 @@ export const columns: ColumnDef<WalletDto>[] = [
     header: "",
     size: 0,
     cell: ({ row }) => {
-      const [open, setOpen] = useState(false);
-      const walletId = row.getValue("id");
+      const [openEditDialog, setOpenEditDialog] = useState(false);
+      const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+      const walletId = row.original.id;
 
       return (
         <>
@@ -78,14 +83,19 @@ export const columns: ColumnDef<WalletDto>[] = [
               }
             />
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit</DropdownMenuItem>
-              <DropdownMenuItem>Duplicate</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setOpenEditDialog(true);
+                }}
+              >
+                Edit
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
                 className="text-destructive"
                 onClick={() => {
-                  setOpen(true);
+                  setOpenDeleteDialog(true);
                 }}
               >
                 Delete
@@ -93,10 +103,16 @@ export const columns: ColumnDef<WalletDto>[] = [
             </DropdownMenuContent>
           </DropdownMenu>
 
+          <EditWalletDialog
+            wallet={row.original}
+            open={openEditDialog}
+            setOpen={setOpenEditDialog}
+          />
+
           <DeleteWalletDialog
             walletId={walletId}
-            open={open}
-            setOpen={setOpen}
+            open={openDeleteDialog}
+            setOpen={setOpenDeleteDialog}
           />
         </>
       );

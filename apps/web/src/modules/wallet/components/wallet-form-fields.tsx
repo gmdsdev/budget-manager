@@ -1,4 +1,5 @@
 import { Field, FieldGroup } from "@budget-manager/ui/components/field";
+import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
 import { Input } from "@budget-manager/ui/components/input";
 import { Label } from "@budget-manager/ui/components/label";
 import {
@@ -70,17 +71,16 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
           </Field>
         )}
       </form.Field>
-      <form.Field name="balance">
+      <form.Field name="openingBalanceCents">
         {(field) => (
           <Field>
-            <Label htmlFor={field.name}>Balance</Label>
-            <Input
+            <Label htmlFor={field.name}>Opening Balance</Label>
+            <CurrencyInput
               id={field.name}
               name={field.name}
-              type="number"
               value={field.state.value}
               onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(Number(e.target.value))}
+              onChange={(value) => field.handleChange(Number(value))}
               className={
                 field.state.meta.errors.length > 0 ? "border-destructive" : ""
               }

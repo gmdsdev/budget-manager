@@ -1,11 +1,19 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { trpc } from "@/utils/trpc";
-import { CreateWalletDto, DeleteWalletDto } from "@budget-manager/schemas";
+import { WalletFormDto, DeleteWalletDto } from "@budget-manager/schemas";
 
 export function useCreateWalletMutation() {
-  return useApiMutation<unknown, CreateWalletDto>({
+  return useApiMutation<unknown, WalletFormDto>({
     mutationFn: trpc.wallet.create.mutationOptions().mutationFn,
     successMessage: "Wallet created successfully",
+    invalidateQueries: trpc.wallet.getAll.queryFilter(),
+  });
+}
+
+export function useUpdateWalletMutation() {
+  return useApiMutation<unknown, WalletFormDto & { id: string }>({
+    mutationFn: trpc.wallet.update.mutationOptions().mutationFn,
+    successMessage: "Wallet updated successfully",
     invalidateQueries: trpc.wallet.getAll.queryFilter(),
   });
 }
