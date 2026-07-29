@@ -45,7 +45,7 @@ export function EditWalletDialog({
       name: wallet.name,
       type: wallet.type,
       openingBalanceCents: wallet.openingBalanceCents,
-      currency: wallet.currency,
+      currencyCode: wallet.currencyCode,
     } as WalletFormDto & { id: string },
     onSubmit: (values) => {
       updateMutation.mutate(

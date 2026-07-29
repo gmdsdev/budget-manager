@@ -14,13 +14,33 @@ export const WalletTypeLabelMap: Record<WalletType, string> = {
   [WalletType.CASH]: "Cash",
 };
 
+export enum WalletCurrency {
+  BRL = "BRL",
+  USD = "USD",
+  EUR = "EUR",
+  GBP = "GBP",
+  JPY = "JPY",
+  KRW = "KRW",
+  CNY = "CNY",
+}
+
+export const WalletCurrencyLabelMap: Record<WalletCurrency, string> = {
+  [WalletCurrency.BRL]: "BRL - Brazilian Real",
+  [WalletCurrency.USD]: "USD - United States Dollar",
+  [WalletCurrency.EUR]: "EUR - Euro",
+  [WalletCurrency.GBP]: "GBP - British Pound",
+  [WalletCurrency.JPY]: "JPY - Japanese Yen",
+  [WalletCurrency.KRW]: "KRW - South Korean Won",
+  [WalletCurrency.CNY]: "CNY - Chinese Yuan",
+};
+
 export const WalletSchema = z.object({
   id: z.uuid(),
   name: z.string().min(1, "Name is required"),
   type: z.enum(Object.values(WalletType)),
   openingBalanceCents: z.number(),
   currentBalanceCents: z.number(),
-  currency: z.string().min(1),
+  currencyCode: z.enum(Object.values(WalletCurrency)),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -31,7 +51,7 @@ export const WalletFormSchema = WalletSchema.pick({
   name: true,
   type: true,
   openingBalanceCents: true,
-  currency: true,
+  currencyCode: true,
 });
 
 export type WalletFormDto = z.infer<typeof WalletFormSchema>;

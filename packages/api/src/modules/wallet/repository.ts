@@ -14,7 +14,7 @@ export class WalletRepository {
         type: wallets.type,
         openingBalanceCents: wallets.openingBalanceCents,
         currentBalanceCents: wallets.currentBalanceCents,
-        currency: wallets.currencyCode,
+        currencyCode: wallets.currencyCode,
         createdAt: wallets.createdAt,
         updatedAt: wallets.updatedAt,
       })

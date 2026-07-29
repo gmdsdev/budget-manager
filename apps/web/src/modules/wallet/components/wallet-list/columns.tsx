@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { WalletDto } from "@budget-manager/schemas";
+import { WalletCurrencyLabelMap, WalletDto } from "@budget-manager/schemas";
 
 import {
   DropdownMenu,
@@ -39,9 +39,12 @@ export const columns: ColumnDef<WalletDto>[] = [
     },
   },
   {
-    accessorKey: "currency",
+    accessorKey: "currencyCode",
     header: "Currency",
     size: 100,
+    cell: ({ row }) => {
+      return <div>{WalletCurrencyLabelMap[row.original.currencyCode]}</div>;
+    },
   },
   {
     accessorKey: "openingBalanceCents",
@@ -51,15 +54,15 @@ export const columns: ColumnDef<WalletDto>[] = [
       const openingBalanceCents = parseFloat(
         row.getValue("openingBalanceCents"),
       );
-      const currency = String(row.getValue("currency"));
+      const currencyCode = row.original.currencyCode;
 
       const formatted = new Intl.NumberFormat("en-US", {
         style: "currency",
         minimumFractionDigits: 2,
-        currency: currency,
+        currency: currencyCode,
       }).format(openingBalanceCents / 100);
 
-      return <div>{formatted}</div>;
+      return <div className="text-right">{formatted}</div>;
     },
   },
   {

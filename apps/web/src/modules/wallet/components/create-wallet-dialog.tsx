@@ -34,7 +34,7 @@ export function CreateWalletDialog() {
     defaultValues: {
       name: "",
       type: WalletType.CHECKING,
-      currency: "BRL",
+      currencyCode: "BRL",
       openingBalanceCents: 0,
     } as WalletFormDto,
     onSubmit: (values) => {

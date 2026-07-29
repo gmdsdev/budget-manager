@@ -10,7 +10,12 @@ import {
   SelectValue,
 } from "@budget-manager/ui/components/select";
 import { UseWalletFormReturnType } from "../hooks/use-wallet-form";
-import { WalletType, WalletTypeLabelMap } from "@budget-manager/schemas";
+import {
+  WalletCurrency,
+  WalletCurrencyLabelMap,
+  WalletType,
+  WalletTypeLabelMap,
+} from "@budget-manager/schemas";
 
 export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
   return (
@@ -93,21 +98,34 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
           </Field>
         )}
       </form.Field>
-      <form.Field name="currency">
+
+      <form.Field name="currencyCode">
         {(field) => (
           <Field>
             <Label htmlFor={field.name}>Currency</Label>
-            <Input
+            <Select
+              items={Object.values(WalletCurrency).map((currency) => ({
+                label: WalletCurrencyLabelMap[currency],
+                value: currency,
+              }))}
               id={field.name}
               name={field.name}
-              type="text"
               value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-              className={
-                field.state.meta.errors.length > 0 ? "border-destructive" : ""
+              onValueChange={(value) =>
+                field.handleChange(value as WalletCurrency)
               }
-            />
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(WalletCurrency).map((currency) => (
+                  <SelectItem key={currency} value={currency}>
+                    {WalletCurrencyLabelMap[currency]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {field.state.meta.errors.map((error) => (
               <p key={error?.message} className="text-destructive">
                 {error?.message}
