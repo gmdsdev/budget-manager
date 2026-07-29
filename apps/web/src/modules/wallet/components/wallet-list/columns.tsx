@@ -15,6 +15,7 @@ import { MoreHorizontalIcon } from "lucide-react";
 import { DeleteWalletDialog } from "../delete-wallet-dialog";
 import { useState } from "react";
 import { EditWalletDialog } from "../edit-wallet-dialog";
+import { formatFromCents } from "@budget-manager/ui/lib/currency";
 
 export const columns: ColumnDef<WalletDto>[] = [
   {
@@ -56,11 +57,7 @@ export const columns: ColumnDef<WalletDto>[] = [
       );
       const currencyCode = row.original.currencyCode;
 
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        minimumFractionDigits: 2,
-        currency: currencyCode,
-      }).format(openingBalanceCents / 100);
+      const formatted = formatFromCents(openingBalanceCents, currencyCode);
 
       return <div className="text-right">{formatted}</div>;
     },

@@ -43,6 +43,7 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
           </Field>
         )}
       </form.Field>
+
       <form.Field name="type">
         {(field) => (
           <Field>
@@ -68,28 +69,6 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
                 ))}
               </SelectContent>
             </Select>
-            {field.state.meta.errors.map((error) => (
-              <p key={error?.message} className="text-destructive">
-                {error?.message}
-              </p>
-            ))}
-          </Field>
-        )}
-      </form.Field>
-      <form.Field name="openingBalanceCents">
-        {(field) => (
-          <Field>
-            <Label htmlFor={field.name}>Opening Balance</Label>
-            <CurrencyInput
-              id={field.name}
-              name={field.name}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(value) => field.handleChange(Number(value))}
-              className={
-                field.state.meta.errors.length > 0 ? "border-destructive" : ""
-              }
-            />
             {field.state.meta.errors.map((error) => (
               <p key={error?.message} className="text-destructive">
                 {error?.message}
@@ -126,6 +105,30 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
                 ))}
               </SelectContent>
             </Select>
+            {field.state.meta.errors.map((error) => (
+              <p key={error?.message} className="text-destructive">
+                {error?.message}
+              </p>
+            ))}
+          </Field>
+        )}
+      </form.Field>
+
+      <form.Field name="openingBalanceCents">
+        {(field) => (
+          <Field>
+            <Label htmlFor={field.name}>Opening Balance</Label>
+            <CurrencyInput
+              id={field.name}
+              name={field.name}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(value) => field.handleChange(Number(value))}
+              currencyCode={form.getFieldValue("currencyCode")}
+              className={
+                field.state.meta.errors.length > 0 ? "border-destructive" : ""
+              }
+            />
             {field.state.meta.errors.map((error) => (
               <p key={error?.message} className="text-destructive">
                 {error?.message}

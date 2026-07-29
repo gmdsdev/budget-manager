@@ -3,19 +3,7 @@
 import * as React from "react";
 
 import { Input } from "./input";
-
-function formatFromCents(cents: number) {
-  return (cents / 100).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function parseToCents(value: string) {
-  const digits = value.replace(/\D/g, "");
-
-  return digits === "" ? 0 : Number(digits);
-}
+import { formatFromCents, parseToCents } from "../lib/currency";
 
 export function CurrencyInput({
   value,
@@ -23,31 +11,36 @@ export function CurrencyInput({
   onBlur,
   className,
   placeholder = "0.00",
+  currencyCode = "USD",
   ...props
 }: Omit<React.ComponentProps<typeof Input>, "value" | "onChange"> & {
   value: number;
   onChange: (value: number) => void;
+  currencyCode: string;
 }) {
   const [displayValue, setDisplayValue] = React.useState(() =>
-    formatFromCents(value),
+    formatFromCents(value, currencyCode),
   );
 
-  const lastEmitted = React.useRef(value);
+  const lastEmitted = React.useRef({ value, currencyCode });
 
   React.useEffect(() => {
-    if (value !== lastEmitted.current) {
-      lastEmitted.current = value;
-      setDisplayValue(formatFromCents(value));
+    if (
+      value !== lastEmitted.current.value ||
+      currencyCode !== lastEmitted.current.currencyCode
+    ) {
+      lastEmitted.current = { value, currencyCode };
+      setDisplayValue(formatFromCents(value, currencyCode));
     }
-  }, [value]);
+  }, [value, currencyCode]);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const input = event.currentTarget;
 
     const cents = parseToCents(input.value);
-    const formatted = formatFromCents(cents);
+    const formatted = formatFromCents(cents, currencyCode);
 
-    lastEmitted.current = cents;
+    lastEmitted.current = { value: cents, currencyCode };
     setDisplayValue(formatted);
     onChange(cents);
 
@@ -58,20 +51,13 @@ export function CurrencyInput({
   }
 
   return (
-    <div className="relative">
-      <span className="pointer-events-none absolute inset-y-0 left-2.5 flex items-center text-xs text-muted-foreground">
-        $
-      </span>
-
-      <Input
-        {...props}
-        value={displayValue}
-        onChange={handleChange}
-        onBlur={onBlur}
-        inputMode="numeric"
-        placeholder={placeholder}
-        className={["pl-5", className].filter(Boolean).join(" ")}
-      />
-    </div>
+    <Input
+      {...props}
+      value={displayValue}
+      onChange={handleChange}
+      onBlur={onBlur}
+      inputMode="numeric"
+      placeholder={placeholder}
+    />
   );
 }
