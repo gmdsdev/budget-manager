@@ -427,6 +427,14 @@ unset becomes a labelled line — so a new column joins the card layout automati
 is only needed when `header` is a function. `credit-card-bills-dialog.tsx` hand-rolls the same
 shape for its six-column statement table, since it is not a `DataTable`.
 
+The one `ColumnMeta` flag the **table** layout reads is `grow`, and each listing marks exactly
+one column with it — Description on transactions, Name on wallets, cards and categories. A
+`w-full` on that column's cells is what makes an auto-layout table hand it every pixel the
+others do not need, instead of spreading the slack evenly and leaving the column that carries
+free text as narrow as `Currency`. It is also the only column allowed to wrap: the rest keep the
+`whitespace-nowrap` that sizes them to their own content, so nothing but the growing column can
+ever be squeezed.
+
 That swap branches in **JS**, via `useIsCompact` (`packages/ui/src/hooks/use-media-query.ts`),
 not `md:hidden`. Rendering both would duplicate every cell for screen readers and make
 `getByTestId`/`tbody tr` match twice — the unit tests and every browser e2e read the table, and

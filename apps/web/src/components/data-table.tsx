@@ -36,6 +36,11 @@ declare module "@tanstack/react-table" {
      * anything unset becomes a labelled line underneath.
      */
     mobile?: "primary" | "trailing" | "actions" | "hidden";
+    /**
+     * The column that takes the table's spare width, so every other one
+     * shrinks to the width of its own content. At most one per table.
+     */
+    grow?: boolean;
   }
 }
 
@@ -63,6 +68,10 @@ function renderCell<TData>(cell: Cell<TData, unknown> | undefined) {
 
 function slotOf<TData>(column: Column<TData, unknown>) {
   return column.columnDef.meta?.mobile;
+}
+
+function growClassOf<TData>(column: Column<TData, unknown>) {
+  return column.columnDef.meta?.grow ? "w-full whitespace-normal" : undefined;
 }
 
 /**
@@ -183,7 +192,11 @@ export function DataTable<TData, TValue>({
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id} scope="col">
+                <TableHead
+                  key={header.id}
+                  scope="col"
+                  className={growClassOf(header.column)}
+                >
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -200,7 +213,7 @@ export function DataTable<TData, TValue>({
             rows.map((row) => (
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell key={cell.id} className={growClassOf(cell.column)}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

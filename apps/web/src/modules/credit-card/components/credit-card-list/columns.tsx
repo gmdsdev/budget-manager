@@ -7,7 +7,7 @@ export const creditCardColumns: ColumnDef<CreditCardRow>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    meta: { mobile: "primary" },
+    meta: { mobile: "primary", grow: true },
   },
   {
     accessorKey: "currencyCode",

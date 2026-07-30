@@ -27,7 +27,7 @@ export const transactionColumns: ColumnDef<TransactionRow>[] = [
   {
     accessorKey: "name",
     header: "Description",
-    meta: { mobile: "primary" },
+    meta: { mobile: "primary", grow: true },
   },
   {
     accessorKey: "walletName",

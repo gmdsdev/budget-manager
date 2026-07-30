@@ -8,7 +8,7 @@ export const categoryColumns: ColumnDef<CategoryRow>[] = [
   {
     accessorKey: "name",
     header: "Name",
-    meta: { mobile: "primary" },
+    meta: { mobile: "primary", grow: true },
     // The swatch rides in the name cell rather than owning a column: it is how
     // a category reads everywhere else, and a column of its own would owe the
     // listing a filter for a value nobody searches by.
