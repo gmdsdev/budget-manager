@@ -7,8 +7,8 @@ import {
   TransactionStatusLabelMap,
 } from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
+import { DatePicker } from "@budget-manager/ui/components/date-picker";
 import { Field, FieldLabel } from "@budget-manager/ui/components/field";
-import { Input } from "@budget-manager/ui/components/input";
 import {
   Select,
   SelectContent,
@@ -150,23 +150,25 @@ export function TransactionFilters({
 
       <Field orientation="horizontal" className="w-auto">
         <FieldLabel htmlFor="transaction-date-from">From</FieldLabel>
-        <Input
+        <DatePicker
           id="transaction-date-from"
-          type="date"
-          className="w-auto"
+          clearable
+          placeholder="Any date"
+          className="w-32"
           value={filters.dateFrom}
-          onChange={(event) => patch({ dateFrom: event.target.value })}
+          onValueChange={(value) => patch({ dateFrom: value })}
         />
       </Field>
 
       <Field orientation="horizontal" className="w-auto">
         <FieldLabel htmlFor="transaction-date-to">To</FieldLabel>
-        <Input
+        <DatePicker
           id="transaction-date-to"
-          type="date"
-          className="w-auto"
+          clearable
+          placeholder="Any date"
+          className="w-32"
           value={filters.dateTo}
-          onChange={(event) => patch({ dateTo: event.target.value })}
+          onValueChange={(value) => patch({ dateTo: value })}
         />
       </Field>
 

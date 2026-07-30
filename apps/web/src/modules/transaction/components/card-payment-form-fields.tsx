@@ -6,6 +6,7 @@ import {
   TransactionStatusLabelMap,
 } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
+import { DatePicker } from "@budget-manager/ui/components/date-picker";
 import {
   Field,
   FieldDescription,
@@ -218,13 +219,12 @@ export function CardPaymentFormFields({
             return (
               <Field data-invalid={showErrors}>
                 <FieldLabel htmlFor={field.name}>Date</FieldLabel>
-                <Input
+                <DatePicker
                   id={field.name}
                   name={field.name}
-                  type="date"
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.value)}
+                  onValueChange={field.handleChange}
                   aria-invalid={showErrors || undefined}
                   aria-describedby={showErrors ? errorId : undefined}
                 />

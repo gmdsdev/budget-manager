@@ -3,6 +3,7 @@ import {
   RecurrenceTypeLabelMap,
 } from "@budget-manager/schemas";
 import { Checkbox } from "@budget-manager/ui/components/checkbox";
+import { DatePicker } from "@budget-manager/ui/components/date-picker";
 import {
   Field,
   FieldDescription,
@@ -147,12 +148,13 @@ export function RepeatsFields({
               <FieldLabel htmlFor="transaction-repeat-ends">
                 Repeat until
               </FieldLabel>
-              <Input
+              <DatePicker
                 id="transaction-repeat-ends"
-                type="date"
-                value={value.endsOn ?? ""}
-                onChange={(event) =>
-                  onChange({ ...value, endsOn: event.target.value || null })
+                clearable
+                placeholder="No end date"
+                value={value.endsOn}
+                onValueChange={(next) =>
+                  onChange({ ...value, endsOn: next || null })
                 }
               />
               <FieldDescription>

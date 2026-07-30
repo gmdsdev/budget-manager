@@ -11,6 +11,7 @@ import {
   type RecurringKind,
 } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
+import { DatePicker } from "@budget-manager/ui/components/date-picker";
 import {
   Field,
   FieldDescription,
@@ -339,13 +340,12 @@ export function RecurringFormFields({
           return (
             <Field data-invalid={showErrors}>
               <FieldLabel htmlFor={field.name}>Starts on</FieldLabel>
-              <Input
+              <DatePicker
                 id={field.name}
                 name={field.name}
-                type="date"
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                onChange={(event) => field.handleChange(event.target.value)}
+                onValueChange={field.handleChange}
                 aria-invalid={showErrors || undefined}
               />
               <FieldError errors={showErrors ? field.state.meta.errors : []} />
@@ -362,15 +362,14 @@ export function RecurringFormFields({
             return (
               <Field data-invalid={showErrors}>
                 <FieldLabel htmlFor={field.name}>Ends on</FieldLabel>
-                <Input
+                <DatePicker
                   id={field.name}
                   name={field.name}
-                  type="date"
-                  value={field.state.value ?? ""}
+                  clearable
+                  placeholder="No end date"
+                  value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(event) =>
-                    field.handleChange(event.target.value || null)
-                  }
+                  onValueChange={(value) => field.handleChange(value || null)}
                   aria-invalid={showErrors || undefined}
                 />
                 <FieldDescription>

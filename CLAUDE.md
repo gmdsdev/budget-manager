@@ -308,6 +308,18 @@ defaults `nativeButton` to `true` and logs a warning when handed a non-`<button>
 `nativeButton={false}` silences it but stamps `role="button"` on the anchor, which is the
 wrong semantics for something that navigates.
 
+**Dates are picked with `DatePicker`, never `<Input type="date">`.** shadcn ships the date
+picker as a recipe rather than a file, so `packages/ui/src/components/date-picker.tsx` is that
+composition (Popover + Calendar, react-day-picker under the hood) with the app's contract
+bolted on: it reads and writes `yyyy-MM-dd` **strings**, which is what every schema, form and
+tRPC input already carries, and `clearable` is what optional fields (`endsOn`, the list
+filters) use to get back to empty. Parse with date-fns `parseISO`, never `new Date(value)` —
+the latter reads a date-only string as UTC midnight, so west-of-UTC users see the previous
+day; `date-picker.test.tsx` pins that. The trigger is a `<button>` carrying the field's `id`,
+so `FieldLabel htmlFor` and Playwright's `getByLabel` both still resolve, and its popup has
+`role="dialog"` — a `getByRole("dialog")` in e2e will match two elements while a picker is
+open.
+
 ## Conventions
 
 - `verbatimModuleSyntax`, `noUncheckedIndexedAccess`, and `noUnusedLocals` are on; `@typescript-eslint/consistent-type-imports` and `no-floating-promises` are errors — use `import type` and `void` fire-and-forget promises.
