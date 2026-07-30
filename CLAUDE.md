@@ -103,7 +103,8 @@ packages/config  shared tsconfig.base.json
 ```
 
 **New accounts start with a default set of categories.** `DEFAULT_CATEGORIES` in
-`packages/schemas/src/category/default-categories.ts` is the one list (8 income, 20 expense),
+`packages/schemas/src/category/default-categories.ts` is the one list (8 income, 20 expense,
+each with a palette colour so a fresh account's charts are already colour-coded),
 and better-auth's `databaseHooks.user.create.after` inserts it via `ensureDefaultCategories`
 (`packages/db/src/defaults/categories.ts`). Not a migration and not a seed script: categories
 are per-user rows, so a migration could only ever cover accounts that already exist. The insert
@@ -112,6 +113,13 @@ and treats archived rows as existing, so re-running never duplicates or resurrec
 and a failure is logged rather than thrown, because a missing convenience category must not
 fail a sign-up whose `user` row is already committed. Accounts created before this hook keep
 whatever they have; nothing backfills them.
+
+Migration `0006` is the exception that proves the rule: adding `categories.color` had to give
+existing rows something, and `DEFAULT 'blue'` alone would have left a user with twenty
+indistinguishable bars. It ships a hand-added `UPDATE` that deals the palette out by
+`row_number() OVER (PARTITION BY user_id, type ORDER BY name, id)`, so every account already had
+a spread of hues the first time it loaded. A generated migration is fine to extend this way —
+the snapshot only tracks DDL, so `db:generate` still reports no changes afterwards.
 
 Workspace packages export raw TypeScript from `src/` (no build step) — only `apps/server` bundles, via tsdown with `noExternal: [/@budget-manager\/.*/]`. Shared dependency versions live in the root `package.json` `workspaces.catalog`; declare them as `"catalog:"` in each package.
 
@@ -346,6 +354,13 @@ accessibility and every e2e that touches a filter. `FILTER_ALL`
 constants alias; `FilterSelect` compares against it to decide whether to show the column name,
 so a module inventing its own string would render a stale label instead.
 
+A category's **colour rides in its Name cell rather than owning a column**, which is why the
+category listing owes no colour filter: it is how a category reads in every other list, and a
+column of its own would demand a filter for a value nobody searches by. `FilterItem.color` is a
+CSS colour rather than a palette name, so `FilterSelect` stays domain-free; it distinguishes
+three states, since a column with no swatch at all (wallet type) is not the same as a row whose
+swatch is empty (`Uncategorized`).
+
 Three deliberate gaps in that rule. **Money columns have no range filter**: wallet
 `balanceCents`, card `outstandingCents` and `availableCents` are derived in TypeScript after
 the page is fetched, so filtering them would mean either duplicating the derivation in SQL
@@ -387,6 +402,51 @@ field touched, so a failed submit reveals everything. Submit buttons disable on
 
 Import aliases: `@/*` → `apps/web/src/*`, `@budget-manager/ui/components/<name>` for primitives.
 
+### Mobile
+
+**`md` is the one breakpoint that matters, and below it the page is touch-first.** Phone layouts
+are not a coat of paint here: a listing has up to eight nowrap columns, which wants ~1000px.
+
+Two structural rules keep the page from ever scrolling sideways, and both are easy to undo by
+accident:
+
+- The root layout in `__root.tsx` is `grid-cols-1`, i.e. `minmax(0, 1fr)`. An `auto` track sizes
+  to its **max-content**, so a single wide table used to widen the whole document and every page
+  scrolled horizontally. The two grid items (`<header>`, the `container`) carry `min-w-0` for the
+  same reason.
+- `container` has no padding of its own in Tailwind v4, so the two call sites add `px-4 sm:px-6`.
+  Without it, text sits flush against the screen edge on a phone.
+- `sr-only` does **not** hide a `<table>`: `width: 1px` is a *minimum* for a table box, so it grows
+  to its cells and widens the page. `ChartDataTable` puts the class on a wrapping `<div>`, whose
+  overflow clip actually contains it.
+
+**A listing renders as a table at md+ and as one card per row below it**, from the same
+`ColumnDef`s. `ColumnMeta` (augmented in `data-table.tsx`) names the slots: `primary` heads the
+card, `trailing` sits opposite it, `actions` is the row menu, `hidden` drops out, and anything
+unset becomes a labelled line — so a new column joins the card layout automatically, and `label`
+is only needed when `header` is a function. `credit-card-bills-dialog.tsx` hand-rolls the same
+shape for its six-column statement table, since it is not a `DataTable`.
+
+That swap branches in **JS**, via `useIsCompact` (`packages/ui/src/hooks/use-media-query.ts`),
+not `md:hidden`. Rendering both would duplicate every cell for screen readers and make
+`getByTestId`/`tbody tr` match twice — the unit tests and every browser e2e read the table, and
+they keep doing so because `useIsCompact` is false when `matchMedia` is missing and at the 1280px
+viewport the suites use. It is `useSyncExternalStore`, so there is no setState-in-effect. The
+date **range** picker uses it too, dropping to one month: two side by side is wider than a phone.
+
+**Controls are 40px below md and keep the dense 32px above it.** `Button`, `Input`,
+`SelectTrigger` and the calendar's `--cell-size` all carry that pair; `xs` is the one size left
+alone, being used inside compositions that would break. Two traps: a `data-[size=default]:h-8`
+variant out-specifies a plain `max-md:h-10`, so the responsive rule has to be data-scoped too
+(`md:data-[size=default]:h-8`), and a caller passing `className="size-8"` silently defeats the
+variant — row-action triggers just use `size="icon"`. Inputs and select triggers are also 16px
+text below md, because iOS Safari zooms the whole page when a focused field's text is smaller.
+
+Above the lists: page headers stack (`flex-col sm:flex-row`), the transaction page's four create
+buttons become a 2×2 grid, and `FilterBar` lays its controls out two per column on a phone —
+seven stacked full-width controls would push the list itself off the first screen. `FilterSearch`
+takes a whole row anyway, since its placeholder is the only thing naming the column.
+
 ### Money
 
 Amounts are integer **minor units** everywhere — DB column, tRPC payload, form state, React state (`openingBalanceCents`, `int4`, hence the `MONEY_MIN/MAX_MINOR_UNITS` bounds in `MoneyMinorUnitsSchema`). Never introduce floats. `packages/money` owns `minorUnitDigits` (zero- and three-decimal currencies), `formatMinorUnits`, `formatCompactMinorUnits`, and `parseMinorUnits`; `packages/ui/src/lib/currency.ts` just re-exports them. `CurrencyInput` reads/writes minor units directly.
@@ -417,6 +477,25 @@ colourblind-separation and contrast check against this app's own surfaces — li
 magenta) sit below 3:1 there, so anything using them owes the reader a visible label or the table
 view. Re-run that check before changing a step or a surface; a hue that "looks different enough"
 routinely is not under deuteranopia.
+
+**A category owns a colour, and that colour is the same ink everywhere the category appears.**
+`CategoryColor` (`packages/schemas/src/category/category-color.ts`) is a closed twelve-hue
+palette — declaration order is the hue wheel, which is the order the picker renders — stored as
+the `category_color` pg enum. Not a hex column: the swatch, the table cell, the select row and
+the chart bar all have to resolve to one token, and only a closed set can carry light and dark
+steps. `--category-*` in `globals.css` holds them, eight aliasing `--chart-1…8` (so a category
+bar and a chart series of the same hue cannot drift apart) plus four filling the gaps the chart
+ring leaves — cyan, lime, purple and a neutral slate. Those four were run through the same
+colourblind-and-contrast check as the chart steps: all four clear 3.2:1 on their own surface
+(three of the *reused* hues still do not, in light mode), and every pair separates by ΔE2000 ≥ 13
+under normal vision. Twelve hues **cannot** all stay separable under dichromacy — the worst pair
+collapses to ΔE 1.8 under protanopia — so the swatch is never the message: `CategoryLabel`
+(`apps/web/src/modules/category/components/category-dot.tsx`) always pairs it with the name, and
+the dot is `aria-hidden` and contributes no text, which is what keeps the label-based filter and
+select assertions in e2e honest. Read a colour through `categoryColorVar`, never
+`bg-category-<name>`: a per-row hue cannot be a static class. A row with no category gets a
+hollow ring rather than a thirteenth hue. Append to the palette rather than re-ordering it — a
+stored value is a category's identity, so shifting a slot would recolour every existing row.
 
 `recharts` is declared in the root `workspaces.catalog` and pulled in as `"catalog:"` by both
 `packages/ui` (for `chart.tsx`) and `apps/web` (for the chart compositions — the app imports

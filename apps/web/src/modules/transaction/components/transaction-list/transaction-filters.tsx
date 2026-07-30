@@ -1,6 +1,7 @@
 import { FilterBar } from "@/components/filter-bar";
 import { FilterSearch } from "@/components/filter-search";
 import { FilterSelect, type FilterItem } from "@/components/filter-select";
+import { categoryColorVar } from "@/modules/category/colors";
 import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
 import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
@@ -72,10 +73,11 @@ export function TransactionFilters({
 
   const categoryItems: FilterItem[] = [
     { label: "All categories", value: TRANSACTION_FILTER_ALL },
-    { label: "Uncategorized", value: FILTER_NONE },
+    { label: "Uncategorized", value: FILTER_NONE, color: null },
     ...(categories ?? []).map((category) => ({
       label: category.name,
       value: category.id,
+      color: categoryColorVar(category.color),
     })),
   ];
 
@@ -91,7 +93,7 @@ export function TransactionFilters({
       <DateRangePicker
         id="transaction-date-range-filter"
         aria-label="Date range"
-        className="w-56"
+        className="col-span-2 w-full sm:col-span-1 sm:w-56"
         value={{ from: filters.dateFrom, to: filters.dateTo }}
         onValueChange={({ from, to }) =>
           patch({ dateFrom: from, dateTo: to })

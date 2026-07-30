@@ -5,6 +5,7 @@ import { creditCardBills } from "@budget-manager/db/schema/creditCardBill";
 import { transactionOccurrences } from "@budget-manager/db/schema/transactionOccurrence";
 import { wallets } from "@budget-manager/db/schema/wallet";
 import {
+  type CategoryColor,
   MONTH_EXPENSE_KINDS,
   TransactionStatus,
 } from "@budget-manager/schemas";
@@ -201,6 +202,7 @@ export class DashboardRepository {
         currencyCode: ownerCurrency,
         categoryId: transactionOccurrences.categoryId,
         categoryName: categories.name,
+        categoryColor: categories.color,
         status: transactionOccurrences.status,
         totalCents:
           sql<number>`sum(${transactionOccurrences.amountCents})`.mapWith(
@@ -230,6 +232,7 @@ export class DashboardRepository {
         ownerCurrency,
         transactionOccurrences.categoryId,
         categories.name,
+        categories.color,
         transactionOccurrences.status,
       );
   }
@@ -265,7 +268,7 @@ export class DashboardRepository {
    * to see.
    */
   async getPending({ userId, limit }: { userId: string; limit: number }) {
-    return this.db
+    const rows = await this.db
       .select({
         id: transactionOccurrences.id,
         name: transactionOccurrences.name,
@@ -276,6 +279,7 @@ export class DashboardRepository {
         creditCardName: creditCards.name,
         walletCurrencyCode: ownerCurrency,
         categoryName: categories.name,
+        categoryColor: categories.color,
       })
       .from(transactionOccurrences)
       .leftJoin(wallets, eq(wallets.id, transactionOccurrences.walletId))
@@ -299,5 +303,10 @@ export class DashboardRepository {
         asc(transactionOccurrences.id),
       )
       .limit(limit);
+
+    return rows.map((row) => ({
+      ...row,
+      categoryColor: row.categoryColor as CategoryColor | null,
+    }));
   }
 }

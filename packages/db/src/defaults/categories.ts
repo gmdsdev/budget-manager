@@ -32,6 +32,7 @@ export async function ensureDefaultCategories({
         userId,
         name: category.name,
         type: category.type,
+        color: category.color,
       })),
     )
     .returning({ id: categories.id });

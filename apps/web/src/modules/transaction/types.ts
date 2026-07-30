@@ -1,4 +1,5 @@
 import {
+  type CategoryColor,
   FILTER_ALL,
   type TransactionKind,
   type TransactionRepeats,
@@ -18,6 +19,7 @@ export type TransactionRow = {
   walletCurrencyCode: string | null;
   categoryId: string | null;
   categoryName: string | null;
+  categoryColor: CategoryColor | null;
   creditCardId: string | null;
   creditCardName: string | null;
   creditCardBillId: string | null;

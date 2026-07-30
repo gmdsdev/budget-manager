@@ -35,9 +35,11 @@ export default function ListTransactionsPage() {
 
   return (
     <div>
-      <header className="flex flex-row items-center justify-between py-4">
-        <h1 className="text-2xl font-semibold">Transactions</h1>
-        <div className="flex flex-row items-center gap-2">
+      <header className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-semibold sm:text-2xl">Transactions</h1>
+        {/* Four ways to record something: two per row on a phone, one row at
+            sm and up. */}
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-center">
           <CreateCardPurchaseDialog />
           <CreateCardPaymentDialog />
           <CreateTransferDialog />

@@ -1,4 +1,8 @@
-import { TransactionKind, TransactionStatus } from "@budget-manager/schemas";
+import {
+  CategoryColor,
+  TransactionKind,
+  TransactionStatus,
+} from "@budget-manager/schemas";
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -67,6 +71,7 @@ function categoryMovement(
     currencyCode: BRL,
     categoryId: "cat-1",
     categoryName: "Groceries",
+    categoryColor: CategoryColor.GREEN,
     status: TransactionStatus.PAID,
     totalCents: 10_000,
     ...over,
@@ -524,16 +529,19 @@ describe("buildCurrencySummaries", () => {
         categoryMovement({
           categoryId: "a",
           categoryName: "Rent",
+          categoryColor: CategoryColor.BLUE,
           totalCents: 200_000,
         }),
         categoryMovement({
           categoryId: "b",
           categoryName: "Food",
+          categoryColor: CategoryColor.GREEN,
           totalCents: 30_000,
         }),
         categoryMovement({
           categoryId: "b",
           categoryName: "Food",
+          categoryColor: CategoryColor.GREEN,
           totalCents: 20_000,
           status: TransactionStatus.WAITING_PAYMENT,
         }),
@@ -541,8 +549,18 @@ describe("buildCurrencySummaries", () => {
     });
 
     expect(brl?.topCategories).toEqual([
-      { categoryId: "a", name: "Rent", amountCents: 200_000 },
-      { categoryId: "b", name: "Food", amountCents: 50_000 },
+      {
+        categoryId: "a",
+        name: "Rent",
+        color: CategoryColor.BLUE,
+        amountCents: 200_000,
+      },
+      {
+        categoryId: "b",
+        name: "Food",
+        color: CategoryColor.GREEN,
+        amountCents: 50_000,
+      },
     ]);
   });
 
@@ -552,6 +570,7 @@ describe("buildCurrencySummaries", () => {
         categoryMovement({
           categoryId: null,
           categoryName: null,
+          categoryColor: null,
           totalCents: 80_000,
         }),
       ],
@@ -560,6 +579,7 @@ describe("buildCurrencySummaries", () => {
     expect(brl?.topCategories[0]).toEqual({
       categoryId: null,
       name: UNCATEGORIZED_LABEL,
+      color: null,
       amountCents: 80_000,
     });
   });

@@ -81,6 +81,9 @@ export function CashFlowChart({
                   axisLine={false}
                   tickMargin={8}
                 />
+                {/* The gutter has to hold a compacted tick ("R$ 13,5 mil"), so
+                    it stays 64px even on a phone: a narrower one clips the
+                    label rather than saving space. */}
                 <YAxis
                   width={64}
                   tickCount={4}

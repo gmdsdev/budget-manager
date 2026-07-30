@@ -1,5 +1,6 @@
 import {
   CategoryType,
+  DEFAULT_CATEGORY_COLOR,
   RecurrenceType,
   TransactionKind,
   TransactionStatus,
@@ -7,6 +8,7 @@ import {
   WalletType,
   type CardPaymentFormDto,
   type CardPurchaseFormDto,
+  type CategoryFormDto,
   type CreditCardFormDto,
   type RecurringFormDto,
   type TransactionFormDto,
@@ -22,6 +24,15 @@ export const wallet = (
   type: WalletType.CHECKING,
   currencyCode: WalletCurrency.BRL,
   openingBalanceCents: 100_000,
+  ...overrides,
+});
+
+export const category = (
+  overrides: Partial<CategoryFormDto> = {},
+): CategoryFormDto => ({
+  name: "Groceries",
+  type: CategoryType.EXPENSE,
+  color: DEFAULT_CATEGORY_COLOR,
   ...overrides,
 });
 
@@ -140,14 +151,14 @@ export async function seedBasics(client: ApiClient) {
         openingBalanceCents: 0,
       }),
     ),
-    client.category.create.mutate({
+    client.category.create.mutate(category({
       name: "Salary",
       type: CategoryType.INCOME,
-    }),
-    client.category.create.mutate({
+    })),
+    client.category.create.mutate(category({
       name: "Groceries",
       type: CategoryType.EXPENSE,
-    }),
+    })),
   ]);
 
   return { checking, savings, salary, groceries };

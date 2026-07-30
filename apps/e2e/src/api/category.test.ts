@@ -1,6 +1,9 @@
 import {
+  CATEGORY_COLORS,
+  CategoryColor,
   CategoryType,
   DEFAULT_CATEGORIES,
+  DEFAULT_CATEGORY_COLOR,
   DEFAULT_EXPENSE_CATEGORY_NAMES,
   DEFAULT_INCOME_CATEGORY_NAMES,
 } from "@budget-manager/schemas";
@@ -9,6 +12,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { errorCodeOf, signUpClient, type ApiClient } from "../support/api";
 import { requireServer } from "../support/env";
 import {
+  category,
   listCategories,
   listTransactions,
   transaction,
@@ -31,21 +35,25 @@ describe("category", () => {
       new Set(DEFAULT_CATEGORIES.map((c) => `${c.type}:${c.name}`)),
     );
     expect(rows.every((c) => !c.isArchived)).toBe(true);
+    expect(new Set(rows.map((c) => `${c.type}:${c.name}:${c.color}`))).toEqual(
+      new Set(DEFAULT_CATEGORIES.map((c) => `${c.type}:${c.name}:${c.color}`)),
+    );
   });
 
+
   test("filters by type", async () => {
-    await api.category.create.mutate({
+    await api.category.create.mutate(category({
       name: "Consulting",
       type: CategoryType.INCOME,
-    });
-    await api.category.create.mutate({
+    }));
+    await api.category.create.mutate(category({
       name: "Comics",
       type: CategoryType.EXPENSE,
-    });
-    await api.category.create.mutate({
+    }));
+    await api.category.create.mutate(category({
       name: "Coworking",
       type: CategoryType.EXPENSE,
-    });
+    }));
 
     expect((await listCategories(api, {})).length).toBe(
       DEFAULT_CATEGORIES.length + 3,
@@ -71,15 +79,14 @@ describe("category", () => {
   });
 
   test("renames and switches type", async () => {
-    const created = await api.category.create.mutate({
+    const created = await api.category.create.mutate(category({
       name: "Temp",
       type: CategoryType.EXPENSE,
-    });
+    }));
 
     const updated = await api.category.update.mutate({
+      ...category({ name: "Renamed", type: CategoryType.INCOME }),
       id: created.id,
-      name: "Renamed",
-      type: CategoryType.INCOME,
     });
 
     expect(updated.name).toBe("Renamed");
@@ -87,10 +94,10 @@ describe("category", () => {
   });
 
   test("archive removes it from the default list, unarchive restores it", async () => {
-    const created = await api.category.create.mutate({
+    const created = await api.category.create.mutate(category({
       name: "Seasonal",
       type: CategoryType.EXPENSE,
-    });
+    }));
 
     await api.category.archive.mutate({ id: created.id });
     expect(
@@ -110,34 +117,34 @@ describe("category", () => {
 
   test("archiving does not filter out its transactions", async () => {
     const holder = await api.wallet.create.mutate(wallet({ name: "Holder" }));
-    const category = await api.category.create.mutate({
-      name: "Archived but used",
-      type: CategoryType.EXPENSE,
-    });
+    const archived = await api.category.create.mutate(
+      category({ name: "Archived but used", type: CategoryType.EXPENSE }),
+    );
 
     await api.transaction.create.mutate(
-      transaction(holder.id, { categoryId: category.id }),
+      transaction(holder.id, { categoryId: archived.id }),
     );
-    await api.category.archive.mutate({ id: category.id });
+    await api.category.archive.mutate({ id: archived.id });
 
     const rows = await listTransactions(api, {
-      categoryId: category.id,
+      categoryId: archived.id,
     });
 
     expect(rows.length).toBe(1);
     expect(rows[0]?.categoryName).toBe("Archived but used");
+    expect(rows[0]?.categoryColor).toBe(DEFAULT_CATEGORY_COLOR);
   });
 
   test("refuses to delete a category in use, allows deleting an unused one", async () => {
     const holder = await api.wallet.create.mutate(wallet({ name: "Owner" }));
-    const used = await api.category.create.mutate({
+    const used = await api.category.create.mutate(category({
       name: "Used",
       type: CategoryType.EXPENSE,
-    });
-    const unused = await api.category.create.mutate({
+    }));
+    const unused = await api.category.create.mutate(category({
       name: "Unused",
       type: CategoryType.EXPENSE,
-    });
+    }));
 
     await api.transaction.create.mutate(
       transaction(holder.id, { categoryId: used.id }),
@@ -153,10 +160,34 @@ describe("category", () => {
     ).toBe(false);
   });
 
+  test("round-trips the colour through create and update", async () => {
+    const created = await api.category.create.mutate(
+      category({ name: "Tinted", color: CategoryColor.PURPLE }),
+    );
+
+    expect(created.color).toBe(CategoryColor.PURPLE);
+
+    const updated = await api.category.update.mutate({
+      ...category({ name: "Tinted", color: CategoryColor.LIME }),
+      id: created.id,
+    });
+
+    expect(updated.color).toBe(CategoryColor.LIME);
+  });
+
+  test("carries the colour on the option rows a select reads", async () => {
+    const options = await api.category.options.query({});
+
+    expect(options.length).toBeGreaterThan(0);
+    expect(
+      options.every((option) => CATEGORY_COLORS.includes(option.color)),
+    ).toBe(true);
+  });
+
   test("rejects a blank name", async () => {
     expect(
       await errorCodeOf(
-        api.category.create.mutate({ name: "  ", type: CategoryType.INCOME }),
+        api.category.create.mutate(category({ name: "  ", type: CategoryType.INCOME })),
       ),
     ).toBe("BAD_REQUEST");
   });

@@ -1,4 +1,9 @@
 import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
+import {
+  CategoryItemLabel,
+  CategoryLabel,
+  type CategoryItem,
+} from "@/modules/category/components/category-dot";
 import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
 import {
   TransactionStatus,
@@ -93,11 +98,12 @@ export function CardPurchaseFormFields({
     value: card.id,
   }));
 
-  const categoryItems = [
-    { label: "Uncategorized", value: TRANSACTION_CATEGORY_NONE },
+  const categoryItems: CategoryItem[] = [
+    { label: "Uncategorized", value: TRANSACTION_CATEGORY_NONE, color: null },
     ...(categories ?? []).map((category) => ({
       label: category.name,
       value: category.id,
+      color: category.color,
     })),
   ];
 
@@ -226,12 +232,19 @@ export function CardPurchaseFormFields({
                     aria-invalid={showErrors || undefined}
                     aria-describedby={showErrors ? errorId : undefined}
                   >
-                    <SelectValue />
+                    <SelectValue>
+                      {(selected: string) => (
+                        <CategoryItemLabel
+                          items={categoryItems}
+                          value={selected}
+                        />
+                      )}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {categoryItems.map((item) => (
                       <SelectItem key={item.value} value={item.value}>
-                        {item.label}
+                        <CategoryLabel color={item.color} name={item.label} />
                       </SelectItem>
                     ))}
                   </SelectContent>

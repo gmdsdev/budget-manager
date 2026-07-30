@@ -6,11 +6,14 @@ import {
   CardTitle,
 } from "@budget-manager/ui/components/card";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
+import { CategoryLabel } from "@/modules/category/components/category-dot";
+import { categoryColorVarOrNeutral } from "@/modules/category/colors";
 import type { CategorySpend } from "../types";
 
 /**
- * One series, so one colour for every bar: shading them by size would spend the
- * only free channel restating the length.
+ * Each bar wears its category's own colour, so the same hue means the same
+ * category here, in the ledger and in every select. Length still carries the
+ * amount — colour is identity, never magnitude.
  */
 export function SpendingBreakdown({
   categories,
@@ -58,7 +61,10 @@ export function SpendingBreakdown({
                   className="space-y-1.5"
                 >
                   <div className="flex flex-row items-baseline justify-between gap-4">
-                    <span className="truncate">{category.name}</span>
+                    <CategoryLabel
+                      color={category.color}
+                      name={category.name}
+                    />
                     <span className="shrink-0 tabular-nums">
                       {formatMinorUnits(category.amountCents, currencyCode)}
                       <span className="ml-2 text-muted-foreground">
@@ -68,8 +74,13 @@ export function SpendingBreakdown({
                   </div>
                   <div className="h-1.5 w-full bg-muted" role="presentation">
                     <div
-                      className="h-full bg-chart-1"
-                      style={{ width: `${width}%` }}
+                      className="h-full"
+                      style={{
+                        width: `${width}%`,
+                        backgroundColor: categoryColorVarOrNeutral(
+                          category.color,
+                        ),
+                      }}
                     />
                   </div>
                 </li>

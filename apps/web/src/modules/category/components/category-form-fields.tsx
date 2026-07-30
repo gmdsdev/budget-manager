@@ -1,4 +1,8 @@
-import { CategoryType, CategoryTypeLabelMap } from "@budget-manager/schemas";
+import {
+  type CategoryColor,
+  CategoryType,
+  CategoryTypeLabelMap,
+} from "@budget-manager/schemas";
 import {
   Field,
   FieldError,
@@ -14,6 +18,7 @@ import {
   SelectValue,
 } from "@budget-manager/ui/components/select";
 import type { UseCategoryFormReturnType } from "../hooks/use-category-form";
+import { CategoryColorPicker } from "./category-color-picker";
 
 const CATEGORY_TYPE_ITEMS = Object.values(CategoryType).map((type) => ({
   label: CategoryTypeLabelMap[type],
@@ -87,6 +92,31 @@ export function CategoryFormFields({
                   ))}
                 </SelectContent>
               </Select>
+              <FieldError
+                id={errorId}
+                errors={showErrors ? field.state.meta.errors : []}
+              />
+            </Field>
+          );
+        }}
+      </form.Field>
+
+      <form.Field name="color">
+        {(field) => {
+          const showErrors =
+            field.state.meta.isTouched && !field.state.meta.isValid;
+          const errorId = `${field.name}-error`;
+
+          return (
+            <Field data-invalid={showErrors}>
+              <FieldLabel htmlFor={field.name}>Color</FieldLabel>
+              <CategoryColorPicker
+                id={field.name}
+                value={field.state.value}
+                onValueChange={(color: CategoryColor) =>
+                  field.handleChange(color)
+                }
+              />
               <FieldError
                 id={errorId}
                 errors={showErrors ? field.state.meta.errors : []}

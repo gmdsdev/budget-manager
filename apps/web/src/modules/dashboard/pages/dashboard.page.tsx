@@ -30,11 +30,12 @@ export default function DashboardPage() {
 
   return (
     <div className="pb-8">
-      <header className="flex flex-row flex-wrap items-center justify-between gap-4 py-4">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <header className="flex flex-col gap-3 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
+        <h1 className="text-xl font-semibold sm:text-2xl">Dashboard</h1>
 
         {/* One control row above everything it scopes: every figure and chart
-            below reads the same month. */}
+            below reads the same month. The label takes the slack on a phone so
+            the two arrows stay at the edges, where thumbs are. */}
         <div className="flex flex-row items-center gap-1">
           <Button
             variant="outline"
@@ -44,7 +45,7 @@ export default function DashboardPage() {
           >
             <CaretLeftIcon aria-hidden />
           </Button>
-          <span className="min-w-36 text-center text-sm tabular-nums">
+          <span className="flex-1 text-center text-sm tabular-nums sm:min-w-36 sm:flex-none">
             {monthLabel}
           </span>
           <Button

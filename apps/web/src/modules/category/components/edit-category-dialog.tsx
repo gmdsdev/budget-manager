@@ -30,6 +30,7 @@ export function EditCategoryDialog({
     defaultValues: {
       name: category.name,
       type: category.type,
+      color: category.color,
     },
     onSubmit: async (values) => {
       await updateMutation.mutateAsync({ ...values, id: category.id });

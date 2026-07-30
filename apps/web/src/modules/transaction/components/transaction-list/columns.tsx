@@ -9,6 +9,7 @@ import {
 } from "@budget-manager/schemas";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { ColumnDef } from "@tanstack/react-table";
+import { CategoryLabel } from "@/modules/category/components/category-dot";
 import type { TransactionRow } from "../../types";
 import { formatDateString } from "../../utils/date";
 import { TransactionRowActions } from "./transaction-row-actions";
@@ -26,6 +27,7 @@ export const transactionColumns: ColumnDef<TransactionRow>[] = [
   {
     accessorKey: "name",
     header: "Description",
+    meta: { mobile: "primary" },
   },
   {
     accessorKey: "walletName",
@@ -37,7 +39,12 @@ export const transactionColumns: ColumnDef<TransactionRow>[] = [
   {
     accessorKey: "categoryName",
     header: "Category",
-    cell: ({ row }) => row.original.categoryName ?? "Uncategorized",
+    cell: ({ row }) => (
+      <CategoryLabel
+        color={row.original.categoryColor}
+        name={row.original.categoryName ?? "Uncategorized"}
+      />
+    ),
   },
   {
     accessorKey: "kind",
@@ -78,6 +85,7 @@ export const transactionColumns: ColumnDef<TransactionRow>[] = [
   {
     accessorKey: "amountCents",
     header: () => <span className="block text-right">Amount</span>,
+    meta: { label: "Amount", mobile: "trailing" },
     cell: ({ row }) => {
       const isCredit = CREDITED_TRANSACTION_KINDS.includes(row.original.kind);
       const amount = formatMinorUnits(
@@ -100,6 +108,7 @@ export const transactionColumns: ColumnDef<TransactionRow>[] = [
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
+    meta: { label: "Actions", mobile: "actions" },
     cell: ({ row }) => <TransactionRowActions transaction={row.original} />,
   },
 ];

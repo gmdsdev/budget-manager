@@ -2,7 +2,11 @@ import type { Db } from "@budget-manager/db";
 import { categories } from "@budget-manager/db/schema/category";
 import { transactionOccurrences } from "@budget-manager/db/schema/transactionOccurrence";
 import { transactionTemplates } from "@budget-manager/db/schema/transactionTemplate";
-import type { CategoryFormDto, CategoryType } from "@budget-manager/schemas";
+import type {
+  CategoryColor,
+  CategoryFormDto,
+  CategoryType,
+} from "@budget-manager/schemas";
 import { and, asc, eq, ilike } from "drizzle-orm";
 import { containsPattern } from "../../search";
 
@@ -10,20 +14,30 @@ const CATEGORY_PUBLIC_COLUMNS = {
   id: categories.id,
   name: categories.name,
   type: categories.type,
+  color: categories.color,
   isArchived: categories.isArchived,
   createdAt: categories.createdAt,
   updatedAt: categories.updatedAt,
 } as const;
 
-type DomainRow<T> = Omit<T, "type"> & { type: CategoryType };
+type DomainRow<T> = Omit<T, "type" | "color"> & {
+  type: CategoryType;
+  color: CategoryColor;
+};
 
-/** Drizzle hands back the raw pg enum; narrow it once, here. */
-function toDomainRow<T extends { type: string }>(row: T): DomainRow<T> {
-  return { ...row, type: row.type as CategoryType };
+/** Drizzle hands back the raw pg enums; narrow them once, here. */
+function toDomainRow<T extends { type: string; color: string }>(
+  row: T,
+): DomainRow<T> {
+  return {
+    ...row,
+    type: row.type as CategoryType,
+    color: row.color as CategoryColor,
+  };
 }
 
 export type CategoryUpdatePatch = Partial<
-  Pick<typeof categories.$inferInsert, "name" | "type">
+  Pick<typeof categories.$inferInsert, "name" | "type" | "color">
 >;
 
 function pickCategoryUpdate(patch: CategoryUpdatePatch): CategoryUpdatePatch {
@@ -35,6 +49,10 @@ function pickCategoryUpdate(patch: CategoryUpdatePatch): CategoryUpdatePatch {
 
   if (patch.type !== undefined) {
     set.type = patch.type;
+  }
+
+  if (patch.color !== undefined) {
+    set.color = patch.color;
   }
 
   return set;
@@ -121,6 +139,7 @@ export class CategoryRepository {
         id: categories.id,
         name: categories.name,
         type: categories.type,
+        color: categories.color,
       })
       .from(categories)
       .where(categoryFilter({ userId, type, includeArchived: false }))
@@ -153,6 +172,7 @@ export class CategoryRepository {
       .values({
         name: category.name,
         type: category.type,
+        color: category.color,
         userId,
       })
       .returning(CATEGORY_PUBLIC_COLUMNS);

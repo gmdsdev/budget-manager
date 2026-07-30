@@ -22,7 +22,7 @@ export function CategoryRowActions({ category }: { category: CategoryRow }) {
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="icon" className="size-8">
+            <Button variant="ghost" size="icon">
               <DotsThreeIcon />
               <span className="sr-only">Actions for {category.name}</span>
             </Button>

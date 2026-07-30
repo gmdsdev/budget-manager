@@ -1,3 +1,4 @@
+export * from "./category/category-color";
 export * from "./category/category.schema";
 export * from "./category/default-categories";
 export * from "./credit-card/credit-card.schema";

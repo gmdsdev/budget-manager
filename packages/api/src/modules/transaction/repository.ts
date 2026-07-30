@@ -10,6 +10,7 @@ import {
   TransactionRepeats,
   type CardPaymentFormDto,
   type CardPurchaseFormDto,
+  type CategoryColor,
   type CategoryType,
   type TransactionFormDto,
   type TransactionStatus,
@@ -62,6 +63,7 @@ const TRANSACTION_LIST_COLUMNS = {
   walletCurrencyCode:
     sql<string>`coalesce(${wallets.currencyCode}, ${creditCards.currencyCode})`,
   categoryName: categories.name,
+  categoryColor: categories.color,
   recurrenceType: recurrenceRules.recurrenceType,
   recurrenceInterval: recurrenceRules.interval,
   recurrenceInstallments: recurrenceRules.installments,
@@ -82,6 +84,19 @@ function toDomainRow<T extends TransactionRowShape>(row: T): DomainRow<T> {
     ...row,
     kind: row.kind as TransactionKind,
     status: row.status as TransactionStatus,
+  };
+}
+
+type ListRowShape = TransactionRowShape & { categoryColor: string | null };
+
+type DomainListRow<T> = Omit<DomainRow<T>, "categoryColor"> & {
+  categoryColor: CategoryColor | null;
+};
+
+function toDomainListRow<T extends ListRowShape>(row: T): DomainListRow<T> {
+  return {
+    ...toDomainRow(row),
+    categoryColor: row.categoryColor as CategoryColor | null,
   };
 }
 
@@ -240,7 +255,7 @@ export class TransactionRepository {
       .limit(limit)
       .offset(offset);
 
-    return rows.map(toDomainRow);
+    return rows.map(toDomainListRow);
   }
 
   async count({

@@ -43,6 +43,13 @@
       "when": 1785432179701,
       "tag": "0005_equal_vivisector",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785447148108,
+      "tag": "0006_rare_deadpool",
+      "breakpoints": true
     }
   ]
 }

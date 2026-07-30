@@ -57,7 +57,9 @@ export function FilterSearch({
       id={id}
       type="search"
       aria-label={label}
-      className="w-48"
+      // A whole row on a phone: at half of one the placeholder — which is the
+      // only thing naming the column — gets clipped.
+      className="col-span-2 w-full sm:col-span-1 sm:w-48"
       autoComplete="off"
       placeholder={placeholder}
       value={text}

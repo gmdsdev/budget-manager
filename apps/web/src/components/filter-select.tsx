@@ -7,7 +7,29 @@ import {
   SelectValue,
 } from "@budget-manager/ui/components/select";
 
-export type FilterItem = { label: string; value: string };
+/**
+ * `color` is a CSS colour rather than a palette name, so the bar stays
+ * domain-free. Three states, not two: absent means the column has no swatch at
+ * all, `null` means this row's swatch is empty — an uncategorized transaction
+ * has no colour to show, which is not the same as a wallet never having one.
+ */
+export type FilterItem = {
+  label: string;
+  value: string;
+  color?: string | null;
+};
+
+function Swatch({ color }: { color: string | null }) {
+  return (
+    <span
+      aria-hidden
+      className={`size-2 shrink-0 rounded-full ${
+        color ? "" : "border border-muted-foreground/60"
+      }`}
+      style={color ? { backgroundColor: color } : undefined}
+    />
+  );
+}
 
 /**
  * The trigger reads as the column name until the column is actually filtered,
@@ -27,12 +49,14 @@ export function FilterSelect({
   value: string;
   onValueChange: (value: string) => void;
 }) {
-  function display(selected: string) {
-    if (selected === FILTER_ALL) {
-      return label;
-    }
+  // One row carrying a swatch means every row reserves the space, so the labels
+  // stay on one left edge.
+  const swatched = items.some((item) => item.color !== undefined);
 
-    return items.find((item) => item.value === selected)?.label ?? label;
+  function selected(value: string) {
+    return value === FILTER_ALL
+      ? undefined
+      : items.find((item) => item.value === value);
   }
 
   return (
@@ -42,12 +66,31 @@ export function FilterSelect({
       value={value}
       onValueChange={(next) => onValueChange(next as string)}
     >
-      <SelectTrigger aria-label={label} className="min-w-32">
-        <SelectValue>{(selected: string) => display(selected)}</SelectValue>
+      <SelectTrigger aria-label={label} className="w-full sm:w-auto sm:min-w-32">
+        <SelectValue>
+          {(value: string) => {
+            const item = selected(value);
+
+            return (
+              <>
+                {item && item.color !== undefined && (
+                  <Swatch color={item.color} />
+                )}
+                {item?.label ?? label}
+              </>
+            );
+          }}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {items.map((item) => (
           <SelectItem key={item.value} value={item.value}>
+            {swatched &&
+              (item.color === undefined ? (
+                <span aria-hidden className="size-2 shrink-0" />
+              ) : (
+                <Swatch color={item.color} />
+              ))}
             {item.label}
           </SelectItem>
         ))}

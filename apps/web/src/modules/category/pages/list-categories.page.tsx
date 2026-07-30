@@ -32,8 +32,8 @@ export default function ListCategoriesPage() {
 
   return (
     <div>
-      <header className="flex flex-row items-center justify-between py-4">
-        <h1 className="text-2xl font-semibold">Categories</h1>
+      <header className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-semibold sm:text-2xl">Categories</h1>
         <CreateCategoryDialog />
       </header>
 

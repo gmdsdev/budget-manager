@@ -1,11 +1,12 @@
 import { trpc } from "@/utils/trpc";
-import type { CategoryType } from "@budget-manager/schemas";
+import type { CategoryColor, CategoryType } from "@budget-manager/schemas";
 import { useQuery } from "@tanstack/react-query";
 
 export type CategoryOption = {
   id: string;
   name: string;
   type: CategoryType;
+  color: CategoryColor;
 };
 
 /**

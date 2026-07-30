@@ -1,3 +1,5 @@
+import type { CategoryColor } from "@budget-manager/schemas";
+
 export type MonthPoint = {
   month: string;
   incomeCents: number;
@@ -8,6 +10,7 @@ export type MonthPoint = {
 export type CategorySpend = {
   categoryId: string | null;
   name: string;
+  color: CategoryColor | null;
   amountCents: number;
 };
 
@@ -54,6 +57,7 @@ export type PendingItem = {
   creditCardName: string | null;
   walletCurrencyCode: string;
   categoryName: string | null;
+  categoryColor: CategoryColor | null;
 };
 
 export type StatementDue = {

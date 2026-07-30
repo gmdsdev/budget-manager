@@ -7,6 +7,7 @@ export const creditCardColumns: ColumnDef<CreditCardRow>[] = [
   {
     accessorKey: "name",
     header: "Name",
+    meta: { mobile: "primary" },
   },
   {
     accessorKey: "currencyCode",
@@ -29,6 +30,7 @@ export const creditCardColumns: ColumnDef<CreditCardRow>[] = [
   {
     accessorKey: "limitCents",
     header: () => <span className="block text-right">Limit</span>,
+    meta: { label: "Limit" },
     cell: ({ row }) => (
       <span className="block text-right tabular-nums">
         {formatMinorUnits(row.original.limitCents, row.original.currencyCode)}
@@ -38,6 +40,7 @@ export const creditCardColumns: ColumnDef<CreditCardRow>[] = [
   {
     accessorKey: "outstandingCents",
     header: () => <span className="block text-right">Outstanding</span>,
+    meta: { label: "Outstanding", mobile: "trailing" },
     cell: ({ row }) => {
       const { outstandingCents, projectedOutstandingCents, currencyCode } =
         row.original;
@@ -61,6 +64,7 @@ export const creditCardColumns: ColumnDef<CreditCardRow>[] = [
   {
     accessorKey: "availableCents",
     header: () => <span className="block text-right">Available</span>,
+    meta: { label: "Available" },
     cell: ({ row }) => (
       <span
         className={`block text-right tabular-nums ${
@@ -77,6 +81,7 @@ export const creditCardColumns: ColumnDef<CreditCardRow>[] = [
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
+    meta: { label: "Actions", mobile: "actions" },
     cell: ({ row }) => <CreditCardRowActions card={row.original} />,
   },
 ];

@@ -60,7 +60,7 @@ export function TransactionRowActions({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="icon" className="size-8">
+            <Button variant="ghost" size="icon">
               <DotsThreeIcon />
               <span className="sr-only">Actions for {transaction.name}</span>
             </Button>

@@ -1,0 +1,134 @@
+import { Button } from "@budget-manager/ui/components/button";
+import { Separator } from "@budget-manager/ui/components/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@budget-manager/ui/components/sheet";
+import { ListIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
+import { Link } from "@tanstack/react-router";
+import { useState } from "react";
+
+import { useSignOut } from "@/hooks/use-sign-out";
+import { authClient } from "@/lib/auth-client";
+import { useTheme } from "@/components/theme-provider";
+import { MAIN_LINKS, SETTINGS_LINKS } from "./nav-links";
+
+const THEMES = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "system", label: "System" },
+] as const;
+
+/**
+ * The whole nav collapses to one button below md: six items in a row need more
+ * width than a phone has, and hiding them behind a sheet keeps every
+ * destination one tap away instead of off screen.
+ */
+export function MobileNav() {
+  const [open, setOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const signOut = useSignOut();
+  const { data: session } = authClient.useSession();
+
+  function close() {
+    setOpen(false);
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
+        render={
+          <Button variant="ghost" size="icon" aria-label="Open menu">
+            <ListIcon aria-hidden />
+          </Button>
+        }
+        className="md:hidden"
+      />
+      <SheetContent side="right" className="w-4/5 max-w-xs overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Menu</SheetTitle>
+          {session ? (
+            <SheetDescription>{session.user.email}</SheetDescription>
+          ) : null}
+        </SheetHeader>
+
+        <nav aria-label="Main" className="flex flex-col px-2">
+          {MAIN_LINKS.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={close}
+              className="flex min-h-11 items-center px-2 text-sm hover:bg-muted"
+              activeProps={{ className: "bg-muted/50 font-medium" }}
+            >
+              {link.label}
+            </Link>
+          ))}
+
+          <Separator className="my-2" />
+
+          <p className="px-2 pb-1 text-xs text-muted-foreground">Settings</p>
+          {SETTINGS_LINKS.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={close}
+              className="flex min-h-11 items-center px-2 text-sm hover:bg-muted"
+              activeProps={{ className: "bg-muted/50 font-medium" }}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        <SheetFooter>
+          <div className="flex flex-col gap-2">
+            <p className="flex flex-row items-center gap-1.5 text-xs text-muted-foreground">
+              <SunIcon aria-hidden className="size-3.5 dark:hidden" />
+              <MoonIcon aria-hidden className="hidden size-3.5 dark:block" />
+              Theme
+            </p>
+            <div className="flex flex-row gap-2">
+              {THEMES.map((option) => (
+                <Button
+                  key={option.value}
+                  variant={theme === option.value ? "secondary" : "outline"}
+                  className="flex-1"
+                  aria-pressed={theme === option.value}
+                  onClick={() => setTheme(option.value)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {session ? (
+            <Button
+              variant="destructive"
+              onClick={() => {
+                close();
+                signOut();
+              }}
+            >
+              Sign Out
+            </Button>
+          ) : (
+            <Link
+              to="/login"
+              onClick={close}
+              className="flex min-h-11 items-center px-2 text-sm hover:bg-muted"
+            >
+              Sign In
+            </Link>
+          )}
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  );
+}

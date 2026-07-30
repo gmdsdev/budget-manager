@@ -10,12 +10,18 @@ export function FilterBar({
   isFiltered: boolean;
   onClear: () => void;
 }) {
+  // Two columns on a phone rather than one: seven stacked controls would push
+  // the list itself off the first screen.
   return (
-    <div className="flex flex-row flex-wrap items-center justify-start gap-2 pb-4">
+    <div className="grid grid-cols-2 items-center gap-2 pb-4 sm:flex sm:flex-row sm:flex-wrap sm:justify-start">
       {children}
 
       {isFiltered && (
-        <Button variant="ghost" onClick={onClear}>
+        <Button
+          variant="ghost"
+          onClick={onClear}
+          className="col-span-2 sm:col-span-1"
+        >
           Clear filters
         </Button>
       )}

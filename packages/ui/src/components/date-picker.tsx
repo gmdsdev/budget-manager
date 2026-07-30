@@ -13,6 +13,7 @@ import {
 } from "@budget-manager/ui/lib/date-range"
 import { Button } from "@budget-manager/ui/components/button"
 import { Calendar } from "@budget-manager/ui/components/calendar"
+import { useIsCompact } from "@budget-manager/ui/hooks/use-media-query"
 import {
   Popover,
   PopoverContent,
@@ -155,6 +156,10 @@ function DateRangePicker({
   const [anchor, setAnchor] = React.useState<Date | undefined>(undefined)
   const from = parseIsoDate(value.from)
   const to = parseIsoDate(value.to)
+  // Two months side by side is wider than a phone, and a popup that scrolls
+  // sideways hides half the range being picked.
+  const isCompact = useIsCompact()
+  const months = isCompact ? 1 : numberOfMonths
 
   const selected: DateRange | undefined = anchor
     ? { from: anchor, to: anchor }
@@ -219,10 +224,11 @@ function DateRangePicker({
           </div>
         ) : null}
         <Calendar
+          className="mx-auto"
           mode="range"
           captionLayout="dropdown"
           {...captionMonthRange()}
-          numberOfMonths={numberOfMonths}
+          numberOfMonths={months}
           selected={selected}
           defaultMonth={from}
           onSelect={(_range, day) => {

@@ -1,9 +1,14 @@
-import { FILTER_ALL, type CategoryType } from "@budget-manager/schemas";
+import {
+  type CategoryColor,
+  FILTER_ALL,
+  type CategoryType,
+} from "@budget-manager/schemas";
 
 export type CategoryRow = {
   id: string;
   name: string;
   type: CategoryType;
+  color: CategoryColor;
   isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;

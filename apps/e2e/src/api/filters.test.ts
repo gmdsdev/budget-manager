@@ -13,6 +13,7 @@ import { requireServer } from "../support/env";
 import {
   card,
   cardPurchase,
+  category,
   listCategories,
   listTransactions,
   listWallets,
@@ -41,10 +42,10 @@ describe("category filters", () => {
   test("searches the name column, case-insensitively", async () => {
     const { client } = await freshUser();
 
-    await client.category.create.mutate({
+    await client.category.create.mutate(category({
       name: "Zebra Consulting",
       type: CategoryType.INCOME,
-    });
+    }));
 
     const rows = await listCategories(client, { search: "zebra con" });
 
@@ -55,14 +56,14 @@ describe("category filters", () => {
     const { client } = await freshUser();
 
     await Promise.all([
-      client.category.create.mutate({
+      client.category.create.mutate(category({
         name: "Trip_2026",
         type: CategoryType.EXPENSE,
-      }),
-      client.category.create.mutate({
+      })),
+      client.category.create.mutate(category({
         name: "TripX2026",
         type: CategoryType.EXPENSE,
-      }),
+      })),
     ]);
 
     expect(names(await listCategories(client, { search: "Trip_2026" }))).toEqual(
@@ -74,14 +75,14 @@ describe("category filters", () => {
     const { client } = await freshUser();
 
     await Promise.all([
-      client.category.create.mutate({
+      client.category.create.mutate(category({
         name: "Cashback 5%",
         type: CategoryType.INCOME,
-      }),
-      client.category.create.mutate({
+      })),
+      client.category.create.mutate(category({
         name: "Cashback 5 percent",
         type: CategoryType.INCOME,
-      }),
+      })),
     ]);
 
     expect(names(await listCategories(client, { search: "5%" }))).toEqual([
@@ -93,14 +94,14 @@ describe("category filters", () => {
     const { client } = await freshUser();
 
     await Promise.all([
-      client.category.create.mutate({
+      client.category.create.mutate(category({
         name: "Zebra Income",
         type: CategoryType.INCOME,
-      }),
-      client.category.create.mutate({
+      })),
+      client.category.create.mutate(category({
         name: "Zebra Expense",
         type: CategoryType.EXPENSE,
-      }),
+      })),
     ]);
 
     const rows = await listCategories(client, {
@@ -114,10 +115,10 @@ describe("category filters", () => {
   test("keeps total in step with the filtered rows", async () => {
     const { client } = await freshUser();
 
-    await client.category.create.mutate({
+    await client.category.create.mutate(category({
       name: "Zebra Only",
       type: CategoryType.INCOME,
-    });
+    }));
 
     const page = await client.category.getAll.query({ search: "zebra only" });
 

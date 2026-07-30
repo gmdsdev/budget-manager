@@ -1,3 +1,8 @@
+import {
+  CategoryItemLabel,
+  CategoryLabel,
+  type CategoryItem,
+} from "@/modules/category/components/category-dot";
 import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
 import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
@@ -97,11 +102,12 @@ export function RecurringFormFields({
         value: wallet.id,
       }));
 
-  const categoryItems = [
-    { label: "Uncategorized", value: NONE },
+  const categoryItems: CategoryItem[] = [
+    { label: "Uncategorized", value: NONE, color: null },
     ...(categories ?? []).map((category) => ({
       label: category.name,
       value: category.id,
+      color: category.color,
     })),
   ];
 
@@ -373,12 +379,19 @@ export function RecurringFormFields({
                 }
               >
                 <SelectTrigger aria-invalid={showErrors || undefined}>
-                  <SelectValue />
+                  <SelectValue>
+                    {(selected: string) => (
+                      <CategoryItemLabel
+                        items={categoryItems}
+                        value={selected}
+                      />
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {categoryItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
-                      {item.label}
+                      <CategoryLabel color={item.color} name={item.label} />
                     </SelectItem>
                   ))}
                 </SelectContent>

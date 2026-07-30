@@ -38,9 +38,11 @@ export function StatTile({
         </p>
         {/* Ink, not a series colour — only money in the red earns a colour, and
             proportional figures read tighter than tabular ones at this size. */}
+        {/* Two tiles to a row on a phone leaves ~140px of content width, which a
+            six-figure amount overruns at the desktop sizes. */}
         <p
           className={`font-heading font-semibold ${
-            lead ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"
+            lead ? "text-xl sm:text-2xl md:text-3xl" : "text-lg sm:text-xl md:text-2xl"
           } ${amountCents < 0 ? "text-destructive" : ""}`}
         >
           {formatMinorUnits(amountCents, currencyCode)}

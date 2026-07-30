@@ -10,36 +10,30 @@ import {
   navigationMenuTriggerStyle,
 } from "@budget-manager/ui/components/navigation-menu";
 import { Logotipo } from "./logotipo";
+import { MobileNav } from "./mobile-nav";
 import { ModeToggle } from "./mode-toggle";
+import { MAIN_LINKS, SETTINGS_LINKS } from "./nav-links";
 import UserMenu from "./user-menu";
-
-const mainLinks = [
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/transaction", label: "Transactions" },
-] as const;
-
-const settingsLinks = [
-  { to: "/wallet", label: "Wallets" },
-  { to: "/credit-card", label: "Credit Cards" },
-  { to: "/category", label: "Categories" },
-] as const;
 
 export default function Header() {
   return (
-    <header className="border-b">
-      <div className="container mx-auto flex flex-row items-center gap-4 py-2">
-        <div className="flex flex-1 items-center">
+    <header className="min-w-0 border-b">
+      <div className="container mx-auto flex min-w-0 flex-row items-center gap-4 px-4 py-2 sm:px-6">
+        <div className="flex min-w-0 flex-1 items-center">
           <Link
             to="/dashboard"
             aria-label="Budget Manager dashboard"
-            className="shrink-0 text-foreground"
+            // The negative margin buys the 24px wordmark a 40px tap area
+            // without changing how tall the header draws.
+            className="-m-2 shrink-0 p-2 text-foreground"
           >
             <Logotipo className="h-6" aria-hidden />
           </Link>
         </div>
-        <NavigationMenu aria-label="Main">
+
+        <NavigationMenu aria-label="Main" className="hidden md:flex">
           <NavigationMenuList>
-            {mainLinks.map((link) => (
+            {MAIN_LINKS.map((link) => (
               <NavigationMenuItem key={link.to}>
                 <NavigationMenuLink
                   className={navigationMenuTriggerStyle()}
@@ -51,7 +45,7 @@ export default function Header() {
               <NavigationMenuTrigger>Settings</NavigationMenuTrigger>
               <NavigationMenuContent>
                 <ul className="w-40">
-                  {settingsLinks.map((link) => (
+                  {SETTINGS_LINKS.map((link) => (
                     <li key={link.to}>
                       <NavigationMenuLink
                         closeOnClick
@@ -64,7 +58,8 @@ export default function Header() {
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
-        <div className="flex flex-1 items-center justify-end">
+
+        <div className="hidden flex-1 items-center justify-end md:flex">
           <NavigationMenu align="end" aria-label="Account menu">
             <NavigationMenuList>
               <ModeToggle />
@@ -72,6 +67,8 @@ export default function Header() {
             </NavigationMenuList>
           </NavigationMenu>
         </div>
+
+        <MobileNav />
       </div>
     </header>
   );

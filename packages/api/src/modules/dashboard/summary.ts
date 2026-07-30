@@ -1,5 +1,6 @@
 import { formatDate, parseDateString } from "../../dates";
 import {
+  type CategoryColor,
   MONTH_EXPENSE_KINDS,
   MONTH_INCOME_KINDS,
   TransactionStatus,
@@ -23,6 +24,7 @@ export type CategoryMovement = {
   currencyCode: string;
   categoryId: string | null;
   categoryName: string | null;
+  categoryColor: string | null;
   status: string;
   totalCents: number;
 };
@@ -47,6 +49,8 @@ export type CardBalanceRow = {
 export type CategorySpend = {
   categoryId: string | null;
   name: string;
+  /** Null for the uncategorized bucket, which owns no colour to inherit. */
+  color: CategoryColor | null;
   amountCents: number;
 };
 
@@ -221,6 +225,7 @@ function topCategoriesByCurrency(movements: CategoryMovement[], limit: number) {
       bucket.set(key, {
         categoryId: movement.categoryId,
         name: movement.categoryName ?? UNCATEGORIZED_LABEL,
+        color: (movement.categoryColor as CategoryColor | null) ?? null,
         amountCents: movement.totalCents,
       });
     }

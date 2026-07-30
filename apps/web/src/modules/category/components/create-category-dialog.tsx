@@ -1,4 +1,7 @@
-import { CategoryType } from "@budget-manager/schemas";
+import {
+  CategoryType,
+  DEFAULT_CATEGORY_COLOR,
+} from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -25,6 +28,7 @@ export function CreateCategoryDialog() {
     defaultValues: {
       name: "",
       type: CategoryType.EXPENSE,
+      color: DEFAULT_CATEGORY_COLOR,
     },
     onSubmit: async (values) => {
       await createMutation.mutateAsync(values);

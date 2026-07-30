@@ -8,7 +8,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 
 import { errorCodeOf, signUpClient, type ApiClient } from "../support/api";
 import { requireServer } from "../support/env";
-import { transaction, wallet } from "../support/fixtures";
+import { category, transaction, wallet } from "../support/fixtures";
 
 const TOTAL = 7;
 
@@ -116,10 +116,10 @@ describe("paginated list envelope", () => {
 
     for (let index = 0; index < 3; index++) {
       await client.wallet.create.mutate(wallet({ name: `W${index}` }));
-      await client.category.create.mutate({
+      await client.category.create.mutate(category({
         name: `C${index}`,
         type: CategoryType.EXPENSE,
-      });
+      }));
     }
 
     const walletPage = await client.wallet.getAll.query({
@@ -170,15 +170,15 @@ describe("option lists are never paginated", () => {
     const client = (await signUpClient()).client;
 
     for (let index = 0; index < 22; index++) {
-      await client.category.create.mutate({
+      await client.category.create.mutate(category({
         name: `Expense ${index}`,
         type: CategoryType.EXPENSE,
-      });
+      }));
     }
-    await client.category.create.mutate({
+    await client.category.create.mutate(category({
       name: "Wages",
       type: CategoryType.INCOME,
-    });
+    }));
 
     expect((await client.category.options.query({})).length).toBe(
       DEFAULT_CATEGORIES.length + 23,

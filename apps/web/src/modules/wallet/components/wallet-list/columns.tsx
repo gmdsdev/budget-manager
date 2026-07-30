@@ -12,6 +12,7 @@ export const walletColumns: ColumnDef<WalletRow>[] = [
   {
     accessorKey: "name",
     header: "Name",
+    meta: { mobile: "primary" },
   },
   {
     accessorKey: "type",
@@ -30,6 +31,7 @@ export const walletColumns: ColumnDef<WalletRow>[] = [
   {
     accessorKey: "openingBalanceCents",
     header: () => <span className="block text-right">Opening Balance</span>,
+    meta: { label: "Opening Balance" },
     cell: ({ row }) => (
       <span className="block text-right tabular-nums">
         {formatMinorUnits(
@@ -42,6 +44,7 @@ export const walletColumns: ColumnDef<WalletRow>[] = [
   {
     accessorKey: "balanceCents",
     header: () => <span className="block text-right">Balance</span>,
+    meta: { label: "Balance", mobile: "trailing" },
     cell: ({ row }) => {
       const { balanceCents, projectedBalanceCents, currencyCode } = row.original;
       const hasPending = projectedBalanceCents !== balanceCents;
@@ -63,6 +66,7 @@ export const walletColumns: ColumnDef<WalletRow>[] = [
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
+    meta: { label: "Actions", mobile: "actions" },
     cell: ({ row }) => <WalletRowActions wallet={row.original} />,
   },
 ];

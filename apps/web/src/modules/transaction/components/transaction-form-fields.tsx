@@ -1,3 +1,8 @@
+import {
+  CategoryItemLabel,
+  CategoryLabel,
+  type CategoryItem,
+} from "@/modules/category/components/category-dot";
 import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
 import {
@@ -143,11 +148,12 @@ function CategoryField({ form }: { form: UseTransactionFormReturnType }) {
     KIND_TO_CATEGORY_TYPE[kind],
   );
 
-  const items = [
-    { label: "Uncategorized", value: TRANSACTION_CATEGORY_NONE },
+  const items: CategoryItem[] = [
+    { label: "Uncategorized", value: TRANSACTION_CATEGORY_NONE, color: null },
     ...(categories ?? []).map((category) => ({
       label: category.name,
       value: category.id,
+      color: category.color,
     })),
   ];
 
@@ -177,12 +183,16 @@ function CategoryField({ form }: { form: UseTransactionFormReturnType }) {
                 aria-invalid={showErrors || undefined}
                 aria-describedby={showErrors ? errorId : undefined}
               >
-                <SelectValue />
+                <SelectValue>
+                  {(selected: string) => (
+                    <CategoryItemLabel items={items} value={selected} />
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {items.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                    <CategoryLabel color={item.color} name={item.label} />
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -9,6 +9,7 @@ import {
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { Link } from "@tanstack/react-router";
 import { buttonVariants } from "@budget-manager/ui/components/button";
+import { CategoryDot } from "@/modules/category/components/category-dot";
 import type { PendingItem } from "../types";
 import { formatDayLabel } from "../utils/month";
 
@@ -48,16 +49,19 @@ export function PendingList({
                   className="flex flex-row items-center justify-between gap-4 py-2 first:pt-0 last:pb-0"
                 >
                   <div className="min-w-0">
-                    <p className="flex flex-row items-center gap-2 truncate text-sm">
+                    {/* truncate belongs on the name, not the row: on the row it
+                        clips whichever child runs off the end, which on a phone
+                        is the Overdue flag. */}
+                    <p className="flex flex-row items-center gap-2 text-sm">
                       <span
                         aria-hidden
                         className={`size-1.5 shrink-0 ${
                           overdue ? "bg-destructive" : "bg-muted-foreground/40"
                         }`}
                       />
-                      {item.name}
+                      <span className="truncate">{item.name}</span>
                       {overdue && (
-                        <span className="text-xs font-medium text-destructive">
+                        <span className="shrink-0 text-xs font-medium text-destructive">
                           Overdue
                         </span>
                       )}
@@ -65,7 +69,18 @@ export function PendingList({
                     <p className="pl-3.5 text-xs text-muted-foreground">
                       {formatDayLabel(item.occurrenceDate)} ·{" "}
                       {item.walletName ?? item.creditCardName ?? "—"}
-                      {item.categoryName ? ` · ${item.categoryName}` : ""}
+                      {item.categoryName ? (
+                        <>
+                          {" · "}
+                          <CategoryDot
+                            color={item.categoryColor}
+                            className="inline-block align-middle"
+                          />{" "}
+                          {item.categoryName}
+                        </>
+                      ) : (
+                        ""
+                      )}
                     </p>
                   </div>
                   <div className="text-right">

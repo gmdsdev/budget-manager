@@ -55,7 +55,10 @@ function RootComponent() {
         storageKey="vite-ui-theme"
       >
         <TooltipProvider>
-          <div className="grid grid-rows-[auto_1fr] h-svh">
+          {/* grid-cols-1 is minmax(0,1fr), not auto: an auto track sizes to its
+              max-content, so one wide table used to widen the whole document
+              and every page scrolled sideways. */}
+          <div className="grid min-h-svh grid-cols-1 grid-rows-[auto_1fr]">
             <Outlet />
           </div>
           <Toaster richColors />

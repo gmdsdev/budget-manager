@@ -13,6 +13,7 @@ import {
 } from "../support/api";
 import { requireServer } from "../support/env";
 import {
+  category,
   listCategories,
   listTransactions,
   listWallets,
@@ -96,9 +97,8 @@ describe("tenant isolation", () => {
     expect(
       await errorCodeOf(
         intruder.category.update.mutate({
+          ...category({ name: "Stolen", type: CategoryType.INCOME }),
           id: seed.salary.id,
-          name: "Stolen",
-          type: CategoryType.INCOME,
         }),
       ),
     ).toBe("NOT_FOUND");
@@ -154,10 +154,10 @@ describe("unauthenticated access", () => {
     );
     expect(
       await errorCodeOf(
-        anon.category.create.mutate({
+        anon.category.create.mutate(category({
           name: "Nope",
           type: CategoryType.EXPENSE,
-        }),
+        })),
       ),
     ).toBe("UNAUTHORIZED");
     expect(

@@ -6,13 +6,13 @@ import {
   navigationMenuTriggerStyle,
 } from "@budget-manager/ui/components/navigation-menu";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 
+import { useSignOut } from "@/hooks/use-sign-out";
 import { authClient } from "@/lib/auth-client";
-import { invalidateSessionCache } from "@/lib/session";
 
 export default function UserMenu() {
-  const navigate = useNavigate();
+  const signOut = useSignOut();
   const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
@@ -46,23 +46,7 @@ export default function UserMenu() {
             <NavigationMenuLink
               closeOnClick
               className="w-full text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
-              render={
-                <button
-                  type="button"
-                  onClick={() => {
-                    void authClient.signOut({
-                      fetchOptions: {
-                        onSuccess: () => {
-                          invalidateSessionCache();
-                          void navigate({
-                            to: "/",
-                          });
-                        },
-                      },
-                    });
-                  }}
-                />
-              }
+              render={<button type="button" onClick={signOut} />}
             >
               Sign Out
             </NavigationMenuLink>

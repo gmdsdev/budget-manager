@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { CATEGORY_COLORS } from "./category-color";
 import { CategorySchema, CategoryType } from "./category.schema";
 import {
   DEFAULT_CATEGORIES,
@@ -26,6 +27,12 @@ describe("DEFAULT_CATEGORIES", () => {
       expect(NAME_SCHEMA.safeParse(category.name).success).toBe(true);
     }
   });
+
+  test("every default carries a colour from the palette", () => {
+    for (const category of DEFAULT_CATEGORIES) {
+      expect(CATEGORY_COLORS).toContain(category.color);
+    }
+  });
 });
 
 describe("missingDefaultCategories", () => {
@@ -42,10 +49,9 @@ describe("missingDefaultCategories", () => {
       { name: "  salary ", type: CategoryType.INCOME },
     ]);
 
-    expect(result).not.toContainEqual({
-      name: "Salary",
-      type: CategoryType.INCOME,
-    });
+    expect(
+      result.some((c) => c.name === "Salary" && c.type === CategoryType.INCOME),
+    ).toBe(false);
   });
 
   test("treats the same name under the other type as a different category", () => {
@@ -53,9 +59,8 @@ describe("missingDefaultCategories", () => {
       { name: "Salary", type: CategoryType.EXPENSE },
     ]);
 
-    expect(result).toContainEqual({
-      name: "Salary",
-      type: CategoryType.INCOME,
-    });
+    expect(
+      result.some((c) => c.name === "Salary" && c.type === CategoryType.INCOME),
+    ).toBe(true);
   });
 });
