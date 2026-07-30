@@ -1,4 +1,9 @@
-import { CategoryType } from "@budget-manager/schemas";
+import {
+  CategoryType,
+  DEFAULT_CATEGORIES,
+  DEFAULT_EXPENSE_CATEGORY_NAMES,
+  DEFAULT_INCOME_CATEGORY_NAMES,
+} from "@budget-manager/schemas";
 import { beforeAll, describe, expect, test } from "bun:test";
 
 import { errorCodeOf, signUpClient, type ApiClient } from "../support/api";
@@ -18,36 +23,44 @@ beforeAll(async () => {
 });
 
 describe("category", () => {
-  test("starts empty for a new user", async () => {
-    expect(await listCategories(api, {})).toEqual([]);
+  test("starts with the default set a sign-up creates", async () => {
+    const rows = await listCategories(api, {});
+
+    expect(rows.length).toBe(DEFAULT_CATEGORIES.length);
+    expect(new Set(rows.map((c) => `${c.type}:${c.name}`))).toEqual(
+      new Set(DEFAULT_CATEGORIES.map((c) => `${c.type}:${c.name}`)),
+    );
+    expect(rows.every((c) => !c.isArchived)).toBe(true);
   });
 
   test("filters by type", async () => {
     await api.category.create.mutate({
-      name: "Salary",
+      name: "Consulting",
       type: CategoryType.INCOME,
     });
     await api.category.create.mutate({
-      name: "Groceries",
+      name: "Comics",
       type: CategoryType.EXPENSE,
     });
     await api.category.create.mutate({
-      name: "Rent",
+      name: "Coworking",
       type: CategoryType.EXPENSE,
     });
 
-    expect((await listCategories(api, {})).length).toBe(3);
+    expect((await listCategories(api, {})).length).toBe(
+      DEFAULT_CATEGORIES.length + 3,
+    );
 
     const income = await listCategories(api, {
       type: CategoryType.INCOME,
     });
-    expect(income.length).toBe(1);
+    expect(income.length).toBe(DEFAULT_INCOME_CATEGORY_NAMES.length + 1);
     expect(income.every((c) => c.type === CategoryType.INCOME)).toBe(true);
 
     const expense = await listCategories(api, {
       type: CategoryType.EXPENSE,
     });
-    expect(expense.length).toBe(2);
+    expect(expense.length).toBe(DEFAULT_EXPENSE_CATEGORY_NAMES.length + 2);
     expect(expense.every((c) => c.type === CategoryType.EXPENSE)).toBe(true);
   });
 

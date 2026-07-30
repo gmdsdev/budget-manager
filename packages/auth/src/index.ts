@@ -1,4 +1,5 @@
 import { db as sharedDb, type Db } from "@budget-manager/db";
+import { ensureDefaultCategories } from "@budget-manager/db/defaults/categories";
 import * as schema from "@budget-manager/db/schema/auth";
 import { env } from "@budget-manager/env/server";
 import { betterAuth } from "better-auth";
@@ -17,6 +18,22 @@ export function createAuth(db: Db = sharedDb) {
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (createdUser) => {
+            try {
+              await ensureDefaultCategories({ db, userId: createdUser.id });
+            } catch (error) {
+              console.error(
+                `Failed to create default categories for user ${createdUser.id}`,
+                error,
+              );
+            }
+          },
+        },
+      },
+    },
     advanced: {
       database: {
         generateId: false,

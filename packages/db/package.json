@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@budget-manager/env": "workspace:*",
+    "@budget-manager/schemas": "workspace:*",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "pg": "^8.22.0",

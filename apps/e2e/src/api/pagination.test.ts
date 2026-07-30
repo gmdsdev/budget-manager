@@ -1,4 +1,9 @@
-import { CategoryType, TransactionStatus } from "@budget-manager/schemas";
+import {
+  CategoryType,
+  DEFAULT_CATEGORIES,
+  DEFAULT_INCOME_CATEGORY_NAMES,
+  TransactionStatus,
+} from "@budget-manager/schemas";
 import { beforeAll, describe, expect, test } from "bun:test";
 
 import { errorCodeOf, signUpClient, type ApiClient } from "../support/api";
@@ -124,12 +129,15 @@ describe("paginated list envelope", () => {
     expect(walletPage.rows.length).toBe(2);
     expect(walletPage.total).toBe(3);
 
+    // Sign-up seeds the default categories, so the three created here land at
+    // the end of the list.
+    const categoryTotal = DEFAULT_CATEGORIES.length + 3;
     const categoryPage = await client.category.getAll.query({
       limit: 2,
-      offset: 2,
+      offset: categoryTotal - 1,
     });
     expect(categoryPage.rows.length).toBe(1);
-    expect(categoryPage.total).toBe(3);
+    expect(categoryPage.total).toBe(categoryTotal);
   });
 
   test("wallet balances stay whole-account, not page-scoped", async () => {
@@ -172,11 +180,13 @@ describe("option lists are never paginated", () => {
       type: CategoryType.INCOME,
     });
 
-    expect((await client.category.options.query({})).length).toBe(23);
+    expect((await client.category.options.query({})).length).toBe(
+      DEFAULT_CATEGORIES.length + 23,
+    );
     expect(
       (await client.category.options.query({ type: CategoryType.INCOME }))
         .length,
-    ).toBe(1);
+    ).toBe(DEFAULT_INCOME_CATEGORY_NAMES.length + 1);
   });
 
   test("omits archived rows so they cannot be assigned to new records", async () => {

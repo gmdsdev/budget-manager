@@ -43,8 +43,19 @@ beforeAll(async () => {
 describe("tenant isolation", () => {
   test("a different user sees none of the owner's rows", async () => {
     expect(await listWallets(intruder, {})).toEqual([]);
-    expect(await listCategories(intruder, {})).toEqual([]);
     expect(await listTransactions(intruder, {})).toEqual([]);
+
+    const ownerCategoryIds = new Set(
+      (await listCategories(owner, {})).map((category) => category.id),
+    );
+    const intruderCategoryIds = (await listCategories(intruder, {})).map(
+      (category) => category.id,
+    );
+
+    expect(intruderCategoryIds.length).toBeGreaterThan(0);
+    expect(
+      intruderCategoryIds.some((id) => ownerCategoryIds.has(id)),
+    ).toBe(false);
   });
 
   test("cannot read the owner's rows even by id", async () => {

@@ -102,6 +102,17 @@ packages/env     @t3-oss/env-core validated env (`/server` and `/web` entries)
 packages/config  shared tsconfig.base.json
 ```
 
+**New accounts start with a default set of categories.** `DEFAULT_CATEGORIES` in
+`packages/schemas/src/category/default-categories.ts` is the one list (8 income, 20 expense),
+and better-auth's `databaseHooks.user.create.after` inserts it via `ensureDefaultCategories`
+(`packages/db/src/defaults/categories.ts`). Not a migration and not a seed script: categories
+are per-user rows, so a migration could only ever cover accounts that already exist. The insert
+is idempotent — `missingDefaultCategories` matches on trimmed, case-insensitive `(name, type)`
+and treats archived rows as existing, so re-running never duplicates or resurrects anything —
+and a failure is logged rather than thrown, because a missing convenience category must not
+fail a sign-up whose `user` row is already committed. Accounts created before this hook keep
+whatever they have; nothing backfills them.
+
 Workspace packages export raw TypeScript from `src/` (no build step) — only `apps/server` bundles, via tsdown with `noExternal: [/@budget-manager\/.*/]`. Shared dependency versions live in the root `package.json` `workspaces.catalog`; declare them as `"catalog:"` in each package.
 
 ### Backend layering (packages/api)

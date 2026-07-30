@@ -1,8 +1,13 @@
+import {
+  DEFAULT_CATEGORIES,
+  DEFAULT_INCOME_CATEGORY_NAMES,
+} from "@budget-manager/schemas";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Page } from "playwright";
 
 import { WEB_URL, requireWeb } from "../support/env";
 import {
+  bodyText,
   closeApp,
   dialog,
   fillField,
@@ -14,6 +19,8 @@ import {
   waitForRowCount,
   type Session,
 } from "../support/web";
+
+const PAGE_SIZE = 20;
 
 let session: Session;
 let page: Page;
@@ -72,23 +79,41 @@ describe("wallet page", () => {
 });
 
 describe("category page", () => {
+  test("lists the defaults a sign-up created", async () => {
+    await page.goto(`${WEB_URL}/category`, { waitUntil: "networkidle" });
+    await waitForRowCount(page, PAGE_SIZE);
+
+    expect(await rowFor(page, "Groceries")).toBeTruthy();
+    expect(await bodyText(page)).toContain(`of ${DEFAULT_CATEGORIES.length}`);
+  }, 60_000);
+
   test("creates categories and filters them by type", async () => {
-    await createCategory("Salary", "Income");
-    await createCategory("Groceries", "Expense");
+    // Names chosen to sort ahead of the seeded defaults, so the new row is on
+    // the first page of its filtered list.
+    await createCategory("Consulting", "Income");
+    await createCategory("Coffee Runs", "Expense");
 
     await page.goto(`${WEB_URL}/category`, { waitUntil: "networkidle" });
-    await waitForRowCount(page, 2);
 
     await pickSelect(page, page, "Type", "Income");
-    await waitForRowCount(page, 1);
-    expect((await rowTexts(page))[0]).toContain("Income");
+    await waitForRowCount(page, DEFAULT_INCOME_CATEGORY_NAMES.length + 1);
+    expect((await rowTexts(page)).every((row) => row.includes("Income"))).toBe(
+      true,
+    );
+    expect(await rowFor(page, "Consulting")).toBeTruthy();
 
     await pickSelect(page, page, "Type", "Expense");
-    await waitForRowCount(page, 1);
-    expect((await rowTexts(page))[0]).toContain("Expense");
+    await waitForRowCount(page, PAGE_SIZE);
+    expect((await rowTexts(page)).every((row) => row.includes("Expense"))).toBe(
+      true,
+    );
+    expect(await rowFor(page, "Coffee Runs")).toBeTruthy();
 
     await pickSelect(page, page, "Type", "All types");
-    await waitForRowCount(page, 2);
+    await waitForRowCount(page, PAGE_SIZE);
+    expect(await bodyText(page)).toContain(
+      `of ${DEFAULT_CATEGORIES.length + 2}`,
+    );
   }, 60_000);
 });
 
