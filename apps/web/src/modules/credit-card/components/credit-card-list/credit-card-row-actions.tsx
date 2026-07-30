@@ -6,7 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@budget-manager/ui/components/dropdown-menu";
-import { MoreHorizontalIcon } from "lucide-react";
+import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { ArchiveCreditCardDialog } from "../archive-credit-card-dialog";
 import { CreditCardBillsDialog } from "../credit-card-bills-dialog";
@@ -24,7 +24,7 @@ export function CreditCardRowActions({ card }: { card: CreditCardRow }) {
         <DropdownMenuTrigger
           render={
             <Button variant="ghost" size="icon" className="size-8">
-              <MoreHorizontalIcon />
+              <DotsThreeIcon />
               <span className="sr-only">Actions for {card.name}</span>
             </Button>
           }

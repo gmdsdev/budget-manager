@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@budget-manager/ui/components/dropdown-menu";
-import { MoreHorizontalIcon } from "lucide-react";
+import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -61,7 +61,7 @@ export function TransactionRowActions({
         <DropdownMenuTrigger
           render={
             <Button variant="ghost" size="icon" className="size-8">
-              <MoreHorizontalIcon />
+              <DotsThreeIcon />
               <span className="sr-only">Actions for {transaction.name}</span>
             </Button>
           }

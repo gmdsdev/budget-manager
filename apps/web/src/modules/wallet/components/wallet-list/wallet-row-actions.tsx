@@ -6,7 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@budget-manager/ui/components/dropdown-menu";
-import { MoreHorizontalIcon } from "lucide-react";
+import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { ArchiveWalletDialog } from "../archive-wallet-dialog";
 import { EditWalletDialog } from "../edit-wallet-dialog";
@@ -23,7 +23,7 @@ export function WalletRowActions({ wallet }: { wallet: WalletRow }) {
         <DropdownMenuTrigger
           render={
             <Button variant="ghost" size="icon" className="size-8">
-              <MoreHorizontalIcon />
+              <DotsThreeIcon />
               <span className="sr-only">Actions for {wallet.name}</span>
             </Button>
           }

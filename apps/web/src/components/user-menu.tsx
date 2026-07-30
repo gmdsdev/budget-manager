@@ -1,13 +1,10 @@
-import { Button } from "@budget-manager/ui/components/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@budget-manager/ui/components/dropdown-menu";
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@budget-manager/ui/components/navigation-menu";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
 import { Link, useNavigate } from "@tanstack/react-router";
 
@@ -19,46 +16,59 @@ export default function UserMenu() {
   const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
-    return <Skeleton className="h-9 w-24" />;
+    return (
+      <NavigationMenuItem>
+        <Skeleton className="h-9 w-24" />
+      </NavigationMenuItem>
+    );
   }
 
   if (!session) {
     return (
-      <Link to="/login">
-        <Button variant="outline">Sign In</Button>
-      </Link>
+      <NavigationMenuItem>
+        <NavigationMenuLink
+          className={navigationMenuTriggerStyle()}
+          render={<Link to="/login">Sign In</Link>}
+        />
+      </NavigationMenuItem>
     );
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" />}>
-        {session.user.name}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-card">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>{session.user.email}</DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => {
-              void authClient.signOut({
-                fetchOptions: {
-                  onSuccess: () => {
-                    invalidateSessionCache();
-                    void navigate({
-                      to: "/",
+    <NavigationMenuItem>
+      <NavigationMenuTrigger>{session.user.name}</NavigationMenuTrigger>
+      <NavigationMenuContent>
+        <ul className="w-48">
+          <li className="p-2 text-xs text-muted-foreground">
+            {session.user.email}
+          </li>
+          <li>
+            <NavigationMenuLink
+              closeOnClick
+              className="w-full text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
+              render={
+                <button
+                  type="button"
+                  onClick={() => {
+                    void authClient.signOut({
+                      fetchOptions: {
+                        onSuccess: () => {
+                          invalidateSessionCache();
+                          void navigate({
+                            to: "/",
+                          });
+                        },
+                      },
                     });
-                  },
-                },
-              });
-            }}
-          >
-            Sign Out
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+                  }}
+                />
+              }
+            >
+              Sign Out
+            </NavigationMenuLink>
+          </li>
+        </ul>
+      </NavigationMenuContent>
+    </NavigationMenuItem>
   );
 }
