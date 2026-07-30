@@ -14,8 +14,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useCreateRecurringMutation } from "@/modules/recurring/mutations/use-recurring-mutation";
+import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
 import { useTransactionForm } from "../hooks/use-transaction-form";
 import { useCreateTransactionMutation } from "../mutations/use-transaction-mutation";
 import { todayAsDateString } from "../utils/date";
@@ -34,6 +35,9 @@ export function CreateTransactionDialog() {
   const createSeriesMutation = useCreateRecurringMutation();
   const [repeat, setRepeat] = useState<RepeatState>(NO_REPEAT_STATE);
 
+  const { data: wallets } = useWalletOptionsQuery();
+  const firstWalletId = wallets?.[0]?.id ?? "";
+
   const form = useTransactionForm({
     defaultValues: {
       kind: TransactionKind.EXPENSE,
@@ -41,7 +45,7 @@ export function CreateTransactionDialog() {
       name: "",
       amountCents: 0,
       occurrenceDate: todayAsDateString(),
-      walletId: "",
+      walletId: firstWalletId,
       categoryId: null,
       notes: null,
     },
@@ -76,6 +80,12 @@ export function CreateTransactionDialog() {
       handleOpenChange(false);
     },
   });
+
+  useEffect(() => {
+    if (firstWalletId && !form.getFieldValue("walletId")) {
+      form.setFieldValue("walletId", firstWalletId, { dontUpdateMeta: true });
+    }
+  }, [firstWalletId, form]);
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
