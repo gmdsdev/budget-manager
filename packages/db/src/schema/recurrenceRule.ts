@@ -1,5 +1,4 @@
 import {
-  boolean,
   date,
   index,
   integer,
@@ -51,7 +50,7 @@ export const recurrenceRules = pgTable(
     startsOn: date("starts_on").notNull(),
     endsOn: date("ends_on"),
 
-    isActive: boolean("is_active").notNull().default(true),
+    // Pausing lives on the template (one flag, one concept).
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

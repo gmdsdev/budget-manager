@@ -1,0 +1,2 @@
+ALTER TABLE "transaction_occurrences" ADD COLUMN "transfer_group_id" uuid;--> statement-breakpoint
+CREATE INDEX "transaction_occurrences_transfer_group_idx" ON "transaction_occurrences" USING btree ("transfer_group_id");

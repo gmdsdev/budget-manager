@@ -22,8 +22,8 @@ const columns: ColumnDef<Row, unknown>[] = [
   },
 ];
 
-const ALICE = { id: "wallet-a", name: "Alice" };
-const BOB = { id: "wallet-b", name: "Bob" };
+const ALICE = { id: "row-a", name: "Alice" };
+const BOB = { id: "row-b", name: "Bob" };
 
 describe("DataTable row identity", () => {
   test("per-row state follows the record across a reorder", () => {
@@ -35,8 +35,8 @@ describe("DataTable row identity", () => {
       />,
     );
 
-    expect(screen.getByTestId("captured-wallet-a").textContent).toBe("Alice");
-    expect(screen.getByTestId("captured-wallet-b").textContent).toBe("Bob");
+    expect(screen.getByTestId("captured-row-a").textContent).toBe("Alice");
+    expect(screen.getByTestId("captured-row-b").textContent).toBe("Bob");
 
     rerender(
       <DataTable
@@ -46,8 +46,8 @@ describe("DataTable row identity", () => {
       />,
     );
 
-    expect(screen.getByTestId("captured-wallet-a").textContent).toBe("Alice");
-    expect(screen.getByTestId("captured-wallet-b").textContent).toBe("Bob");
+    expect(screen.getByTestId("captured-row-a").textContent).toBe("Alice");
+    expect(screen.getByTestId("captured-row-b").textContent).toBe("Bob");
   });
 
   test("renders the empty state when there are no rows", () => {
@@ -56,11 +56,11 @@ describe("DataTable row identity", () => {
         columns={columns}
         data={[]}
         getRowId={(row) => row.id}
-        emptyState={<span>No wallets yet</span>}
+        emptyState={<span>No rows yet</span>}
       />,
     );
 
-    expect(screen.getByText("No wallets yet")).toBeDefined();
+    expect(screen.getByText("No rows yet")).toBeDefined();
   });
 
   test("empty-state cell spans exactly the visible columns", () => {

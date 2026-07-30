@@ -1,1 +1,6 @@
+export * from "./category/category.schema";
+export * from "./category/default-categories";
+export * from "./credit-card/credit-card.schema";
+export * from "./recurring/recurring.schema";
+export * from "./transaction/transaction.schema";
 export * from "./wallet/wallet.schema";

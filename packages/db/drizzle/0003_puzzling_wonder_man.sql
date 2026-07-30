@@ -1,0 +1,1 @@
+ALTER TABLE "wallets" DROP COLUMN "current_balance_cents";

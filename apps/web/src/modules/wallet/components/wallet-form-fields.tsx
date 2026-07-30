@@ -41,11 +41,12 @@ function OpeningBalanceField({ form }: { form: UseWalletFormReturnType }) {
   return (
     <form.Field name="openingBalanceCents">
       {(field) => {
-        const invalid = !field.state.meta.isValid;
+        const showErrors =
+          field.state.meta.isTouched && !field.state.meta.isValid;
         const errorId = `${field.name}-error`;
 
         return (
-          <Field data-invalid={invalid}>
+          <Field data-invalid={showErrors}>
             <FieldLabel htmlFor={field.name}>Opening Balance</FieldLabel>
             <CurrencyInput
               id={field.name}
@@ -54,10 +55,13 @@ function OpeningBalanceField({ form }: { form: UseWalletFormReturnType }) {
               currencyCode={currencyCode}
               onValueChange={field.handleChange}
               onBlur={field.handleBlur}
-              aria-invalid={invalid || undefined}
-              aria-describedby={invalid ? errorId : undefined}
+              aria-invalid={showErrors || undefined}
+              aria-describedby={showErrors ? errorId : undefined}
             />
-            <FieldError id={errorId} errors={field.state.meta.errors} />
+            <FieldError
+              id={errorId}
+              errors={showErrors ? field.state.meta.errors : []}
+            />
           </Field>
         );
       }}
@@ -70,11 +74,12 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
     <FieldGroup>
       <form.Field name="name">
         {(field) => {
-          const invalid = !field.state.meta.isValid;
+          const showErrors =
+            field.state.meta.isTouched && !field.state.meta.isValid;
           const errorId = `${field.name}-error`;
 
           return (
-            <Field data-invalid={invalid}>
+            <Field data-invalid={showErrors}>
               <FieldLabel htmlFor={field.name}>Name</FieldLabel>
               <Input
                 id={field.name}
@@ -83,10 +88,13 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.target.value)}
-                aria-invalid={invalid || undefined}
-                aria-describedby={invalid ? errorId : undefined}
+                aria-invalid={showErrors || undefined}
+                aria-describedby={showErrors ? errorId : undefined}
               />
-              <FieldError id={errorId} errors={field.state.meta.errors} />
+              <FieldError
+                id={errorId}
+                errors={showErrors ? field.state.meta.errors : []}
+              />
             </Field>
           );
         }}
@@ -94,11 +102,12 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
 
       <form.Field name="type">
         {(field) => {
-          const invalid = !field.state.meta.isValid;
+          const showErrors =
+            field.state.meta.isTouched && !field.state.meta.isValid;
           const errorId = `${field.name}-error`;
 
           return (
-            <Field data-invalid={invalid}>
+            <Field data-invalid={showErrors}>
               <FieldLabel htmlFor={field.name}>Type</FieldLabel>
               <Select
                 items={WALLET_TYPE_ITEMS}
@@ -110,8 +119,8 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
                 }
               >
                 <SelectTrigger
-                  aria-invalid={invalid || undefined}
-                  aria-describedby={invalid ? errorId : undefined}
+                  aria-invalid={showErrors || undefined}
+                  aria-describedby={showErrors ? errorId : undefined}
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -123,7 +132,10 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
                   ))}
                 </SelectContent>
               </Select>
-              <FieldError id={errorId} errors={field.state.meta.errors} />
+              <FieldError
+                id={errorId}
+                errors={showErrors ? field.state.meta.errors : []}
+              />
             </Field>
           );
         }}
@@ -131,11 +143,12 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
 
       <form.Field name="currencyCode">
         {(field) => {
-          const invalid = !field.state.meta.isValid;
+          const showErrors =
+            field.state.meta.isTouched && !field.state.meta.isValid;
           const errorId = `${field.name}-error`;
 
           return (
-            <Field data-invalid={invalid}>
+            <Field data-invalid={showErrors}>
               <FieldLabel htmlFor={field.name}>Currency</FieldLabel>
               <Select
                 items={WALLET_CURRENCY_ITEMS}
@@ -147,8 +160,8 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
                 }
               >
                 <SelectTrigger
-                  aria-invalid={invalid || undefined}
-                  aria-describedby={invalid ? errorId : undefined}
+                  aria-invalid={showErrors || undefined}
+                  aria-describedby={showErrors ? errorId : undefined}
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -160,7 +173,10 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
                   ))}
                 </SelectContent>
               </Select>
-              <FieldError id={errorId} errors={field.state.meta.errors} />
+              <FieldError
+                id={errorId}
+                errors={showErrors ? field.state.meta.errors : []}
+              />
             </Field>
           );
         }}

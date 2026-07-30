@@ -39,6 +39,9 @@ export const transactionOccurrences = pgTable(
       .notNull()
       .default("waiting_payment"),
 
+    // Links the transfer_out / transfer_in pair of a single transfer
+    transferGroupId: uuid("transfer_group_id"),
+
     name: text("name").notNull(),
     amountCents: integer("amount_cents").notNull(),
 
@@ -91,5 +94,8 @@ export const transactionOccurrences = pgTable(
     index("transaction_occurrences_bill_idx").on(table.creditCardBillId),
     index("transaction_occurrences_template_idx").on(table.templateId),
     index("transaction_occurrences_status_idx").on(table.status),
+    index("transaction_occurrences_transfer_group_idx").on(
+      table.transferGroupId,
+    ),
   ],
 );

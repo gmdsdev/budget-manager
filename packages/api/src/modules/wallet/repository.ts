@@ -5,7 +5,7 @@ import { transactionOccurrences } from "@budget-manager/db/schema/transactionOcc
 import { transactionTemplates } from "@budget-manager/db/schema/transactionTemplate";
 import { wallets } from "@budget-manager/db/schema/wallet";
 import type { WalletFormDto } from "@budget-manager/schemas";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull, sql } from "drizzle-orm";
 
 const WALLET_PUBLIC_COLUMNS = {
   id: wallets.id,
@@ -47,6 +47,18 @@ function pickWalletUpdate(patch: WalletUpdatePatch): WalletUpdatePatch {
   return set;
 }
 
+function walletFilter({
+  userId,
+  includeArchived,
+}: {
+  userId: string;
+  includeArchived: boolean;
+}) {
+  return includeArchived
+    ? eq(wallets.userId, userId)
+    : and(eq(wallets.userId, userId), eq(wallets.isArchived, false));
+}
+
 export class WalletRepository {
   constructor(private readonly db: Db) {}
 
@@ -64,14 +76,60 @@ export class WalletRepository {
     return this.db
       .select(WALLET_PUBLIC_COLUMNS)
       .from(wallets)
-      .where(
-        includeArchived
-          ? eq(wallets.userId, userId)
-          : and(eq(wallets.userId, userId), eq(wallets.isArchived, false)),
-      )
+      .where(walletFilter({ userId, includeArchived }))
       .orderBy(asc(wallets.name), asc(wallets.id))
       .limit(limit)
       .offset(offset);
+  }
+
+  async count({
+    userId,
+    includeArchived,
+  }: {
+    userId: string;
+    includeArchived: boolean;
+  }) {
+    return this.db.$count(wallets, walletFilter({ userId, includeArchived }));
+  }
+
+  /**
+   * Unpaginated, minimal rows for select inputs. Page size must never silently
+   * hide an option the user needs to pick.
+   */
+  async listOptions({ userId }: { userId: string }) {
+    return this.db
+      .select({
+        id: wallets.id,
+        name: wallets.name,
+        currencyCode: wallets.currencyCode,
+      })
+      .from(wallets)
+      .where(and(eq(wallets.userId, userId), eq(wallets.isArchived, false)))
+      .orderBy(asc(wallets.name), asc(wallets.id));
+  }
+
+  async getMovementTotals({ userId }: { userId: string }) {
+    return this.db
+      .select({
+        walletId: transactionOccurrences.walletId,
+        kind: transactionOccurrences.kind,
+        status: transactionOccurrences.status,
+        totalCents: sql<number>`sum(${transactionOccurrences.amountCents})`.mapWith(
+          Number,
+        ),
+      })
+      .from(transactionOccurrences)
+      .where(
+        and(
+          eq(transactionOccurrences.userId, userId),
+          isNotNull(transactionOccurrences.walletId),
+        ),
+      )
+      .groupBy(
+        transactionOccurrences.walletId,
+        transactionOccurrences.kind,
+        transactionOccurrences.status,
+      );
   }
 
   async findById({ id, userId }: { id: string; userId: string }) {

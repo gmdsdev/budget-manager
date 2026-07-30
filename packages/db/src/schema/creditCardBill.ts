@@ -1,10 +1,7 @@
 import {
   date,
   index,
-  integer,
-  pgEnum,
   pgTable,
-  text,
   timestamp,
   uniqueIndex,
   uuid,
@@ -12,17 +9,6 @@ import {
 import { user } from "./auth";
 import { creditCards } from "./creditCard";
 import { wallets } from "./wallet";
-
-/**
- * Enums
- */
-
-export const creditCardBillStatusEnum = pgEnum("credit_card_bill_status", [
-  "open",
-  "waiting_payment",
-  "paid",
-  "cancelled",
-]);
 
 /**
  * Credit card bills
@@ -53,14 +39,9 @@ export const creditCardBills = pgTable(
     closeAt: date("close_at").notNull(),
     dueAt: date("due_at").notNull(),
 
-    status: creditCardBillStatusEnum("status").notNull().default("open"),
-
-    // Cached totals, derived from transactions
-    statementTotalCents: integer("statement_total_cents").notNull().default(0),
-    paidCents: integer("paid_cents").notNull().default(0),
-    usedLimitCents: integer("used_limit_cents").notNull().default(0),
-
-    notes: text("notes"),
+    // No stored status or cached totals: the statement total and paid amount are
+    // summed from the linked occurrences, and a bill "closes" simply by closeAt
+    // passing. Storing either would need a scheduler and could drift.
 
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -77,7 +58,6 @@ export const creditCardBills = pgTable(
       table.periodEnd,
     ),
     index("credit_card_bills_card_idx").on(table.creditCardId),
-    index("credit_card_bills_status_idx").on(table.status),
     index("credit_card_bills_user_id_idx").on(table.userId),
     index("credit_card_bills_billing_wallet_idx").on(table.billingWalletId),
   ],

@@ -40,6 +40,27 @@ export const walletColumns: ColumnDef<WalletRow>[] = [
     ),
   },
   {
+    accessorKey: "balanceCents",
+    header: () => <span className="block text-right">Balance</span>,
+    cell: ({ row }) => {
+      const { balanceCents, projectedBalanceCents, currencyCode } = row.original;
+      const hasPending = projectedBalanceCents !== balanceCents;
+
+      return (
+        <span className="block text-right tabular-nums">
+          <span className={balanceCents < 0 ? "text-destructive" : undefined}>
+            {formatMinorUnits(balanceCents, currencyCode)}
+          </span>
+          {hasPending && (
+            <span className="block text-xs text-muted-foreground">
+              {formatMinorUnits(projectedBalanceCents, currencyCode)} projected
+            </span>
+          )}
+        </span>
+      );
+    },
+  },
+  {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => <WalletRowActions wallet={row.original} />,

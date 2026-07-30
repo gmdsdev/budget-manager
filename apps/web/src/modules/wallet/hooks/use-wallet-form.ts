@@ -1,5 +1,5 @@
 import { type WalletFormDto, WalletFormSchema } from "@budget-manager/schemas";
-import { useForm } from "@tanstack/react-form";
+import { revalidateLogic, useForm } from "@tanstack/react-form";
 
 export function useWalletForm({
   onSubmit,
@@ -11,9 +11,15 @@ export function useWalletForm({
   return useForm({
     defaultValues,
     onSubmit: ({ value }) => onSubmit(value),
+    // One validation cause only. TanStack keys errors by cause, so mixing
+    // onBlur with onChange strands blur-sourced errors until the next blur —
+    // which Base UI selects never fire, leaving the form unsubmittable.
+    validationLogic: revalidateLogic({
+      mode: "change",
+      modeAfterSubmission: "change",
+    }),
     validators: {
-      onBlur: WalletFormSchema,
-      onSubmit: WalletFormSchema,
+      onDynamic: WalletFormSchema,
     },
   });
 }

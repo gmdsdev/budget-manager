@@ -1,0 +1,24 @@
+{
+  "name": "@budget-manager/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test:e2e": "bun test",
+    "test:e2e:api": "bun test src/api",
+    "test:e2e:ui": "bun test src/ui"
+  },
+  "dependencies": {
+    "@budget-manager/api": "workspace:*",
+    "@budget-manager/schemas": "workspace:*",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:"
+  },
+  "devDependencies": {
+    "@budget-manager/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "playwright": "^1.56.0",
+    "typescript": "catalog:"
+  }
+}

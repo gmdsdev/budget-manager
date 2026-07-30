@@ -18,6 +18,13 @@ export const walletRouter = router({
       });
     }),
 
+  // Unpaginated, for select inputs. See CLAUDE.md on pagination.
+  options: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.services.wallet.getOptions({
+      userId: ctx.session.user.id,
+    });
+  }),
+
   create: protectedProcedure
     .input(CreateWalletInput)
     .mutation(async ({ input, ctx }) => {

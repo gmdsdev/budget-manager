@@ -1,0 +1,10 @@
+{
+  "extends": "@budget-manager/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    // Callbacks passed to page.$$eval / page.waitForFunction are serialized and
+    // run inside the browser, so they legitimately reference DOM globals.
+    "lib": ["ESNext", "DOM"]
+  },
+  "include": ["src"]
+}

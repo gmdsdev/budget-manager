@@ -36,9 +36,7 @@ export const wallets = pgTable(
 
     currencyCode: text("currency_code").notNull().default("BRL"),
 
-    // Optional cache fields
     openingBalanceCents: integer("opening_balance_cents").notNull().default(0),
-    currentBalanceCents: integer("current_balance_cents").notNull().default(0),
 
     isArchived: boolean("is_archived").notNull().default(false),
     archivedAt: timestamp("archived_at", { withTimezone: true }),

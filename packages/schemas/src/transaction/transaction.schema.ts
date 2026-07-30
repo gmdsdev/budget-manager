@@ -1,0 +1,224 @@
+import { z } from "zod";
+import { MoneyMinorUnitsSchema } from "../wallet/wallet.schema";
+
+/** Mirrors the `transaction_kind` pg enum exactly. */
+export enum TransactionKind {
+  INCOME = "income",
+  EXPENSE = "expense",
+  TRANSFER_IN = "transfer_in",
+  TRANSFER_OUT = "transfer_out",
+  CREDIT_CARD_PURCHASE = "credit_card_purchase",
+  CREDIT_CARD_PAYMENT = "credit_card_payment",
+}
+
+export const TransactionKindLabelMap: Record<TransactionKind, string> = {
+  [TransactionKind.INCOME]: "Income",
+  [TransactionKind.EXPENSE]: "Expense",
+  [TransactionKind.TRANSFER_IN]: "Transfer in",
+  [TransactionKind.TRANSFER_OUT]: "Transfer out",
+  [TransactionKind.CREDIT_CARD_PURCHASE]: "Card purchase",
+  [TransactionKind.CREDIT_CARD_PAYMENT]: "Card payment",
+};
+
+export const TRANSACTION_FORM_KINDS = [
+  TransactionKind.INCOME,
+  TransactionKind.EXPENSE,
+] as const;
+
+export type TransactionFormKind = (typeof TRANSACTION_FORM_KINDS)[number];
+
+export const TRANSFER_KINDS = [
+  TransactionKind.TRANSFER_OUT,
+  TransactionKind.TRANSFER_IN,
+] as const;
+
+export const CREDITED_TRANSACTION_KINDS: readonly TransactionKind[] = [
+  TransactionKind.INCOME,
+  TransactionKind.TRANSFER_IN,
+];
+
+/**
+ * Which kinds move money in a **wallet**. A card purchase is deliberately absent:
+ * it creates a debt on the card and touches no wallet. Paying the bill is what
+ * finally leaves the wallet.
+ */
+export const WALLET_AFFECTING_KINDS: readonly TransactionKind[] = [
+  TransactionKind.INCOME,
+  TransactionKind.EXPENSE,
+  TransactionKind.TRANSFER_IN,
+  TransactionKind.TRANSFER_OUT,
+  TransactionKind.CREDIT_CARD_PAYMENT,
+];
+
+/** Which kinds move the outstanding balance on a **card**. */
+export const CARD_AFFECTING_KINDS: readonly TransactionKind[] = [
+  TransactionKind.CREDIT_CARD_PURCHASE,
+  TransactionKind.CREDIT_CARD_PAYMENT,
+];
+
+/**
+ * What a budget month counts as spending. A card purchase is the expense; paying
+ * the bill later settles a liability and must NOT be counted again, or every
+ * card expense lands in the month totals twice.
+ */
+export const MONTH_EXPENSE_KINDS: readonly TransactionKind[] = [
+  TransactionKind.EXPENSE,
+  TransactionKind.CREDIT_CARD_PURCHASE,
+];
+
+export const MONTH_INCOME_KINDS: readonly TransactionKind[] = [
+  TransactionKind.INCOME,
+];
+
+export function isTransactionKind(value: string): value is TransactionKind {
+  return (Object.values(TransactionKind) as string[]).includes(value);
+}
+
+export function signedAmountCents(
+  kind: TransactionKind,
+  amountCents: number,
+): number {
+  return CREDITED_TRANSACTION_KINDS.includes(kind) ? amountCents : -amountCents;
+}
+
+export enum TransactionStatus {
+  WAITING_PAYMENT = "waiting_payment",
+  PAID = "paid",
+  CANCELLED = "cancelled",
+}
+
+export function isTransactionStatus(value: string): value is TransactionStatus {
+  return (Object.values(TransactionStatus) as string[]).includes(value);
+}
+
+export const TransactionStatusLabelMap: Record<TransactionStatus, string> = {
+  [TransactionStatus.WAITING_PAYMENT]: "Waiting payment",
+  [TransactionStatus.PAID]: "Paid",
+  [TransactionStatus.CANCELLED]: "Cancelled",
+};
+
+export const TRANSACTION_NAME_MAX_LENGTH = 200;
+export const TRANSACTION_NOTES_MAX_LENGTH = 500;
+
+export const TransactionAmountSchema = MoneyMinorUnitsSchema.min(
+  1,
+  "Amount must be greater than zero",
+);
+
+const TransactionNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Name is required")
+  .max(
+    TRANSACTION_NAME_MAX_LENGTH,
+    `Name must be ${TRANSACTION_NAME_MAX_LENGTH} characters or fewer`,
+  );
+
+const TransactionNotesSchema = z
+  .string()
+  .trim()
+  .max(
+    TRANSACTION_NOTES_MAX_LENGTH,
+    `Notes must be ${TRANSACTION_NOTES_MAX_LENGTH} characters or fewer`,
+  )
+  .nullable();
+
+export const TransactionSchema = z.object({
+  id: z.uuid(),
+  kind: z.enum(Object.values(TransactionKind)),
+  status: z.enum(Object.values(TransactionStatus)),
+  name: TransactionNameSchema,
+  amountCents: TransactionAmountSchema,
+  occurrenceDate: z.iso.date("Date is required"),
+  walletId: z.uuid("Wallet is required"),
+  categoryId: z.uuid().nullable(),
+  transferGroupId: z.uuid().nullable(),
+  notes: TransactionNotesSchema,
+  paidAt: z.date().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type TransactionDto = z.infer<typeof TransactionSchema>;
+
+export const TransactionFormSchema = TransactionSchema.pick({
+  status: true,
+  name: true,
+  amountCents: true,
+  occurrenceDate: true,
+  walletId: true,
+  categoryId: true,
+  notes: true,
+}).extend({
+  kind: z.enum(TRANSACTION_FORM_KINDS),
+});
+
+export type TransactionFormDto = z.infer<typeof TransactionFormSchema>;
+
+export const DeleteTransactionSchema = TransactionSchema.pick({ id: true });
+
+export type DeleteTransactionDto = z.infer<typeof DeleteTransactionSchema>;
+
+export const SAME_WALLET_TRANSFER_MESSAGE =
+  "Source and destination wallets must be different";
+
+export const TransferFormFieldsSchema = z.object({
+  status: z.enum(Object.values(TransactionStatus)),
+  name: TransactionNameSchema,
+  amountCents: TransactionAmountSchema,
+  occurrenceDate: z.iso.date("Date is required"),
+  fromWalletId: z.uuid("Source wallet is required"),
+  toWalletId: z.uuid("Destination wallet is required"),
+  notes: TransactionNotesSchema,
+});
+
+export const hasDistinctWallets = (value: {
+  fromWalletId: string;
+  toWalletId: string;
+}) => value.fromWalletId !== value.toWalletId;
+
+export const DISTINCT_WALLETS_ERROR = {
+  message: SAME_WALLET_TRANSFER_MESSAGE,
+  path: ["toWalletId"],
+};
+
+export const TransferFormSchema = TransferFormFieldsSchema.refine(
+  hasDistinctWallets,
+  DISTINCT_WALLETS_ERROR,
+);
+
+export type TransferFormDto = z.infer<typeof TransferFormFieldsSchema>;
+
+export const TransferGroupIdSchema = z.object({
+  transferGroupId: z.uuid(),
+});
+
+export type TransferGroupIdDto = z.infer<typeof TransferGroupIdSchema>;
+
+/** A purchase on a card. No wallet: nothing leaves an account yet. */
+export const CardPurchaseFormSchema = z.object({
+  status: z.enum(Object.values(TransactionStatus)),
+  name: TransactionNameSchema,
+  amountCents: TransactionAmountSchema,
+  occurrenceDate: z.iso.date("Date is required"),
+  creditCardId: z.uuid("Card is required"),
+  categoryId: z.uuid().nullable(),
+  notes: TransactionNotesSchema,
+});
+
+export type CardPurchaseFormDto = z.infer<typeof CardPurchaseFormSchema>;
+
+/** Paying a card bill: money leaves a wallet and reduces what the card owes. */
+export const CardPaymentFormSchema = z.object({
+  status: z.enum(Object.values(TransactionStatus)),
+  name: TransactionNameSchema,
+  amountCents: TransactionAmountSchema,
+  occurrenceDate: z.iso.date("Date is required"),
+  creditCardId: z.uuid("Card is required"),
+  walletId: z.uuid("Wallet is required"),
+  /** Optional: allocate the payment to a specific statement. */
+  creditCardBillId: z.uuid().nullable(),
+  notes: TransactionNotesSchema,
+});
+
+export type CardPaymentFormDto = z.infer<typeof CardPaymentFormSchema>;

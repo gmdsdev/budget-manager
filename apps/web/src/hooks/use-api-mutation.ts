@@ -14,7 +14,7 @@ type ApiMutationProps<TData, TVariables> = MutationOptions<
   successMessage?: string;
   errorMessage?: string;
   suppressErrorToast?: boolean;
-  invalidateQueries?: QueryFilters;
+  invalidateQueries?: QueryFilters | QueryFilters[];
 };
 
 export function useApiMutation<TData, TVariables>({
@@ -34,9 +34,15 @@ export function useApiMutation<TData, TVariables>({
         toast.success(successMessage);
       }
 
-      const invalidation = invalidateQueries
-        ? queryClient.invalidateQueries(invalidateQueries)
-        : undefined;
+      const filters = Array.isArray(invalidateQueries)
+        ? invalidateQueries
+        : invalidateQueries
+          ? [invalidateQueries]
+          : [];
+
+      const invalidation = Promise.all(
+        filters.map((filter) => queryClient.invalidateQueries(filter)),
+      );
 
       options.onSuccess?.(data, variables, onMutateResult, context);
 

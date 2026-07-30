@@ -1,5 +1,6 @@
 import type { WalletFormDto } from "@budget-manager/schemas";
 import { ConflictError, NotFoundError } from "../../errors";
+import { computeWalletBalances } from "./balance";
 import type { WalletRepository, WalletUpdatePatch } from "./repository";
 
 export class WalletService {
@@ -16,12 +17,22 @@ export class WalletService {
     limit: number;
     offset: number;
   }) {
-    return await this.repository.getAll({
-      userId,
-      includeArchived,
+    const [rows, movements, total] = await Promise.all([
+      this.repository.getAll({ userId, includeArchived, limit, offset }),
+      this.repository.getMovementTotals({ userId }),
+      this.repository.count({ userId, includeArchived }),
+    ]);
+
+    return {
+      rows: computeWalletBalances(rows, movements),
+      total,
       limit,
       offset,
-    });
+    };
+  }
+
+  async getOptions({ userId }: { userId: string }) {
+    return await this.repository.listOptions({ userId });
   }
 
   async create({ userId, wallet }: { userId: string; wallet: WalletFormDto }) {

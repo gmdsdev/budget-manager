@@ -15,6 +15,34 @@
       "when": 1785358075405,
       "tag": "0001_medical_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785411539492,
+      "tag": "0002_next_prodigy",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785414887864,
+      "tag": "0003_puzzling_wonder_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785429054913,
+      "tag": "0004_green_northstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785432179701,
+      "tag": "0005_equal_vivisector",
+      "breakpoints": true
     }
   ]
 }

@@ -70,18 +70,9 @@ export function EditWalletDialog({
 
         <DialogFooter>
           <DialogClose render={<Button variant="outline">Cancel</Button>} />
-          <form.Subscribe
-            selector={(state) => ({
-              canSubmit: state.canSubmit,
-              isSubmitting: state.isSubmitting,
-            })}
-          >
-            {({ canSubmit, isSubmitting }) => (
-              <Button
-                type="submit"
-                form={formId}
-                disabled={!canSubmit || isSubmitting}
-              >
+          <form.Subscribe selector={(state) => state.isSubmitting}>
+            {(isSubmitting) => (
+              <Button type="submit" form={formId} disabled={isSubmitting}>
                 {isSubmitting ? "Saving…" : "Save changes"}
               </Button>
             )}

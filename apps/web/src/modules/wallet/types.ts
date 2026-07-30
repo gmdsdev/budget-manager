@@ -5,6 +5,8 @@ export type WalletRow = {
   name: string;
   type: WalletType;
   openingBalanceCents: number;
+  balanceCents: number;
+  projectedBalanceCents: number;
   currencyCode: string;
   isArchived: boolean;
   createdAt: Date;
