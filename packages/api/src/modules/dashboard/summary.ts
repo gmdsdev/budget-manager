@@ -1,4 +1,4 @@
-import { formatDate } from "../../dates";
+import { formatDate, parseDateString } from "../../dates";
 import {
   MONTH_EXPENSE_KINDS,
   MONTH_INCOME_KINDS,
@@ -7,7 +7,12 @@ import {
   isTransactionStatus,
 } from "@budget-manager/schemas";
 
-export type CurrencyMovement = {
+/**
+ * A movement total already bucketed by the month it falls in, so one query
+ * feeds both the selected month's figures and the trailing trend.
+ */
+export type TrendMovement = {
+  month: string;
   currencyCode: string;
   kind: string;
   status: string;
@@ -23,13 +28,18 @@ export type CategoryMovement = {
 };
 
 export type WalletBalanceRow = {
+  id: string;
+  name: string;
   currencyCode: string;
   balanceCents: number;
   projectedBalanceCents: number;
 };
 
 export type CardBalanceRow = {
+  id: string;
+  name: string;
   currencyCode: string;
+  limitCents: number;
   outstandingCents: number;
   availableCents: number;
 };
@@ -38,6 +48,29 @@ export type CategorySpend = {
   categoryId: string | null;
   name: string;
   amountCents: number;
+};
+
+/** One point of the trailing cash-flow series. */
+export type MonthPoint = {
+  month: string;
+  incomeCents: number;
+  expenseCents: number;
+  netCents: number;
+};
+
+export type WalletSlice = {
+  id: string;
+  name: string;
+  balanceCents: number;
+  projectedBalanceCents: number;
+};
+
+export type CardSlice = {
+  id: string;
+  name: string;
+  limitCents: number;
+  outstandingCents: number;
+  availableCents: number;
 };
 
 export type CurrencySummary = {
@@ -56,6 +89,10 @@ export type CurrencySummary = {
   expenseCents: number;
   netCents: number;
   topCategories: CategorySpend[];
+  /** Oldest first, one point per month in the requested window. */
+  trend: MonthPoint[];
+  wallets: WalletSlice[];
+  cards: CardSlice[];
 };
 
 export const UNCATEGORIZED_LABEL = "Uncategorized";
@@ -98,42 +135,70 @@ export function monthRange(month: string): { from: string; to: string } {
   };
 }
 
-function sumMonthByCurrency(movements: CurrencyMovement[]) {
-  const totals = new Map<
-    string,
-    { incomeCents: number; expenseCents: number }
-  >();
+/**
+ * Transfers move money between the user's own wallets, and a card payment
+ * settles a debt the purchase already counted — both would inflate a month that
+ * gained and lost nothing, so neither side claims them.
+ */
+function monthRole(kind: string): "income" | "expense" | null {
+  if (!isTransactionKind(kind)) return null;
+  if (MONTH_INCOME_KINDS.includes(kind)) return "income";
+  if (MONTH_EXPENSE_KINDS.includes(kind)) return "expense";
 
-  for (const movement of movements) {
-    if (!isTransactionKind(movement.kind) || !counts(movement.status)) {
-      continue;
-    }
+  return null;
+}
 
-    const isIncome = MONTH_INCOME_KINDS.includes(movement.kind);
-    const isExpense = MONTH_EXPENSE_KINDS.includes(movement.kind);
+/** The `YYYY-MM` months ending at `month`, oldest first. */
+export function trailingMonths(month: string, count: number): string[] {
+  const anchor = parseDateString(monthRange(month).from);
+  const months: string[] = [];
 
-    // Transfers move money between the user's own wallets, and a card payment
-    // settles a debt the purchase already counted — both would inflate a month
-    // that gained and lost nothing.
-    if (!isIncome && !isExpense) {
-      continue;
-    }
+  for (let offset = count - 1; offset >= 0; offset -= 1) {
+    const point = new Date(anchor.getFullYear(), anchor.getMonth() - offset, 1);
 
-    const entry = totals.get(movement.currencyCode) ?? {
-      incomeCents: 0,
-      expenseCents: 0,
-    };
-
-    if (isIncome) {
-      entry.incomeCents += movement.totalCents;
-    } else {
-      entry.expenseCents += movement.totalCents;
-    }
-
-    totals.set(movement.currencyCode, entry);
+    months.push(resolveMonth(point));
   }
 
-  return totals;
+  return months;
+}
+
+function emptyTrend(months: string[]): MonthPoint[] {
+  return months.map((month) => ({
+    month,
+    incomeCents: 0,
+    expenseCents: 0,
+    netCents: 0,
+  }));
+}
+
+function trendByCurrency(movements: TrendMovement[], months: string[]) {
+  const slotOf = new Map(months.map((month, index) => [month, index]));
+  const trends = new Map<string, MonthPoint[]>();
+
+  for (const movement of movements) {
+    const slot = slotOf.get(movement.month);
+    const role = monthRole(movement.kind);
+
+    if (slot === undefined || role === null || !counts(movement.status)) {
+      continue;
+    }
+
+    const points = trends.get(movement.currencyCode) ?? emptyTrend(months);
+    const point = points[slot];
+
+    if (!point) continue;
+
+    if (role === "income") {
+      point.incomeCents += movement.totalCents;
+    } else {
+      point.expenseCents += movement.totalCents;
+    }
+
+    point.netCents = point.incomeCents - point.expenseCents;
+    trends.set(movement.currencyCode, points);
+  }
+
+  return trends;
 }
 
 function topCategoriesByCurrency(movements: CategoryMovement[], limit: number) {
@@ -186,17 +251,21 @@ function topCategoriesByCurrency(movements: CategoryMovement[], limit: number) {
 export function buildCurrencySummaries({
   wallets,
   cards = [],
-  monthMovements,
+  trendMonths,
+  trendMovements,
   categoryMovements,
   topCategoryLimit = 5,
 }: {
   wallets: WalletBalanceRow[];
   cards?: CardBalanceRow[];
-  monthMovements: CurrencyMovement[];
+  /** The window the trend covers, oldest first; the last one is the month in view. */
+  trendMonths: string[];
+  trendMovements: TrendMovement[];
   categoryMovements: CategoryMovement[];
   topCategoryLimit?: number;
 }): CurrencySummary[] {
-  const monthTotals = sumMonthByCurrency(monthMovements);
+  const trends = trendByCurrency(trendMovements, trendMonths);
+  const selectedMonth = trendMonths.at(-1);
   const categoryTotals = topCategoriesByCurrency(
     categoryMovements,
     topCategoryLimit,
@@ -222,6 +291,9 @@ export function buildCurrencySummaries({
       expenseCents: 0,
       netCents: 0,
       topCategories: [],
+      trend: emptyTrend(trendMonths),
+      wallets: [],
+      cards: [],
     };
 
     byCurrency.set(currencyCode, created);
@@ -235,6 +307,12 @@ export function buildCurrencySummaries({
     summary.walletCount += 1;
     summary.balanceCents += wallet.balanceCents;
     summary.projectedBalanceCents += wallet.projectedBalanceCents;
+    summary.wallets.push({
+      id: wallet.id,
+      name: wallet.name,
+      balanceCents: wallet.balanceCents,
+      projectedBalanceCents: wallet.projectedBalanceCents,
+    });
   }
 
   for (const card of cards) {
@@ -243,6 +321,13 @@ export function buildCurrencySummaries({
     summary.cardCount += 1;
     summary.cardOutstandingCents += card.outstandingCents;
     summary.cardAvailableCents += card.availableCents;
+    summary.cards.push({
+      id: card.id,
+      name: card.name,
+      limitCents: card.limitCents,
+      outstandingCents: card.outstandingCents,
+      availableCents: card.availableCents,
+    });
   }
 
   // Only after both loops, so a card-only currency still nets correctly.
@@ -250,12 +335,16 @@ export function buildCurrencySummaries({
     summary.netWorthCents = summary.balanceCents - summary.cardOutstandingCents;
   }
 
-  for (const [currencyCode, totals] of monthTotals) {
+  // The month in view is the last trend point, so the figures at the top of the
+  // dashboard and the last column of its chart cannot disagree.
+  for (const [currencyCode, points] of trends) {
     const summary = ensure(currencyCode);
+    const selected = points.find((point) => point.month === selectedMonth);
 
-    summary.incomeCents = totals.incomeCents;
-    summary.expenseCents = totals.expenseCents;
-    summary.netCents = totals.incomeCents - totals.expenseCents;
+    summary.trend = points;
+    summary.incomeCents = selected?.incomeCents ?? 0;
+    summary.expenseCents = selected?.expenseCents ?? 0;
+    summary.netCents = selected?.netCents ?? 0;
   }
 
   for (const [currencyCode, categories] of categoryTotals) {

@@ -3,12 +3,19 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Page } from "playwright";
 
 import { requireWeb, WEB_URL } from "../support/env";
-import { card, transaction, wallet } from "../support/fixtures";
+import {
+  card,
+  dayLastMonth,
+  dayThisMonth,
+  transaction,
+  wallet,
+} from "../support/fixtures";
 import {
   apiForPage,
   closeApp,
   fillField,
   openApp,
+  pickDateRangePreset,
   pickSelect,
   rows,
   rowTexts,
@@ -47,10 +54,22 @@ beforeAll(async () => {
       card({ name: "Unbilled Master", defaultBillingWalletId: null }),
     ),
     api.transaction.create.mutate(
-      transaction(checking.id, { name: "Zebra Rent" }),
+      transaction(checking.id, {
+        name: "Zebra Rent",
+        occurrenceDate: dayThisMonth(5),
+      }),
     ),
     api.transaction.create.mutate(
-      transaction(euro.id, { name: "Coffee Beans" }),
+      transaction(euro.id, {
+        name: "Coffee Beans",
+        occurrenceDate: dayThisMonth(6),
+      }),
+    ),
+    api.transaction.create.mutate(
+      transaction(checking.id, {
+        name: "Old Subscription",
+        occurrenceDate: dayLastMonth(12),
+      }),
     ),
   ]);
 }, 60_000);
@@ -130,6 +149,21 @@ describe("credit card filters", () => {
 describe("transaction filters", () => {
   beforeAll(async () => {
     await page.goto(`${WEB_URL}/transaction`, { waitUntil: "networkidle" });
+    await waitForRowCount(page, 2);
+  }, 60_000);
+
+  test("opens scoped to the current month", async () => {
+    // Never an all-time ledger: the third row sits in last month.
+    expect((await rowTexts(page)).flat()).not.toContain("Old Subscription");
+  });
+
+  test("reaches another month through a preset", async () => {
+    await pickDateRangePreset(page, "Last month");
+    await waitForRowCount(page, 1);
+
+    expect((await rowTexts(page)).flat()).toContain("Old Subscription");
+
+    await page.getByRole("button", { name: "Clear filters" }).click();
     await waitForRowCount(page, 2);
   }, 60_000);
 

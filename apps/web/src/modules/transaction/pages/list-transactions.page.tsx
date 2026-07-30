@@ -19,14 +19,14 @@ import { transactionColumns } from "../components/transaction-list/columns";
 import { TransactionFilters } from "../components/transaction-list/transaction-filters";
 import { useTransactionsQuery } from "../queries/use-transactions-query";
 import {
-  EMPTY_TRANSACTION_FILTERS,
+  defaultTransactionFilters,
   isTransactionFiltered,
   type TransactionFiltersState,
 } from "../types";
 
 export default function ListTransactionsPage() {
   const { filters, page, setFilters, setPage } =
-    usePagedFilters<TransactionFiltersState>(EMPTY_TRANSACTION_FILTERS);
+    usePagedFilters<TransactionFiltersState>(defaultTransactionFilters());
 
   const { data, isPending, isError, error, refetch, isRefetching, isFetching } =
     useTransactionsQuery(filters, page);

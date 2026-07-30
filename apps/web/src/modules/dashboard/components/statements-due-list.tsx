@@ -8,22 +8,8 @@ import {
 } from "@budget-manager/ui/components/card";
 import { buttonVariants } from "@budget-manager/ui/components/button";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
+import type { StatementDue } from "../types";
 import { formatDayLabel } from "../utils/month";
-
-export type StatementDue = {
-  id: string;
-  creditCardId: string;
-  creditCardName: string;
-  currencyCode: string;
-  periodStart: string;
-  periodEnd: string;
-  closeAt: string;
-  dueAt: string;
-  statementTotalCents: number;
-  paidCents: number;
-  remainingCents: number;
-  status: string;
-};
 
 const STATUS_LABELS: Record<string, string> = {
   open: "Still open",
@@ -69,15 +55,21 @@ export function StatementsDueList({
                   className="flex flex-row items-center justify-between gap-4 py-2 first:pt-0 last:pb-0"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm">
+                    <p className="flex flex-row items-center gap-2 truncate text-sm">
+                      <span
+                        aria-hidden
+                        className={`size-1.5 shrink-0 ${
+                          overdue ? "bg-destructive" : "bg-muted-foreground/40"
+                        }`}
+                      />
                       {bill.creditCardName}
                       {overdue && (
-                        <span className="ml-2 text-xs font-medium text-destructive">
+                        <span className="text-xs font-medium text-destructive">
                           Overdue
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="pl-3.5 text-xs text-muted-foreground">
                       Due {formatDayLabel(bill.dueAt)} ·{" "}
                       {formatDayLabel(bill.periodStart)}–
                       {formatDayLabel(bill.periodEnd)} ·{" "}

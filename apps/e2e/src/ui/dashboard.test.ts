@@ -90,6 +90,25 @@ describe("dashboard", () => {
     expect(body).toContain("Groceries");
   }, 60_000);
 
+  test("charts the cash flow and lists the accounts behind the totals", async () => {
+    // The chart is canvas-free SVG, so what is asserted is its table twin: the
+    // same numbers, reachable without colour or hover.
+    const body = await bodyText(page);
+
+    expect(body).toContain("Cash flow");
+    expect(body).toContain("Wallets");
+    expect(body).toContain("Checking");
+    expect(
+      await page
+        .getByRole("table", { name: /Income, spending and net per month/i })
+        .count(),
+    ).toBe(1);
+    expect(await page.getByRole("img", { name: /Monthly net in BRL/i }).count()).toBe(
+      1,
+    );
+    expect(body).toContain("R$ 4.800,00");
+  }, 60_000);
+
   test("cannot navigate past the current month", async () => {
     expect(await page.getByRole("button", { name: "Next" }).isDisabled()).toBe(
       true,

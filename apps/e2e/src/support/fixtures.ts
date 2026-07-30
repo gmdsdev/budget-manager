@@ -115,6 +115,21 @@ export const transfer = (
   ...overrides,
 });
 
+/**
+ * A day in the month the suite happens to run in, capped at 28 so it exists in
+ * every month. Rows the transaction list must show without touching its filters
+ * have to be dated here, since that list always scopes itself to a date range.
+ */
+export function dayThisMonth(day: number, today = new Date()) {
+  const month = `${today.getMonth() + 1}`.padStart(2, "0");
+
+  return `${today.getFullYear()}-${month}-${`${Math.min(day, 28)}`.padStart(2, "0")}`;
+}
+
+export function dayLastMonth(day: number, today = new Date()) {
+  return dayThisMonth(day, new Date(today.getFullYear(), today.getMonth() - 1, 1));
+}
+
 /** The common starting point: two same-currency wallets and both category types. */
 export async function seedBasics(client: ApiClient) {
   const [checking, savings, salary, groceries] = await Promise.all([

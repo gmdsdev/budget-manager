@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  formatCompactMinorUnits,
   formatMinorUnits,
   minorUnitDigits,
   MONEY_MAX_MINOR_UNITS,
@@ -71,6 +72,40 @@ describe("formatMinorUnits", () => {
 
     expect(first).toBe(second);
     expect(first).toContain("1,234.56");
+  });
+});
+
+describe("formatCompactMinorUnits", () => {
+  test("shortens thousands and millions", () => {
+    expect(formatCompactMinorUnits(1_000_00, "USD")).toBe("$1K");
+    expect(formatCompactMinorUnits(12_345_67, "USD")).toBe("$12.3K");
+    expect(formatCompactMinorUnits(1_234_567_89, "USD")).toBe("$1.2M");
+  });
+
+  test("keeps the exact amount below one thousand, so a tick stays findable", () => {
+    expect(formatCompactMinorUnits(999_99, "USD")).toBe(
+      formatMinorUnits(999_99, "USD"),
+    );
+    expect(formatCompactMinorUnits(0, "USD")).toBe(formatMinorUnits(0, "USD"));
+  });
+
+  test("keeps the sign on money going out", () => {
+    expect(formatCompactMinorUnits(-450_000_00, "USD")).toBe("-$450K");
+  });
+
+  test("scales by the currency's own minor unit, and compacts the locale's way", () => {
+    // 12,345 yen, not 123.45 — and ja-JP counts in 万, not thousands.
+    expect(formatCompactMinorUnits(12_345, "JPY")).toBe("¥1.2万");
+    // Intl separates with a non-breaking space, so compare on flattened text.
+    expect(
+      formatCompactMinorUnits(1_234_500, "BRL").replace(/\s/g, " "),
+    ).toBe("R$ 12,3 mil");
+  });
+
+  test("falls back to the plain format for a code Intl cannot handle", () => {
+    expect(formatCompactMinorUnits(1_000_00, "ZZ")).toBe(
+      formatMinorUnits(1_000_00, "ZZ"),
+    );
   });
 });
 

@@ -253,6 +253,137 @@ describe("dashboard", () => {
     expect(checking.id).toBeTruthy();
   });
 
+  test("reports a six-month trend ending at the month in view", async () => {
+    const { client, checking, salary } = await freshUser();
+
+    await client.transaction.create.mutate(
+      transaction(checking.id, {
+        kind: TransactionKind.INCOME,
+        amountCents: 500_000,
+        categoryId: salary.id,
+        occurrenceDate: IN_MONTH,
+      }),
+    );
+    await client.transaction.create.mutate(
+      transaction(checking.id, {
+        amountCents: 120_000,
+        occurrenceDate: IN_MONTH,
+      }),
+    );
+    await client.transaction.create.mutate(
+      transaction(checking.id, {
+        amountCents: 30_000,
+        occurrenceDate: "2026-05-09",
+      }),
+    );
+    // Older than the window, and newer than it: neither may appear.
+    await client.transaction.create.mutate(
+      transaction(checking.id, {
+        amountCents: 999_00,
+        occurrenceDate: "2025-12-09",
+      }),
+    );
+    await client.transaction.create.mutate(
+      transaction(checking.id, {
+        amountCents: 888_00,
+        occurrenceDate: NEXT_MONTH,
+      }),
+    );
+
+    const summary = await client.dashboard.getSummary.query({ month: MONTH });
+    const row = brl(summary.currencies);
+
+    expect(summary.trendMonths).toEqual([
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07",
+    ]);
+    expect(row?.trend.map((point) => point.month)).toEqual(
+      summary.trendMonths,
+    );
+    expect(row?.trend.find((point) => point.month === "2026-05")).toEqual({
+      month: "2026-05",
+      incomeCents: 0,
+      expenseCents: 30_000,
+      netCents: -30_000,
+    });
+    // A month with nothing in it is still a point, so the chart has no gaps.
+    expect(row?.trend.find((point) => point.month === "2026-03")).toEqual({
+      month: "2026-03",
+      incomeCents: 0,
+      expenseCents: 0,
+      netCents: 0,
+    });
+    // The month in view is the last point, so figures and chart cannot differ.
+    expect(row?.trend.at(-1)).toEqual({
+      month: MONTH,
+      incomeCents: 500_000,
+      expenseCents: 120_000,
+      netCents: 380_000,
+    });
+  });
+
+  test("the trend window follows the month asked for", async () => {
+    const { client, checking } = await freshUser();
+
+    await client.transaction.create.mutate(
+      transaction(checking.id, {
+        amountCents: 45_000,
+        occurrenceDate: IN_MONTH,
+      }),
+    );
+
+    const june = await client.dashboard.getSummary.query({ month: "2026-06" });
+
+    expect(june.trendMonths.at(-1)).toBe("2026-06");
+    expect(june.trendMonths.at(0)).toBe("2026-01");
+    // July is outside a window that ends in June.
+    expect(
+      brl(june.currencies)?.trend.some((point) => point.expenseCents > 0),
+    ).toBe(false);
+  });
+
+  test("lists the wallets and cards behind each currency's totals", async () => {
+    const { client, checking, savings } = await freshUser();
+    const visa = await client.creditCard.create.mutate(
+      card({ name: "Visa", limitCents: 400_000, defaultBillingWalletId: null }),
+    );
+
+    await client.transaction.createCardPurchase.mutate(
+      cardPurchase(visa.id, {
+        amountCents: 90_000,
+        occurrenceDate: IN_MONTH,
+      }),
+    );
+
+    const row = brl(
+      (await client.dashboard.getSummary.query({ month: MONTH })).currencies,
+    );
+
+    expect(row?.wallets.map((entry) => entry.name).sort()).toEqual([
+      "Checking",
+      "Savings",
+    ]);
+    expect(
+      row?.wallets.find((entry) => entry.id === checking.id)?.balanceCents,
+    ).toBe(100_000);
+    expect(
+      row?.wallets.find((entry) => entry.id === savings.id)?.balanceCents,
+    ).toBe(0);
+    expect(row?.cards).toEqual([
+      {
+        id: visa.id,
+        name: "Visa",
+        limitCents: 400_000,
+        outstandingCents: 90_000,
+        availableCents: 310_000,
+      },
+    ]);
+  });
+
   test("lists pending items oldest first, including overdue, omitting settled", async () => {
     const { client, checking } = await freshUser();
     const future = "2099-12-31";

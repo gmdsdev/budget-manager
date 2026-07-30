@@ -4,12 +4,13 @@ import {
   TransactionRepeats,
   TransactionStatus,
 } from "@budget-manager/schemas";
+import { currentMonthRange } from "@budget-manager/ui/lib/date-range";
 import { describe, expect, test } from "bun:test";
 
 import { PAGE_SIZE } from "@/lib/pagination";
 import {
   cardAccountValue,
-  EMPTY_TRANSACTION_FILTERS,
+  defaultTransactionFilters,
   isTransactionFiltered,
   parseAccountValue,
   TRANSACTION_FILTER_ALL,
@@ -18,52 +19,101 @@ import {
 } from "../types";
 import { transactionsQueryInput } from "./use-transactions-query";
 
-const FIRST_PAGE = { limit: PAGE_SIZE, offset: 0 };
+const DEFAULT_FILTERS = defaultTransactionFilters();
+
+const CURRENT_MONTH = currentMonthRange();
+
+const FIRST_PAGE = {
+  limit: PAGE_SIZE,
+  offset: 0,
+  dateFrom: CURRENT_MONTH.from,
+  dateTo: CURRENT_MONTH.to,
+};
 
 const WALLET_ID = "aeb0f2c2-0d4c-4f14-9b2b-2b6e63b4dcb5";
 
 const CARD_ID = "1f0f0b2e-6b3c-4c2a-9d51-6a1b2c3d4e5f";
 
+describe("defaultTransactionFilters", () => {
+  test("opens on the month the given day falls in", () => {
+    const filters = defaultTransactionFilters(new Date(2026, 1, 14));
+
+    expect(filters.dateFrom).toBe("2026-02-01");
+    expect(filters.dateTo).toBe("2026-02-28");
+  });
+
+  test("leaves every other column unfiltered", () => {
+    expect(defaultTransactionFilters()).toMatchObject({
+      search: "",
+      accountId: TRANSACTION_FILTER_ALL,
+      categoryId: TRANSACTION_FILTER_ALL,
+      kind: TRANSACTION_FILTER_ALL,
+      repeats: TRANSACTION_FILTER_ALL,
+      status: TRANSACTION_FILTER_ALL,
+    });
+  });
+});
+
 describe("transactionsQueryInput", () => {
-  test("sends only pagination for the default state", () => {
-    expect(transactionsQueryInput(EMPTY_TRANSACTION_FILTERS)).toEqual(
-      FIRST_PAGE,
-    );
+  test("sends the current month and pagination for the default state", () => {
+    expect(transactionsQueryInput(DEFAULT_FILTERS)).toEqual(FIRST_PAGE);
   });
 
   test("matches the loader input when nothing is filtered", () => {
-    expect(transactionsQueryInput(EMPTY_TRANSACTION_FILTERS)).toEqual(
+    expect(transactionsQueryInput(DEFAULT_FILTERS)).toEqual(
       transactionsQueryInput(),
     );
   });
 
+  test("still sends a range when the state carries none", () => {
+    expect(
+      transactionsQueryInput({
+        ...DEFAULT_FILTERS,
+        dateFrom: "",
+        dateTo: "",
+      }),
+    ).toEqual(FIRST_PAGE);
+  });
+
+  test("sends the picked range instead of the current month", () => {
+    expect(
+      transactionsQueryInput({
+        ...DEFAULT_FILTERS,
+        dateFrom: "2026-01-01",
+        dateTo: "2026-03-31",
+      }),
+    ).toEqual({
+      ...FIRST_PAGE,
+      dateFrom: "2026-01-01",
+      dateTo: "2026-03-31",
+    });
+  });
+
   test("drops the sentinel values and keeps real filters", () => {
     const input = transactionsQueryInput({
-      ...EMPTY_TRANSACTION_FILTERS,
+      ...DEFAULT_FILTERS,
       kind: TransactionKind.EXPENSE,
       status: TransactionStatus.PAID,
-      dateFrom: "2026-07-01",
     });
 
     expect(input).toEqual({
       ...FIRST_PAGE,
       kind: TransactionKind.EXPENSE,
       status: TransactionStatus.PAID,
-      dateFrom: "2026-07-01",
     });
   });
 
   test("sends a wallet choice as walletId and a card choice as creditCardId", () => {
     expect(
       transactionsQueryInput({
-        ...EMPTY_TRANSACTION_FILTERS,
+        ...DEFAULT_FILTERS,
         accountId: walletAccountValue(WALLET_ID),
       }),
     ).toEqual({ ...FIRST_PAGE, walletId: WALLET_ID });
 
     expect(
       transactionsQueryInput({
-        ...EMPTY_TRANSACTION_FILTERS,
+        ...DEFAULT_FILTERS,
         accountId: cardAccountValue(CARD_ID),
       }),
     ).toEqual({ ...FIRST_PAGE, creditCardId: CARD_ID });
@@ -72,7 +122,7 @@ describe("transactionsQueryInput", () => {
   test("passes the uncategorized sentinel through untouched", () => {
     expect(
       transactionsQueryInput({
-        ...EMPTY_TRANSACTION_FILTERS,
+        ...DEFAULT_FILTERS,
         categoryId: FILTER_NONE,
       }),
     ).toEqual({ ...FIRST_PAGE, categoryId: FILTER_NONE });
@@ -81,7 +131,7 @@ describe("transactionsQueryInput", () => {
   test("sends the search term and the repeats choice", () => {
     expect(
       transactionsQueryInput({
-        ...EMPTY_TRANSACTION_FILTERS,
+        ...DEFAULT_FILTERS,
         search: "coffee",
         repeats: TransactionRepeats.RECURRING,
       }),
@@ -93,23 +143,21 @@ describe("transactionsQueryInput", () => {
   });
 
   test("translates the page number into an offset", () => {
-    expect(transactionsQueryInput(EMPTY_TRANSACTION_FILTERS, 1).offset).toBe(0);
-    expect(transactionsQueryInput(EMPTY_TRANSACTION_FILTERS, 2).offset).toBe(
-      PAGE_SIZE,
-    );
-    expect(transactionsQueryInput(EMPTY_TRANSACTION_FILTERS, 3).offset).toBe(
+    expect(transactionsQueryInput(DEFAULT_FILTERS, 1).offset).toBe(0);
+    expect(transactionsQueryInput(DEFAULT_FILTERS, 2).offset).toBe(PAGE_SIZE);
+    expect(transactionsQueryInput(DEFAULT_FILTERS, 3).offset).toBe(
       PAGE_SIZE * 2,
     );
   });
 
   test("keeps filters and pagination together on later pages", () => {
     const input = transactionsQueryInput(
-      { ...EMPTY_TRANSACTION_FILTERS, kind: TransactionKind.INCOME },
+      { ...DEFAULT_FILTERS, kind: TransactionKind.INCOME },
       2,
     );
 
     expect(input).toEqual({
-      limit: PAGE_SIZE,
+      ...FIRST_PAGE,
       offset: PAGE_SIZE,
       kind: TransactionKind.INCOME,
     });
@@ -118,40 +166,52 @@ describe("transactionsQueryInput", () => {
 
 describe("isTransactionFiltered", () => {
   test("is false for the default state", () => {
-    expect(isTransactionFiltered(EMPTY_TRANSACTION_FILTERS)).toBe(false);
+    expect(isTransactionFiltered(DEFAULT_FILTERS)).toBe(false);
   });
 
   test("is false again after a filter is reset to its sentinel", () => {
     expect(
-      isTransactionFiltered({ ...EMPTY_TRANSACTION_FILTERS, dateTo: "" }),
+      isTransactionFiltered({
+        ...DEFAULT_FILTERS,
+        accountId: TRANSACTION_FILTER_ALL,
+      }),
     ).toBe(false);
   });
 
   test("is true once a filter is set", () => {
     expect(
       isTransactionFiltered({
-        ...EMPTY_TRANSACTION_FILTERS,
+        ...DEFAULT_FILTERS,
         accountId: walletAccountValue(WALLET_ID),
       }),
     ).toBe(true);
   });
 
   test("is true for a search term", () => {
+    expect(isTransactionFiltered({ ...DEFAULT_FILTERS, search: "coffee" })).toBe(
+      true,
+    );
+  });
+
+  test("is true for a range other than the current month", () => {
     expect(
-      isTransactionFiltered({ ...EMPTY_TRANSACTION_FILTERS, search: "coffee" }),
+      isTransactionFiltered({
+        ...DEFAULT_FILTERS,
+        dateFrom: "2026-01-01",
+        dateTo: "2026-03-31",
+      }),
     ).toBe(true);
   });
 
   test("is true for every filter the bar exposes", () => {
     const set: TransactionFiltersState[] = [
-      { ...EMPTY_TRANSACTION_FILTERS, search: "coffee" },
-      { ...EMPTY_TRANSACTION_FILTERS, accountId: cardAccountValue(CARD_ID) },
-      { ...EMPTY_TRANSACTION_FILTERS, categoryId: FILTER_NONE },
-      { ...EMPTY_TRANSACTION_FILTERS, kind: TransactionKind.EXPENSE },
-      { ...EMPTY_TRANSACTION_FILTERS, repeats: TransactionRepeats.RECURRING },
-      { ...EMPTY_TRANSACTION_FILTERS, status: TransactionStatus.PAID },
-      { ...EMPTY_TRANSACTION_FILTERS, dateFrom: "2026-07-01" },
-      { ...EMPTY_TRANSACTION_FILTERS, dateTo: "2026-07-31" },
+      { ...DEFAULT_FILTERS, search: "coffee" },
+      { ...DEFAULT_FILTERS, accountId: cardAccountValue(CARD_ID) },
+      { ...DEFAULT_FILTERS, categoryId: FILTER_NONE },
+      { ...DEFAULT_FILTERS, kind: TransactionKind.EXPENSE },
+      { ...DEFAULT_FILTERS, repeats: TransactionRepeats.RECURRING },
+      { ...DEFAULT_FILTERS, status: TransactionStatus.PAID },
+      { ...DEFAULT_FILTERS, dateFrom: "2020-07-01", dateTo: "2020-07-31" },
     ];
 
     expect(set.every(isTransactionFiltered)).toBe(true);

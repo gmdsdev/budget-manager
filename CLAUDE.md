@@ -42,7 +42,7 @@ kept in TypeScript — see the balances note below.
 
 ```bash
 bun run db:start && bun run db:migrate && bun run dev   # prerequisites
-bun run test:e2e          # 234 checks: API + browser
+bun run test:e2e          # 240 checks: API + browser
 bun run test:e2e:api      # server only, ~2s
 bun run test:e2e:ui       # Playwright flows
 ```
@@ -168,6 +168,22 @@ transfers are excluded from month income/expense because they only shuffle money
 user's own wallets. `pending` returns *all* rows awaiting payment including overdue ones,
 oldest first — filtering to `date >= today` hid exactly the bills a user most needs to see.
 
+**The month in view is the last point of the trend, not a second query.** `getTrendMovements`
+groups once by `(month, currency, kind, status)` over the trailing `TREND_MONTHS` window —
+`occurrenceMonth` is a `to_char(...,'YYYY-MM')` grouping key, not a rule — and
+`buildCurrencySummaries` reads `incomeCents`/`expenseCents`/`netCents` off the point whose month
+is `trendMonths.at(-1)`. A separate month query is what would let the figures at the top of the
+dashboard disagree with the last column of its chart. Every month in the window gets a point
+even when nothing happened in it, so the chart has no gaps, and `trailingMonths` is unit tested
+across the year boundary. Each summary also carries the `wallets` and `cards` behind its totals
+(name, balance / limit, outstanding) so the page can break a figure down per account without a
+second round trip.
+
+The month bucketing is the one piece of dashboard logic that *is* SQL, so unit tests cannot reach
+it: `apps/e2e/src/api/dashboard.test.ts` is what pins it (window boundaries, a row just outside
+the window, and the last point matching the month's own figures). Anything else you push into
+that query needs a check there, not in `summary.test.ts`.
+
 ### The accounting model
 
 Every occurrence belongs to **one** account: a wallet or a card, never both. Which kinds move
@@ -274,6 +290,17 @@ state so changing a filter always resets to page 1. Two `useState` calls would l
 forget the reset and strand the user on a page that no longer exists. `PAGE_SIZE` and the
 offset math live in `src/lib/pagination.ts`.
 
+**The dashboard reads top-down: figures, then charts, then the lists that need acting on.**
+`dashboard.page.tsx` owns only the month control and the two global lists (statements, awaiting
+payment); everything currency-scoped lives in `CurrencySection`, repeated per currency because
+totals are never summed across them. Inside a section the order is fixed — stat tiles (`In
+wallets`, `Income`, `Expenses`, `Net` with a sparkline; a second row of card figures when the
+user has cards), then `CashFlowChart` beside `SpendingBreakdown`, then the per-account
+breakdowns. The month control sits **above everything it scopes**, never inside a card, and a
+refetch holds the previous render at reduced opacity instead of flashing skeletons, so changing
+month never jumps the page. Spending, wallet and meter bars are plain HTML rather than recharts:
+they carry long category names and their own value labels, which an SVG bar would clip.
+
 **A column on a listing table gets a filter for it.** All four list pages follow this: wallets
 (name, type, currency), categories (name, type), cards (name, currency, billing wallet) and
 transactions (date range, description, account, category, kind, repeats, status). The controls
@@ -284,6 +311,18 @@ page positions its own. `FilterSelect` and `FilterSearch` are the two control sh
 `XFiltersState` + `EMPTY_X_FILTERS` + `isXFiltered` trio in `types.ts` and one
 `xQueryInput(filters?, page?)` builder that drops sentinel values — the route loaders call it
 with no arguments, so it must always work bare.
+
+**The transaction list is always scoped to a date range.** There is no all-time ledger: rows
+accumulate forever, so an unscoped list is both unreadable and unbounded. The transaction module
+therefore has no `EMPTY_TRANSACTION_FILTERS` — `defaultTransactionFilters()` builds the unset
+state with the **current month** in it, `Clear filters` resets to that rather than to nothing,
+and `isTransactionFiltered` compares the range against it so a different month still offers the
+clear action. `transactionsQueryInput` sends `dateFrom`/`dateTo` on **every** request and falls
+back to the current month if the state somehow carries none, which is what keeps the bare loader
+call and the page's first query on the same key. Create dialogs default `occurrenceDate` to
+today (`todayAsDateString`), so anything just recorded lands inside the default view. Anything
+outside it — a series materialized months ahead, a seeded past row — needs the range widened
+first, which is why the e2e suites reach for `pickDateRangePreset` and `dayThisMonth`.
 
 **The bar has no visible labels; each control names its own column.** A `FilterSelect` trigger
 reads as the column name (`Category`) while that column is unfiltered and switches to the
@@ -341,13 +380,53 @@ Import aliases: `@/*` → `apps/web/src/*`, `@budget-manager/ui/components/<name
 
 ### Money
 
-Amounts are integer **minor units** everywhere — DB column, tRPC payload, form state, React state (`openingBalanceCents`, `int4`, hence the `MONEY_MIN/MAX_MINOR_UNITS` bounds in `MoneyMinorUnitsSchema`). Never introduce floats. `packages/money` owns `minorUnitDigits` (zero- and three-decimal currencies), `formatMinorUnits`, and `parseMinorUnits`; `packages/ui/src/lib/currency.ts` just re-exports them. `CurrencyInput` reads/writes minor units directly.
+Amounts are integer **minor units** everywhere — DB column, tRPC payload, form state, React state (`openingBalanceCents`, `int4`, hence the `MONEY_MIN/MAX_MINOR_UNITS` bounds in `MoneyMinorUnitsSchema`). Never introduce floats. `packages/money` owns `minorUnitDigits` (zero- and three-decimal currencies), `formatMinorUnits`, `formatCompactMinorUnits`, and `parseMinorUnits`; `packages/ui/src/lib/currency.ts` just re-exports them. `CurrencyInput` reads/writes minor units directly.
+
+`formatCompactMinorUnits` is for **axis ticks only**, where the full figure would collide with
+its neighbours. It keeps anything under one thousand exact — a rounded tick the user cannot find
+in the list below it is worse than a long one — and compacts the locale's own way (`R$ 12,3 mil`,
+`¥1.2万`), so tests must compare on `\s`-flattened text: Intl separates with U+00A0.
 
 ### UI
 
 Primitives in `packages/ui/src/components` are shadcn (`style: base-lyra`, `iconLibrary: remixicon`) on top of **@base-ui/react**, not Radix. Base UI composes via the `render` prop, not `asChild`: `<DialogTrigger render={<Button>Create</Button>} />`. Design tokens live in `packages/ui/src/styles/globals.css` (Tailwind v4, CSS-first).
 
 Add shared primitives from the root: `npx shadcn@latest add <name> -c packages/ui`. Run the shadcn CLI from `apps/web` only for app-specific blocks.
+
+**Charts are recharts behind the shadcn `chart.tsx` wrapper, and colour is a token, never a
+literal.** `ChartContainer` publishes each config key as a `--color-<key>` variable under both
+themes, so a series reads `fill="var(--color-income)"` while the palette itself lives in
+`globals.css`. `--chart-1…8` are a validated eight-hue categorical set (blue, orange, aqua,
+yellow, magenta, green, violet, red) with **light and dark steps of the same hue** — the slot
+*order* is what keeps adjacent pairs colourblind-separable, so add a hue at the end rather than
+re-ordering, and never generate a ninth. `--chart-income` (green) and `--chart-expense` (red)
+alias slots 6 and 8: that pair sits in the colourblind-safety warn band, which is why the bars
+are also positionally fixed (income always left) and legended. `--chart-track` is the meter
+track, `--success`/`--warning` are status inks. The steps are not taste: they were run through a
+colourblind-separation and contrast check against this app's own surfaces — light `#ffffff`
+(`--card`) and dark `#171717`, **not** the page plane — and three light-mode hues (aqua, yellow,
+magenta) sit below 3:1 there, so anything using them owes the reader a visible label or the table
+view. Re-run that check before changing a step or a surface; a hue that "looks different enough"
+routinely is not under deuteranopia.
+
+`recharts` is declared in the root `workspaces.catalog` and pulled in as `"catalog:"` by both
+`packages/ui` (for `chart.tsx`) and `apps/web` (for the chart compositions — the app imports
+`recharts` directly, so it has to own the dependency, not borrow the UI package's). It is the
+heaviest thing in the app by far: it lands in the lazily-loaded `dashboard` route chunk
+(~114 kB gzip), which is the only reason it is affordable. Keep chart composition inside route
+modules that are already lazy — importing recharts from a shared component would drag it into
+the entry chunk for every page.
+
+Five rules the dashboard follows and new charts should too: one series → **one** colour (never a
+value-ramp on nominal categories); a legend whenever there are two or more series; hairline
+**solid** grid lines (`stroke="var(--border)"`, never dashed) and no y-axis line; values as
+**minor units** with `tickFormatter`/tooltip `formatter` doing the money formatting; and every
+chart carries a table twin (`ChartDataTable`, `sr-only`) so no number is reachable only by
+hovering. Stat-tile figures wear ink, not a series colour — only a negative amount takes
+`text-destructive`, and a small swatch next to the label is what ties `Income`/`Expenses` to
+their bars. `<Card>` inside a chart grid needs **`min-w-0`**: `ResponsiveContainer` starts at a
+fixed width, and a `1fr` column with `min-width: auto` would size to it and push the page into a
+horizontal scroll.
 
 For a **navigation** target that should look like a button, use
 `<Link className={buttonVariants()}>`, not `<Button render={<Link/>} />`. Base UI's Button
@@ -359,13 +438,26 @@ wrong semantics for something that navigates.
 picker as a recipe rather than a file, so `packages/ui/src/components/date-picker.tsx` is that
 composition (Popover + Calendar, react-day-picker under the hood) with the app's contract
 bolted on: it reads and writes `yyyy-MM-dd` **strings**, which is what every schema, form and
-tRPC input already carries, and `clearable` is what optional fields (`endsOn`, the list
-filters) use to get back to empty. Parse with date-fns `parseISO`, never `new Date(value)` —
-the latter reads a date-only string as UTC midnight, so west-of-UTC users see the previous
-day; `date-picker.test.tsx` pins that. The trigger is a `<button>` carrying the field's `id`,
-so `FieldLabel htmlFor` and Playwright's `getByLabel` both still resolve, and its popup has
-`role="dialog"` — a `getByRole("dialog")` in e2e will match two elements while a picker is
-open.
+tRPC input already carries, and `clearable` is what optional fields (`endsOn`) use to get back
+to empty. Parse with date-fns `parseISO`, never `new Date(value)` — the latter reads a date-only
+string as UTC midnight, so west-of-UTC users see the previous day; `date-picker.test.tsx` pins
+that. The trigger is a `<button>` carrying the field's `id`, so `FieldLabel htmlFor` and
+Playwright's `getByLabel` both still resolve, and its popup has `role="dialog"` — a
+`getByRole("dialog")` in e2e will match two elements while a picker is open. Both pickers carry
+month and year dropdowns (`captionLayout="dropdown"`); `captionMonthRange` widens them to ±10
+years, because react-day-picker's default stops at the end of the current year and would put
+every future-dated row out of reach.
+
+**A start-and-end pair is one `DateRangePicker`, not two `DatePicker`s.** It lives in the same
+file and takes `{ from, to }` as the same ISO strings, with the presets (`This month`,
+`Last month`, `Last 3 months`, `This year`, `Next 12 months`) in
+`packages/ui/src/lib/date-range.ts` next to `currentMonthRange` — the transaction module reads
+that same helper for its default filters, so the picker and the list cannot disagree about what
+"this month" means. Two rules are load-bearing: every pick **starts a fresh range** (first click
+the start, second the end, ordered if the second lands earlier), and only a *complete* range is
+handed to `onValueChange`, so a caller that requires a range is never left holding half of one —
+which is what lets the transaction filters treat it as mandatory. `date-range-picker.test.tsx`
+pins both, plus the preset arithmetic across a leap February.
 
 ## Conventions
 

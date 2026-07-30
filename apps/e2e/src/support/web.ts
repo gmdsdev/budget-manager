@@ -143,6 +143,18 @@ export async function fillField(
   await root.getByLabel(label, { exact: true }).fill(value);
 }
 
+/**
+ * The transaction list is always scoped to a date range, so a suite whose rows
+ * sit outside the current month has to widen it first.
+ */
+export async function pickDateRangePreset(page: Page, preset: string) {
+  await page.getByLabel("Date range", { exact: true }).click();
+  await page.getByRole("button", { name: preset, exact: true }).click();
+  await page
+    .getByRole("button", { name: preset, exact: true })
+    .waitFor({ state: "hidden" });
+}
+
 /** Whole-page text with Intl's non-breaking spaces flattened. */
 export async function bodyText(page: Page) {
   const raw = await page.locator("body").innerText();

@@ -10,6 +10,7 @@ import { authClient } from "@/lib/auth-client";
 import { invalidateSessionCache } from "@/lib/session";
 
 import Loader from "./loader";
+import { Logotipo } from "./logotipo";
 
 export default function SignUpForm({
   onSwitchToSignIn,
@@ -63,7 +64,14 @@ export default function SignUpForm({
 
   return (
     <div className="mx-auto w-full mt-10 max-w-md p-6">
-      <h1 className="mb-6 text-center text-3xl font-bold">Create Account</h1>
+      <div className="mb-6 flex flex-col items-center gap-6">
+        <Logotipo
+          className="h-8 text-foreground"
+          role="img"
+          aria-label="Budget Manager"
+        />
+        <h1 className="text-center text-3xl font-bold">Create Account</h1>
+      </div>
 
       <form
         onSubmit={(e) => {

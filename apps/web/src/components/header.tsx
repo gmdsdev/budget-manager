@@ -65,7 +65,7 @@ export default function Header() {
           </NavigationMenuList>
         </NavigationMenu>
         <div className="flex flex-1 items-center justify-end">
-          <NavigationMenu align="end" aria-label="Account">
+          <NavigationMenu align="end" aria-label="Account menu">
             <NavigationMenuList>
               <ModeToggle />
               <UserMenu />

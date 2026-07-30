@@ -18,6 +18,14 @@ export function formatMonthLabel(month: string) {
   return date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
+/** Just the month name, for an axis tick where the year is context. */
+export function formatMonthShortLabel(month: string) {
+  const [year, index] = month.split("-");
+  const date = new Date(Number(year), Number(index) - 1, 1);
+
+  return date.toLocaleDateString(undefined, { month: "short" });
+}
+
 export function formatDayLabel(date: string) {
   const [year, month, day] = date.split("-");
 

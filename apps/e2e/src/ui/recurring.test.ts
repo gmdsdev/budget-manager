@@ -8,6 +8,7 @@ import {
   dialog,
   fillField,
   openApp,
+  pickDateRangePreset,
   pickSelect,
   rowFor,
   rowTexts,
@@ -127,6 +128,9 @@ describe("recurrence lives on the transaction form", () => {
     await page.getByRole("button", { name: "Create series" }).click();
     await dialog(page).waitFor({ state: "hidden", timeout: 10_000 });
 
+    // The list opens on the current month; the series runs past it.
+    await pickDateRangePreset(page, "Next 12 months");
+
     // Six scheduled rows plus the earlier one-off, all in one list.
     await waitForRowCount(page, 7);
 
@@ -186,6 +190,7 @@ describe("recurrence lives on the transaction form", () => {
     await dialog(page).waitFor({ state: "hidden", timeout: 10_000 });
 
     await page.reload({ waitUntil: "networkidle" });
+    await pickDateRangePreset(page, "Next 12 months");
     await waitForRowCount(page, 7);
 
     const cells = (await rowTexts(page)).flat();

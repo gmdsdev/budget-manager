@@ -5,16 +5,53 @@ import {
   buildCurrencySummaries,
   monthRange,
   resolveMonth,
+  trailingMonths,
   UNCATEGORIZED_LABEL,
+  type CardBalanceRow,
   type CategoryMovement,
-  type CurrencyMovement,
+  type TrendMovement,
+  type WalletBalanceRow,
 } from "./summary";
 
 const BRL = "BRL";
 const USD = "USD";
 
-function movement(over: Partial<CurrencyMovement> = {}): CurrencyMovement {
+const MONTH = "2026-07";
+const PREVIOUS_MONTH = "2026-06";
+const WINDOW = trailingMonths(MONTH, 6);
+
+let sequence = 0;
+
+function wallet(over: Partial<WalletBalanceRow> = {}): WalletBalanceRow {
+  sequence += 1;
+
   return {
+    id: `wallet-${sequence}`,
+    name: `Wallet ${sequence}`,
+    currencyCode: BRL,
+    balanceCents: 500_000,
+    projectedBalanceCents: 500_000,
+    ...over,
+  };
+}
+
+function card(over: Partial<CardBalanceRow> = {}): CardBalanceRow {
+  sequence += 1;
+
+  return {
+    id: `card-${sequence}`,
+    name: `Card ${sequence}`,
+    currencyCode: BRL,
+    limitCents: 500_000,
+    outstandingCents: 0,
+    availableCents: 500_000,
+    ...over,
+  };
+}
+
+function movement(over: Partial<TrendMovement> = {}): TrendMovement {
+  return {
+    month: MONTH,
     currencyCode: BRL,
     kind: TransactionKind.EXPENSE,
     status: TransactionStatus.PAID,
@@ -36,8 +73,16 @@ function categoryMovement(
   };
 }
 
-function summarize(over: Parameters<typeof buildCurrencySummaries>[0]) {
-  return buildCurrencySummaries(over);
+function summarize(
+  over: Partial<Parameters<typeof buildCurrencySummaries>[0]> = {},
+) {
+  return buildCurrencySummaries({
+    wallets: [],
+    trendMonths: WINDOW,
+    trendMovements: [],
+    categoryMovements: [],
+    ...over,
+  });
 }
 
 describe("monthRange", () => {
@@ -80,20 +125,39 @@ describe("resolveMonth", () => {
   });
 });
 
-describe("buildCurrencySummaries — cards", () => {
-  const wallet = (over = {}) => ({
-    currencyCode: BRL,
-    balanceCents: 500_000,
-    projectedBalanceCents: 500_000,
-    ...over,
+describe("trailingMonths", () => {
+  test("ends on the month asked for, oldest first", () => {
+    expect(trailingMonths("2026-07", 6)).toEqual([
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07",
+    ]);
   });
 
+  test("rolls back across the year boundary", () => {
+    expect(trailingMonths("2026-02", 4)).toEqual([
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+    ]);
+  });
+
+  test("a window of one is just that month", () => {
+    expect(trailingMonths("2026-07", 1)).toEqual(["2026-07"]);
+  });
+
+  test("rejects a malformed month", () => {
+    expect(() => trailingMonths("2026-7", 6)).toThrow();
+  });
+});
+
+describe("buildCurrencySummaries — cards", () => {
   test("reports no card debt when the user has none", () => {
-    const [brl] = summarize({
-      wallets: [wallet()],
-      monthMovements: [],
-      categoryMovements: [],
-    });
+    const [brl] = summarize({ wallets: [wallet()] });
 
     expect(brl?.cardCount).toBe(0);
     expect(brl?.cardOutstandingCents).toBe(0);
@@ -103,15 +167,7 @@ describe("buildCurrencySummaries — cards", () => {
   test("subtracts card debt from the liquid balance", () => {
     const [brl] = summarize({
       wallets: [wallet()],
-      cards: [
-        {
-          currencyCode: BRL,
-          outstandingCents: 120_000,
-          availableCents: 380_000,
-        },
-      ],
-      monthMovements: [],
-      categoryMovements: [],
+      cards: [card({ outstandingCents: 120_000, availableCents: 380_000 })],
     });
 
     expect(brl?.cardCount).toBe(1);
@@ -125,11 +181,9 @@ describe("buildCurrencySummaries — cards", () => {
     const [brl] = summarize({
       wallets: [wallet()],
       cards: [
-        { currencyCode: BRL, outstandingCents: 100_000, availableCents: 1_000 },
-        { currencyCode: BRL, outstandingCents: 50_000, availableCents: 2_000 },
+        card({ outstandingCents: 100_000, availableCents: 1_000 }),
+        card({ outstandingCents: 50_000, availableCents: 2_000 }),
       ],
-      monthMovements: [],
-      categoryMovements: [],
     });
 
     expect(brl?.cardCount).toBe(2);
@@ -142,10 +196,12 @@ describe("buildCurrencySummaries — cards", () => {
     const summaries = summarize({
       wallets: [wallet({ currencyCode: BRL, balanceCents: 500_000 })],
       cards: [
-        { currencyCode: USD, outstandingCents: 90_000, availableCents: 10_000 },
+        card({
+          currencyCode: USD,
+          outstandingCents: 90_000,
+          availableCents: 10_000,
+        }),
       ],
-      monthMovements: [],
-      categoryMovements: [],
     });
 
     const brl = summaries.find((s) => s.currencyCode === BRL);
@@ -161,12 +217,7 @@ describe("buildCurrencySummaries — cards", () => {
 
   test("a card-only currency surfaces its debt as a negative position", () => {
     const [brl] = summarize({
-      wallets: [],
-      cards: [
-        { currencyCode: BRL, outstandingCents: 70_000, availableCents: 0 },
-      ],
-      monthMovements: [],
-      categoryMovements: [],
+      cards: [card({ outstandingCents: 70_000, availableCents: 0 })],
     });
 
     expect(brl?.walletCount).toBe(0);
@@ -176,37 +227,171 @@ describe("buildCurrencySummaries — cards", () => {
   test("an overspent card can push the position negative", () => {
     const [brl] = summarize({
       wallets: [wallet({ balanceCents: 10_000 })],
-      cards: [
-        {
-          currencyCode: BRL,
-          outstandingCents: 60_000,
-          availableCents: -10_000,
-        },
-      ],
-      monthMovements: [],
-      categoryMovements: [],
+      cards: [card({ outstandingCents: 60_000, availableCents: -10_000 })],
     });
 
     expect(brl?.netWorthCents).toBe(-50_000);
   });
 });
 
+describe("buildCurrencySummaries — accounts behind the totals", () => {
+  test("lists each wallet under its own currency", () => {
+    const summaries = summarize({
+      wallets: [
+        wallet({ id: "w-1", name: "Checking", balanceCents: 300_000 }),
+        wallet({ id: "w-2", name: "Savings", balanceCents: 200_000 }),
+        wallet({ id: "w-3", name: "Dollars", currencyCode: USD }),
+      ],
+    });
+
+    const brl = summaries.find((s) => s.currencyCode === BRL);
+    const usd = summaries.find((s) => s.currencyCode === USD);
+
+    expect(brl?.wallets.map((w) => w.name)).toEqual(["Checking", "Savings"]);
+    expect(brl?.wallets[0]?.balanceCents).toBe(300_000);
+    expect(usd?.wallets.map((w) => w.name)).toEqual(["Dollars"]);
+  });
+
+  test("carries each card's limit so utilisation can be shown", () => {
+    const [brl] = summarize({
+      cards: [
+        card({
+          id: "c-1",
+          name: "Visa",
+          limitCents: 500_000,
+          outstandingCents: 120_000,
+          availableCents: 380_000,
+        }),
+      ],
+    });
+
+    expect(brl?.cards).toEqual([
+      {
+        id: "c-1",
+        name: "Visa",
+        limitCents: 500_000,
+        outstandingCents: 120_000,
+        availableCents: 380_000,
+      },
+    ]);
+  });
+});
+
+describe("buildCurrencySummaries — trend", () => {
+  test("returns one point per month in the window, oldest first", () => {
+    const [brl] = summarize({ wallets: [wallet()] });
+
+    expect(brl?.trend.map((point) => point.month)).toEqual(WINDOW);
+    expect(brl?.trend.every((point) => point.netCents === 0)).toBe(true);
+  });
+
+  test("buckets movements into the month they fall in", () => {
+    const [brl] = summarize({
+      trendMovements: [
+        movement({
+          month: PREVIOUS_MONTH,
+          kind: TransactionKind.INCOME,
+          totalCents: 400_000,
+        }),
+        movement({ month: PREVIOUS_MONTH, totalCents: 100_000 }),
+        movement({
+          month: MONTH,
+          kind: TransactionKind.INCOME,
+          totalCents: 500_000,
+        }),
+      ],
+    });
+
+    const previous = brl?.trend.find((p) => p.month === PREVIOUS_MONTH);
+    const current = brl?.trend.find((p) => p.month === MONTH);
+
+    expect(previous).toEqual({
+      month: PREVIOUS_MONTH,
+      incomeCents: 400_000,
+      expenseCents: 100_000,
+      netCents: 300_000,
+    });
+    expect(current?.incomeCents).toBe(500_000);
+    expect(current?.expenseCents).toBe(0);
+  });
+
+  test("the month in view is the last point, so the two cannot disagree", () => {
+    const [brl] = summarize({
+      trendMovements: [
+        movement({ kind: TransactionKind.INCOME, totalCents: 500_000 }),
+        movement({ totalCents: 120_000 }),
+        // Outside the window entirely: it must not leak into the figures.
+        movement({ month: "2025-01", totalCents: 999_999 }),
+      ],
+    });
+
+    const last = brl?.trend.at(-1);
+
+    expect(last?.month).toBe(MONTH);
+    expect(brl?.incomeCents).toBe(last?.incomeCents);
+    expect(brl?.expenseCents).toBe(last?.expenseCents);
+    expect(brl?.netCents).toBe(last?.netCents);
+    expect(brl?.expenseCents).toBe(120_000);
+  });
+
+  test("keeps a currency's history separate", () => {
+    const summaries = summarize({
+      trendMovements: [
+        movement({ currencyCode: BRL, totalCents: 10_000 }),
+        movement({ currencyCode: USD, totalCents: 7_000 }),
+      ],
+    });
+
+    expect(
+      summaries.map((s) => [s.currencyCode, s.trend.at(-1)?.expenseCents]),
+    ).toEqual([
+      [BRL, 10_000],
+      [USD, 7_000],
+    ]);
+  });
+
+  test("excludes transfers and card payments from every point", () => {
+    const [brl] = summarize({
+      trendMovements: [
+        movement({
+          month: PREVIOUS_MONTH,
+          kind: TransactionKind.TRANSFER_IN,
+          totalCents: 999,
+        }),
+        movement({
+          month: PREVIOUS_MONTH,
+          kind: TransactionKind.CREDIT_CARD_PAYMENT,
+          totalCents: 999,
+        }),
+        movement({ month: PREVIOUS_MONTH, totalCents: 5_000 }),
+      ],
+    });
+
+    expect(brl?.trend.find((p) => p.month === PREVIOUS_MONTH)).toEqual({
+      month: PREVIOUS_MONTH,
+      incomeCents: 0,
+      expenseCents: 5_000,
+      netCents: -5_000,
+    });
+  });
+});
+
 describe("buildCurrencySummaries", () => {
   test("returns nothing when the user has no wallets", () => {
-    expect(
-      summarize({ wallets: [], monthMovements: [], categoryMovements: [] }),
-    ).toEqual([]);
+    expect(summarize()).toEqual([]);
   });
 
   test("adds up balances per currency and counts wallets", () => {
     const [brl, usd] = summarize({
       wallets: [
-        { currencyCode: BRL, balanceCents: 100, projectedBalanceCents: 90 },
-        { currencyCode: BRL, balanceCents: 200, projectedBalanceCents: 200 },
-        { currencyCode: USD, balanceCents: 50, projectedBalanceCents: 50 },
+        wallet({ balanceCents: 100, projectedBalanceCents: 90 }),
+        wallet({ balanceCents: 200, projectedBalanceCents: 200 }),
+        wallet({
+          currencyCode: USD,
+          balanceCents: 50,
+          projectedBalanceCents: 50,
+        }),
       ],
-      monthMovements: [],
-      categoryMovements: [],
     });
 
     expect(brl?.currencyCode).toBe(BRL);
@@ -220,22 +405,17 @@ describe("buildCurrencySummaries", () => {
   test("never mixes two currencies into one total", () => {
     const summaries = summarize({
       wallets: [
-        {
-          currencyCode: BRL,
-          balanceCents: 1_000,
-          projectedBalanceCents: 1_000,
-        },
-        {
+        wallet({ balanceCents: 1_000, projectedBalanceCents: 1_000 }),
+        wallet({
           currencyCode: USD,
           balanceCents: 1_000,
           projectedBalanceCents: 1_000,
-        },
+        }),
       ],
-      monthMovements: [
+      trendMovements: [
         movement({ currencyCode: BRL, kind: TransactionKind.INCOME }),
         movement({ currencyCode: USD, kind: TransactionKind.INCOME }),
       ],
-      categoryMovements: [],
     });
 
     expect(summaries.length).toBe(2);
@@ -245,12 +425,10 @@ describe("buildCurrencySummaries", () => {
 
   test("nets income against expense for the month", () => {
     const [brl] = summarize({
-      wallets: [],
-      monthMovements: [
+      trendMovements: [
         movement({ kind: TransactionKind.INCOME, totalCents: 500_000 }),
         movement({ kind: TransactionKind.EXPENSE, totalCents: 120_000 }),
       ],
-      categoryMovements: [],
     });
 
     expect(brl?.incomeCents).toBe(500_000);
@@ -261,17 +439,12 @@ describe("buildCurrencySummaries", () => {
   test("excludes transfers, which only move money between own wallets", () => {
     const [brl] = summarize({
       wallets: [
-        {
-          currencyCode: BRL,
-          balanceCents: 5_000,
-          projectedBalanceCents: 5_000,
-        },
+        wallet({ balanceCents: 5_000, projectedBalanceCents: 5_000 }),
       ],
-      monthMovements: [
+      trendMovements: [
         movement({ kind: TransactionKind.TRANSFER_IN, totalCents: 999 }),
         movement({ kind: TransactionKind.TRANSFER_OUT, totalCents: 999 }),
       ],
-      categoryMovements: [],
     });
 
     expect(brl?.incomeCents).toBe(0);
@@ -283,15 +456,13 @@ describe("buildCurrencySummaries", () => {
 
   test("excludes cancelled rows but keeps pending ones", () => {
     const [brl] = summarize({
-      wallets: [],
-      monthMovements: [
+      trendMovements: [
         movement({ totalCents: 7_000, status: TransactionStatus.CANCELLED }),
         movement({
           totalCents: 3_000,
           status: TransactionStatus.WAITING_PAYMENT,
         }),
       ],
-      categoryMovements: [],
     });
 
     expect(brl?.expenseCents).toBe(3_000);
@@ -299,16 +470,13 @@ describe("buildCurrencySummaries", () => {
 
   test("counts a card purchase as spending", () => {
     const [brl] = summarize({
-      wallets: [
-        { currencyCode: BRL, balanceCents: 0, projectedBalanceCents: 0 },
-      ],
-      monthMovements: [
+      wallets: [wallet({ balanceCents: 0, projectedBalanceCents: 0 })],
+      trendMovements: [
         movement({
           kind: TransactionKind.CREDIT_CARD_PURCHASE,
           totalCents: 45_000,
         }),
       ],
-      categoryMovements: [],
     });
 
     expect(brl?.expenseCents).toBe(45_000);
@@ -316,10 +484,8 @@ describe("buildCurrencySummaries", () => {
 
   test("does not count paying a card bill, which would double the expense", () => {
     const [brl] = summarize({
-      wallets: [
-        { currencyCode: BRL, balanceCents: 0, projectedBalanceCents: 0 },
-      ],
-      monthMovements: [
+      wallets: [wallet({ balanceCents: 0, projectedBalanceCents: 0 })],
+      trendMovements: [
         movement({
           kind: TransactionKind.CREDIT_CARD_PURCHASE,
           totalCents: 45_000,
@@ -329,7 +495,6 @@ describe("buildCurrencySummaries", () => {
           totalCents: 45_000,
         }),
       ],
-      categoryMovements: [],
     });
 
     // The purchase is the expense; settling it later is not a second one.
@@ -338,11 +503,8 @@ describe("buildCurrencySummaries", () => {
 
   test("ignores a kind outside the model entirely", () => {
     const [brl] = summarize({
-      wallets: [
-        { currencyCode: BRL, balanceCents: 0, projectedBalanceCents: 0 },
-      ],
-      monthMovements: [movement({ kind: "some_future_kind" })],
-      categoryMovements: [],
+      wallets: [wallet({ balanceCents: 0, projectedBalanceCents: 0 })],
+      trendMovements: [movement({ kind: "some_future_kind" })],
     });
 
     expect(brl?.expenseCents).toBe(0);
@@ -351,17 +513,13 @@ describe("buildCurrencySummaries", () => {
   test("shows nothing at all when there are no wallets and no countable rows", () => {
     expect(
       summarize({
-        wallets: [],
-        monthMovements: [movement({ kind: TransactionKind.TRANSFER_IN })],
-        categoryMovements: [],
+        trendMovements: [movement({ kind: TransactionKind.TRANSFER_IN })],
       }),
     ).toEqual([]);
   });
 
   test("ranks categories by spend and merges duplicate rows", () => {
     const [brl] = summarize({
-      wallets: [],
-      monthMovements: [],
       categoryMovements: [
         categoryMovement({
           categoryId: "a",
@@ -390,8 +548,6 @@ describe("buildCurrencySummaries", () => {
 
   test("labels a null category and keeps it rankable", () => {
     const [brl] = summarize({
-      wallets: [],
-      monthMovements: [],
       categoryMovements: [
         categoryMovement({
           categoryId: null,
@@ -410,8 +566,6 @@ describe("buildCurrencySummaries", () => {
 
   test("honours the top-N limit", () => {
     const [brl] = summarize({
-      wallets: [],
-      monthMovements: [],
       categoryMovements: Array.from({ length: 8 }, (_, i) =>
         categoryMovement({
           categoryId: `c${i}`,
@@ -430,9 +584,7 @@ describe("buildCurrencySummaries", () => {
 
   test("surfaces a currency that only has movements, no wallets left", () => {
     const [brl] = summarize({
-      wallets: [],
-      monthMovements: [movement({ kind: TransactionKind.INCOME })],
-      categoryMovements: [],
+      trendMovements: [movement({ kind: TransactionKind.INCOME })],
     });
 
     expect(brl?.currencyCode).toBe(BRL);
@@ -442,12 +594,10 @@ describe("buildCurrencySummaries", () => {
   test("orders currencies deterministically", () => {
     const summaries = summarize({
       wallets: [
-        { currencyCode: USD, balanceCents: 1, projectedBalanceCents: 1 },
-        { currencyCode: "EUR", balanceCents: 1, projectedBalanceCents: 1 },
-        { currencyCode: BRL, balanceCents: 1, projectedBalanceCents: 1 },
+        wallet({ currencyCode: USD, balanceCents: 1 }),
+        wallet({ currencyCode: "EUR", balanceCents: 1 }),
+        wallet({ currencyCode: BRL, balanceCents: 1 }),
       ],
-      monthMovements: [],
-      categoryMovements: [],
     });
 
     expect(summaries.map((s) => s.currencyCode)).toEqual(["BRL", "EUR", "USD"]);

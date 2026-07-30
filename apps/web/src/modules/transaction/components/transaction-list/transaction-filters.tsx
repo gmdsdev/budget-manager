@@ -13,10 +13,10 @@ import {
   TransactionStatus,
   TransactionStatusLabelMap,
 } from "@budget-manager/schemas";
-import { DatePicker } from "@budget-manager/ui/components/date-picker";
+import { DateRangePicker } from "@budget-manager/ui/components/date-picker";
 import {
   cardAccountValue,
-  EMPTY_TRANSACTION_FILTERS,
+  defaultTransactionFilters,
   isTransactionFiltered,
   TRANSACTION_FILTER_ALL,
   walletAccountValue,
@@ -86,26 +86,16 @@ export function TransactionFilters({
   return (
     <FilterBar
       isFiltered={isTransactionFiltered(filters)}
-      onClear={() => onFiltersChange(EMPTY_TRANSACTION_FILTERS)}
+      onClear={() => onFiltersChange(defaultTransactionFilters())}
     >
-      <DatePicker
-        id="transaction-date-from"
-        aria-label="From"
-        clearable
-        placeholder="From date"
-        className="w-36"
-        value={filters.dateFrom}
-        onValueChange={(value) => patch({ dateFrom: value })}
-      />
-
-      <DatePicker
-        id="transaction-date-to"
-        aria-label="To"
-        clearable
-        placeholder="To date"
-        className="w-36"
-        value={filters.dateTo}
-        onValueChange={(value) => patch({ dateTo: value })}
+      <DateRangePicker
+        id="transaction-date-range-filter"
+        aria-label="Date range"
+        className="w-56"
+        value={{ from: filters.dateFrom, to: filters.dateTo }}
+        onValueChange={({ from, to }) =>
+          patch({ dateFrom: from, dateTo: to })
+        }
       />
 
       <FilterSearch

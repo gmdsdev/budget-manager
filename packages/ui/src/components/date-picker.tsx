@@ -1,8 +1,16 @@
 import * as React from "react"
 import { RiCalendar2Line } from "@remixicon/react"
-import { format, isValid, parseISO } from "date-fns"
+import type { DateRange } from "react-day-picker"
 
 import { cn } from "@budget-manager/ui/lib/utils"
+import {
+  captionMonthRange,
+  DATE_RANGE_PRESETS,
+  formatIsoDate,
+  parseIsoDate,
+  type DateRangePreset,
+  type DateRangeValue,
+} from "@budget-manager/ui/lib/date-range"
 import { Button } from "@budget-manager/ui/components/button"
 import { Calendar } from "@budget-manager/ui/components/calendar"
 import {
@@ -11,20 +19,23 @@ import {
   PopoverTrigger,
 } from "@budget-manager/ui/components/popover"
 
-const ISO_DATE = "yyyy-MM-dd"
-
-function parseIsoDate(value: string | null | undefined) {
-  if (!value) {
-    return undefined
-  }
-
-  const parsed = parseISO(value)
-
-  return isValid(parsed) ? parsed : undefined
+const DAY_FORMAT: Intl.DateTimeFormatOptions = {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
 }
 
-function formatIsoDate(date: Date) {
-  return format(date, ISO_DATE)
+function formatDay(date: Date) {
+  return date.toLocaleDateString(undefined, DAY_FORMAT)
+}
+
+function formatRange(from: Date, to: Date) {
+  const start =
+    from.getFullYear() === to.getFullYear()
+      ? from.toLocaleDateString(undefined, { day: "numeric", month: "short" })
+      : formatDay(from)
+
+  return `${start} – ${formatDay(to)}`
 }
 
 function DatePicker({
@@ -73,18 +84,14 @@ function DatePicker({
           />
         }
       >
-        {selected
-          ? selected.toLocaleDateString(undefined, {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-          : placeholder}
+        {selected ? formatDay(selected) : placeholder}
         <RiCalendar2Line className="text-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto gap-0 p-0">
         <Calendar
           mode="single"
+          captionLayout="dropdown"
+          {...captionMonthRange()}
           selected={selected}
           defaultMonth={selected}
           onSelect={(date) => {
@@ -115,4 +122,127 @@ function DatePicker({
   )
 }
 
-export { DatePicker, formatIsoDate, parseIsoDate }
+/**
+ * One control for a start and an end date. Every pick starts a fresh range — the
+ * first click sets the start, the second the end — and only a complete range
+ * reaches the caller, so one that requires a range is never handed half of it.
+ * An abandoned first click is discarded when the popup closes.
+ */
+function DateRangePicker({
+  value,
+  onValueChange,
+  id,
+  placeholder = "Pick a date range",
+  presets = DATE_RANGE_PRESETS,
+  numberOfMonths = 2,
+  disabled,
+  className,
+  ...props
+}: {
+  value: DateRangeValue
+  onValueChange: (value: DateRangeValue) => void
+  id?: string
+  placeholder?: string
+  presets?: DateRangePreset[]
+  numberOfMonths?: number
+  disabled?: boolean
+  className?: string
+  "aria-invalid"?: boolean
+  "aria-describedby"?: string
+  "aria-label"?: string
+}) {
+  const [open, setOpen] = React.useState(false)
+  const [anchor, setAnchor] = React.useState<Date | undefined>(undefined)
+  const from = parseIsoDate(value.from)
+  const to = parseIsoDate(value.to)
+
+  const selected: DateRange | undefined = anchor
+    ? { from: anchor, to: anchor }
+    : from
+      ? { from, to }
+      : undefined
+
+  function commit(next: DateRangeValue) {
+    setAnchor(undefined)
+    onValueChange(next)
+    setOpen(false)
+  }
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setAnchor(undefined)
+        setOpen(next)
+      }}
+    >
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            id={id}
+            disabled={disabled}
+            data-empty={!from || !to}
+            className={cn(
+              "w-full justify-between border-input font-normal data-[empty=true]:text-muted-foreground dark:bg-input/30",
+              className
+            )}
+            {...props}
+          />
+        }
+      >
+        {from && to ? formatRange(from, to) : placeholder}
+        <RiCalendar2Line className="text-muted-foreground" />
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-auto max-w-[calc(100vw-2rem)] flex-col gap-0 overflow-auto p-0 sm:flex-row"
+      >
+        {presets.length > 0 ? (
+          <div className="flex shrink-0 flex-row flex-wrap gap-1 border-b border-border p-2 sm:w-36 sm:flex-col sm:border-b-0 sm:border-r">
+            {presets.map((preset) => {
+              const range = preset.getRange()
+              const active = range.from === value.from && range.to === value.to
+
+              return (
+                <Button
+                  key={preset.label}
+                  variant={active ? "secondary" : "ghost"}
+                  size="sm"
+                  className="justify-start font-normal"
+                  onClick={() => commit(range)}
+                >
+                  {preset.label}
+                </Button>
+              )
+            })}
+          </div>
+        ) : null}
+        <Calendar
+          mode="range"
+          captionLayout="dropdown"
+          {...captionMonthRange()}
+          numberOfMonths={numberOfMonths}
+          selected={selected}
+          defaultMonth={from}
+          onSelect={(_range, day) => {
+            if (!anchor) {
+              setAnchor(day)
+
+              return
+            }
+
+            const [earlier, later] = day < anchor ? [day, anchor] : [anchor, day]
+
+            commit({
+              from: formatIsoDate(earlier),
+              to: formatIsoDate(later),
+            })
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+export { DatePicker, DateRangePicker }

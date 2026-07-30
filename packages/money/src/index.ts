@@ -91,6 +91,52 @@ export function formatMinorUnits(
   }
 }
 
+const compactFormatterCache = new Map<string, Intl.NumberFormat>();
+
+function getCompactFormatter(locale: string, currency: string) {
+  const key = `${locale}|${currency}`;
+  let formatter = compactFormatterCache.get(key);
+
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+      notation: "compact",
+      maximumFractionDigits: 1,
+    });
+    compactFormatterCache.set(key, formatter);
+  }
+
+  return formatter;
+}
+
+/**
+ * A short form for axis ticks, where the full figure would collide with its
+ * neighbours. Values below one thousand keep their exact amount, so a tick is
+ * never rounded into something the user cannot find in the list below it.
+ */
+export function formatCompactMinorUnits(
+  minorUnits: number,
+  currencyCode: string,
+): string {
+  const code = (currencyCode ?? "").toUpperCase();
+  const digits = minorUnitDigits(code);
+  const amount = (Number.isFinite(minorUnits) ? minorUnits : 0) / 10 ** digits;
+
+  if (!/^[A-Z]{3}$/.test(code) || Math.abs(amount) < 1_000) {
+    return formatMinorUnits(minorUnits, code);
+  }
+
+  try {
+    return getCompactFormatter(
+      CURRENCY_LOCALE[code] ?? FALLBACK_LOCALE,
+      code,
+    ).format(amount);
+  } catch {
+    return formatMinorUnits(minorUnits, code);
+  }
+}
+
 export function parseMinorUnits(
   input: string,
   { allowNegative = false }: { allowNegative?: boolean } = {},

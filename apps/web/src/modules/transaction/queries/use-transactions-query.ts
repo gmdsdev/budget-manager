@@ -5,8 +5,10 @@ import type {
   TransactionRepeats,
   TransactionStatus,
 } from "@budget-manager/schemas";
+import { currentMonthRange } from "@budget-manager/ui/lib/date-range";
 import { useQuery } from "@tanstack/react-query";
 import {
+  defaultTransactionFilters,
   parseAccountValue,
   TRANSACTION_FILTER_ALL,
   type TransactionFiltersState,
@@ -21,19 +23,29 @@ type TransactionsQueryInput = {
   creditCardId?: string;
   categoryId?: string;
   repeats?: TransactionRepeats;
-  dateFrom?: string;
-  dateTo?: string;
+  dateFrom: string;
+  dateTo: string;
   limit: number;
   offset: number;
 };
 
+/**
+ * The date range is part of every request, so a caller with no filters — the
+ * route loader — asks for the same current month the page opens on, and a range
+ * that somehow arrives empty falls back to it instead of listing all time.
+ */
 export function transactionsQueryInput(
   filters?: TransactionFiltersState,
   page = 1,
 ): TransactionsQueryInput {
+  const resolved = filters ?? defaultTransactionFilters();
+  const fallback = currentMonthRange();
+
   const input: TransactionsQueryInput = {
     limit: PAGE_SIZE,
     offset: toOffset(page),
+    dateFrom: resolved.dateFrom || fallback.from,
+    dateTo: resolved.dateTo || fallback.to,
   };
 
   if (!filters) {
@@ -70,14 +82,6 @@ export function transactionsQueryInput(
 
   if (filters.status !== TRANSACTION_FILTER_ALL) {
     input.status = filters.status;
-  }
-
-  if (filters.dateFrom) {
-    input.dateFrom = filters.dateFrom;
-  }
-
-  if (filters.dateTo) {
-    input.dateTo = filters.dateTo;
   }
 
   return input;

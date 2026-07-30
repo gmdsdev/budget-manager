@@ -3,10 +3,17 @@ import { computeCardBalances } from "../credit-card/balance";
 import { computeBillTotals } from "../credit-card/bill-totals";
 import { computeWalletBalances } from "../wallet/balance";
 import type { DashboardRepository } from "./repository";
-import { buildCurrencySummaries, monthRange, resolveMonth } from "./summary";
+import {
+  buildCurrencySummaries,
+  monthRange,
+  resolveMonth,
+  trailingMonths,
+} from "./summary";
 
 const PENDING_LIMIT = 6;
 const STATEMENT_LIMIT = 6;
+/** How much history the cash-flow chart shows, including the month in view. */
+const TREND_MONTHS = 6;
 
 export class DashboardService {
   constructor(private readonly repository: DashboardRepository) {}
@@ -23,6 +30,9 @@ export class DashboardService {
     const resolvedMonth = month ?? resolveMonth(now);
     const { from, to } = monthRange(resolvedMonth);
     const today = formatDate(now);
+    const trendMonths = trailingMonths(resolvedMonth, TREND_MONTHS);
+    // The window opens on the first day of the oldest month it covers.
+    const trendFrom = monthRange(trendMonths[0] ?? resolvedMonth).from;
 
     const [
       wallets,
@@ -31,7 +41,7 @@ export class DashboardService {
       cardMovements,
       bills,
       billMovements,
-      monthMovements,
+      trendMovements,
       categoryMovements,
       pending,
     ] = await Promise.all([
@@ -41,7 +51,7 @@ export class DashboardService {
       this.repository.getCardMovementTotals({ userId }),
       this.repository.listBills({ userId }),
       this.repository.getBillMovementTotals({ userId }),
-      this.repository.getMonthMovements({ userId, from, to }),
+      this.repository.getTrendMovements({ userId, from: trendFrom, to }),
       this.repository.getMonthCategoryMovements({ userId, from, to }),
       this.repository.getPending({ userId, limit: PENDING_LIMIT }),
     ]);
@@ -61,12 +71,14 @@ export class DashboardService {
       month: resolvedMonth,
       monthStart: from,
       monthEnd: to,
+      trendMonths,
       // Sent so the client flags overdue rows against the server's clock.
       today,
       currencies: buildCurrencySummaries({
         wallets: walletBalances,
         cards: cardBalances,
-        monthMovements,
+        trendMonths,
+        trendMovements,
         categoryMovements,
       }),
       pending,

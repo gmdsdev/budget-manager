@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Page } from "playwright";
 
 import { WEB_URL, requireWeb } from "../support/env";
-import { seedBasics, transaction } from "../support/fixtures";
+import { dayThisMonth, seedBasics, transaction } from "../support/fixtures";
 import {
   closeApp,
   apiForPage,
@@ -40,7 +40,7 @@ beforeAll(async () => {
       transaction(seed.checking.id, {
         name: `Expense ${index}`,
         amountCents: (index + 1) * 100,
-        occurrenceDate: `2026-06-${`${index + 1}`.padStart(2, "0")}`,
+        occurrenceDate: dayThisMonth(index + 1),
         categoryId: seed.groceries.id,
         status: TransactionStatus.PAID,
       }),
@@ -53,7 +53,7 @@ beforeAll(async () => {
         kind: TransactionKind.INCOME,
         name: `Income ${index}`,
         amountCents: 500_000,
-        occurrenceDate: `2026-05-${`${index + 1}`.padStart(2, "0")}`,
+        occurrenceDate: dayThisMonth(index + 26),
         categoryId: seed.salary.id,
       }),
     );

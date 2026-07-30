@@ -11,55 +11,66 @@ import {
   EmptyTitle,
 } from "@budget-manager/ui/components/empty";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
+import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { CurrencySummaryCard } from "../components/currency-summary-card";
+import { CurrencySection } from "../components/currency-section";
 import { PendingList } from "../components/pending-list";
 import { StatementsDueList } from "../components/statements-due-list";
 import { useDashboardQuery } from "../queries/use-dashboard-query";
-import {
-  currentMonth,
-  formatMonthLabel,
-  shiftMonth,
-} from "../utils/month";
+import { currentMonth, formatMonthLabel, shiftMonth } from "../utils/month";
 
 export default function DashboardPage() {
   const [month, setMonth] = useState(currentMonth());
-  const { data, isPending, isError, error, refetch, isRefetching } =
+  const { data, isPending, isError, error, refetch, isRefetching, isFetching } =
     useDashboardQuery(month);
 
   const monthLabel = formatMonthLabel(month);
   const isCurrentMonth = month === currentMonth();
 
   return (
-    <div>
+    <div className="pb-8">
       <header className="flex flex-row flex-wrap items-center justify-between gap-4 py-4">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
 
-        <div className="flex flex-row items-center gap-2">
+        {/* One control row above everything it scopes: every figure and chart
+            below reads the same month. */}
+        <div className="flex flex-row items-center gap-1">
           <Button
             variant="outline"
+            size="icon"
+            aria-label="Previous"
             onClick={() => setMonth(shiftMonth(month, -1))}
           >
-            Previous
+            <CaretLeftIcon aria-hidden />
           </Button>
           <span className="min-w-36 text-center text-sm tabular-nums">
             {monthLabel}
           </span>
           <Button
             variant="outline"
+            size="icon"
+            aria-label="Next"
             disabled={isCurrentMonth}
             onClick={() => setMonth(shiftMonth(month, 1))}
           >
-            Next
+            <CaretRightIcon aria-hidden />
           </Button>
         </div>
       </header>
 
       {isPending ? (
         <div className="space-y-4" role="status" aria-label="Loading dashboard">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-40 w-full" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Skeleton className="h-28 w-full" />
+            <Skeleton className="h-28 w-full" />
+            <Skeleton className="h-28 w-full" />
+            <Skeleton className="h-28 w-full" />
+          </div>
+          <div className="grid gap-4 lg:grid-cols-12">
+            <Skeleton className="h-72 w-full lg:col-span-7" />
+            <Skeleton className="h-72 w-full lg:col-span-5" />
+          </div>
         </div>
       ) : isError ? (
         <Empty className="border">
@@ -91,18 +102,25 @@ export default function DashboardPage() {
           </EmptyContent>
         </Empty>
       ) : (
-        <div className="space-y-4 pb-8">
+        // Refetching holds the previous render at reduced opacity rather than
+        // dropping back to skeletons, so switching months never jumps.
+        <div
+          className={`space-y-8 transition-opacity ${
+            isFetching ? "opacity-60" : ""
+          }`}
+        >
           {data.currencies.map((summary) => (
-            <CurrencySummaryCard
+            <CurrencySection
               key={summary.currencyCode}
               summary={summary}
               monthLabel={monthLabel}
             />
           ))}
 
-          <StatementsDueList statements={data.statements} today={data.today} />
-
-          <PendingList items={data.pending} today={data.today} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <StatementsDueList statements={data.statements} today={data.today} />
+            <PendingList items={data.pending} today={data.today} />
+          </div>
         </div>
       )}
     </div>

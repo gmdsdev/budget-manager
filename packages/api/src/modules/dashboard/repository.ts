@@ -26,6 +26,9 @@ const ownerNotArchived = or(
   eq(creditCards.isArchived, false),
 );
 
+/** The `YYYY-MM` bucket a row falls in — a grouping key, not a rule. */
+const occurrenceMonth = sql<string>`to_char(${transactionOccurrences.occurrenceDate}, 'YYYY-MM')`;
+
 /**
  * Every query here is a plain GROUP BY with no CASE/FILTER: which kinds and
  * statuses count is decided in `summary.ts`, which is unit tested. See the
@@ -38,6 +41,7 @@ export class DashboardRepository {
     return this.db
       .select({
         id: wallets.id,
+        name: wallets.name,
         currencyCode: wallets.currencyCode,
         openingBalanceCents: wallets.openingBalanceCents,
       })
@@ -136,7 +140,12 @@ export class DashboardRepository {
       );
   }
 
-  async getMonthMovements({
+  /**
+   * One row per (month, currency, kind, status) across the whole trend window.
+   * The month in view is a slice of this, so its figures and the trend chart
+   * come from the same grouping.
+   */
+  async getTrendMovements({
     userId,
     from,
     to,
@@ -147,6 +156,7 @@ export class DashboardRepository {
   }) {
     return this.db
       .select({
+        month: occurrenceMonth,
         currencyCode: ownerCurrency,
         kind: transactionOccurrences.kind,
         status: transactionOccurrences.status,
@@ -170,6 +180,7 @@ export class DashboardRepository {
         ),
       )
       .groupBy(
+        occurrenceMonth,
         ownerCurrency,
         transactionOccurrences.kind,
         transactionOccurrences.status,

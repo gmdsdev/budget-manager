@@ -4,6 +4,7 @@ import {
   type TransactionRepeats,
   type TransactionStatus,
 } from "@budget-manager/schemas";
+import { currentMonthRange } from "@budget-manager/ui/lib/date-range";
 
 export type TransactionRow = {
   id: string;
@@ -78,18 +79,31 @@ export type TransactionFiltersState = {
   dateTo: string;
 };
 
-export const EMPTY_TRANSACTION_FILTERS: TransactionFiltersState = {
-  search: "",
-  accountId: TRANSACTION_FILTER_ALL,
-  categoryId: TRANSACTION_FILTER_ALL,
-  kind: TRANSACTION_FILTER_ALL,
-  repeats: TRANSACTION_FILTER_ALL,
-  status: TRANSACTION_FILTER_ALL,
-  dateFrom: "",
-  dateTo: "",
-};
+/**
+ * The list is always scoped to a date range, so the unset state is the current
+ * month rather than "no dates" — an all-time ledger is neither what anyone reads
+ * nor something pagination can make readable.
+ */
+export function defaultTransactionFilters(
+  today = new Date(),
+): TransactionFiltersState {
+  const { from, to } = currentMonthRange(today);
+
+  return {
+    search: "",
+    accountId: TRANSACTION_FILTER_ALL,
+    categoryId: TRANSACTION_FILTER_ALL,
+    kind: TRANSACTION_FILTER_ALL,
+    repeats: TRANSACTION_FILTER_ALL,
+    status: TRANSACTION_FILTER_ALL,
+    dateFrom: from,
+    dateTo: to,
+  };
+}
 
 export function isTransactionFiltered(filters: TransactionFiltersState) {
+  const defaults = defaultTransactionFilters();
+
   return (
     filters.search !== "" ||
     filters.accountId !== TRANSACTION_FILTER_ALL ||
@@ -97,7 +111,7 @@ export function isTransactionFiltered(filters: TransactionFiltersState) {
     filters.kind !== TRANSACTION_FILTER_ALL ||
     filters.repeats !== TRANSACTION_FILTER_ALL ||
     filters.status !== TRANSACTION_FILTER_ALL ||
-    filters.dateFrom !== "" ||
-    filters.dateTo !== ""
+    filters.dateFrom !== defaults.dateFrom ||
+    filters.dateTo !== defaults.dateTo
   );
 }

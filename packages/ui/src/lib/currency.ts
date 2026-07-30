@@ -1,4 +1,5 @@
 export {
+  formatCompactMinorUnits,
   formatMinorUnits,
   minorUnitDigits,
   parseMinorUnits,
