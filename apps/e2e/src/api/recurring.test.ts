@@ -1,4 +1,5 @@
 import {
+  RECURRENCE_YEARS,
   RecurrenceType,
   TransactionKind,
   TransactionStatus,
@@ -112,21 +113,29 @@ describe("recurring series", () => {
     ]);
   });
 
-  test("a monthly series stops at its end date", async () => {
+  test("an open-ended series ends 50 years out, a year at a time", async () => {
     const { client, checking } = await freshUser();
+    const startsOn = monthsFromToday(0);
 
-    await client.recurring.create.mutate(
+    const created = await client.recurring.create.mutate(
       recurring({
         name: "Gym",
         walletId: checking.id,
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
-        startsOn: "2026-06-15",
-        endsOn: "2026-09-15",
+        startsOn,
       }),
     );
 
-    expect((await seriesRows(client, "Gym")).length).toBe(4);
+    const series = (await client.recurring.getAll.query({})).rows[0];
+    const year = Number(startsOn.slice(0, 4)) + RECURRENCE_YEARS;
+
+    // Nobody was asked for an end date; it comes off the start date.
+    expect(series?.endsOn).toBe(`${year}${startsOn.slice(4)}`);
+    // Only the horizon is materialized, so the ledger holds a year, not fifty.
+    expect(created.generated).toBeGreaterThanOrEqual(12);
+    expect(created.generated).toBeLessThanOrEqual(13);
+    expect((await seriesRows(client, "Gym")).length).toBe(created.generated);
   });
 
   test("the generated rows carry the series' account and category", async () => {
@@ -174,7 +183,7 @@ describe("recurring series", () => {
   test("lists the series with its schedule and a row count", async () => {
     const { client, checking } = await freshUser();
 
-    await client.recurring.create.mutate(
+    const created = await client.recurring.create.mutate(
       recurring({
         name: "Salary",
         kind: TransactionKind.INCOME,
@@ -182,7 +191,6 @@ describe("recurring series", () => {
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
         startsOn: "2026-07-01",
-        endsOn: "2026-09-01",
       }),
     );
 
@@ -193,10 +201,10 @@ describe("recurring series", () => {
     expect(series?.recurrenceType).toBe(RecurrenceType.MONTHLY);
     expect(series?.interval).toBe(1);
     expect(series?.startsOn).toBe("2026-07-01");
-    expect(series?.endsOn).toBe("2026-09-01");
+    expect(series?.endsOn).toBe("2076-07-01");
     expect(series?.walletName).toBe("Checking");
     expect(series?.currencyCode).toBe("BRL");
-    expect(series?.occurrenceCount).toBe(3);
+    expect(series?.occurrenceCount).toBe(created.generated);
   });
 });
 
@@ -256,7 +264,6 @@ describe("editing a series", () => {
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
         startsOn: monthsFromToday(2),
-        endsOn: monthsFromToday(5),
       }),
     );
 
@@ -268,7 +275,6 @@ describe("editing a series", () => {
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
         startsOn: monthsFromToday(2),
-        endsOn: monthsFromToday(5),
       }),
       id: created.id,
     });
@@ -279,7 +285,7 @@ describe("editing a series", () => {
     expect(rows.every((r) => r.amountCents === 9_000)).toBe(true);
   });
 
-  test("shortening the series removes the rows beyond the new end", async () => {
+  test("re-laying a shorter schedule removes the rows beyond it", async () => {
     const { client, checking } = await freshUser();
 
     const created = await client.recurring.create.mutate(
@@ -289,7 +295,6 @@ describe("editing a series", () => {
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
         startsOn: monthsFromToday(1),
-        endsOn: monthsFromToday(6),
       }),
     );
 
@@ -299,17 +304,16 @@ describe("editing a series", () => {
       ...recurring({
         name: "Trial",
         walletId: checking.id,
-        recurrenceType: RecurrenceType.MONTHLY,
-        installments: null,
+        recurrenceType: RecurrenceType.FIXED,
+        installments: 3,
         startsOn: monthsFromToday(1),
-        endsOn: monthsFromToday(3),
       }),
       id: created.id,
     });
 
     const after = (await seriesRows(client, "Trial")).length;
 
-    expect(before).toBe(6);
+    expect(before).toBeGreaterThan(3);
     expect(after).toBe(3);
   });
 
@@ -441,24 +445,6 @@ describe("validation and access", () => {
     ).toBe("BAD_REQUEST");
   });
 
-  test("rejects an end date before the start", async () => {
-    const { client, checking } = await freshUser();
-
-    expect(
-      await errorCodeOf(
-        client.recurring.create.mutate(
-          recurring({
-            walletId: checking.id,
-            recurrenceType: RecurrenceType.MONTHLY,
-            installments: null,
-            startsOn: "2026-06-01",
-            endsOn: "2026-05-01",
-          }),
-        ),
-      ),
-    ).toBe("BAD_REQUEST");
-  });
-
   test("rejects a category that contradicts the kind", async () => {
     const { client, checking, salary } = await freshUser();
 
@@ -517,8 +503,8 @@ describe("pausing a series", () => {
         walletId: checking.id,
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
-        startsOn: "2020-01-12",
-        endsOn: monthsFromToday(6, 12),
+        // Straddles today so there is both history and a schedule ahead.
+        startsOn: monthsFromToday(-6, 12),
       }),
     );
 
@@ -551,7 +537,6 @@ describe("pausing a series", () => {
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
         startsOn: monthsFromToday(1, 12),
-        endsOn: monthsFromToday(5, 12),
       }),
     );
 
@@ -568,7 +553,6 @@ describe("pausing a series", () => {
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
         startsOn: monthsFromToday(1, 12),
-        endsOn: monthsFromToday(5, 12),
       }),
       id: created.id,
     });
@@ -587,7 +571,6 @@ describe("pausing a series", () => {
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
         startsOn: monthsFromToday(1, 12),
-        endsOn: monthsFromToday(4, 12),
       }),
     );
 
@@ -639,8 +622,7 @@ describe("deleting a series", () => {
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
         // Straddles today so there is both history and a future.
-        startsOn: "2020-01-08",
-        endsOn: monthsFromToday(6, 8),
+        startsOn: monthsFromToday(-6, 8),
       }),
     );
 

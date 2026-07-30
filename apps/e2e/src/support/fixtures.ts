@@ -96,7 +96,6 @@ export const recurring = (
   interval: 1,
   installments: null,
   startsOn: "2026-07-05",
-  endsOn: "2026-10-05",
   ...overrides,
 });
 

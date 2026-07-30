@@ -33,6 +33,12 @@ export type RecurringKind = (typeof RECURRING_KINDS)[number];
 export const MAX_INTERVAL = 52;
 export const MAX_INSTALLMENTS = 360;
 
+/**
+ * How long an open-ended series runs for. Long enough that nobody budgets past
+ * it, which is why the end date is derived from the start rather than asked for.
+ */
+export const RECURRENCE_YEARS = 50;
+
 export const RECURRING_ACCOUNT_MESSAGE =
   "Pick a wallet for income and expenses, or a card for card purchases";
 
@@ -73,7 +79,6 @@ export const RecurringFieldsSchema = z.object({
     .max(MAX_INSTALLMENTS, `Must be ${MAX_INSTALLMENTS} or fewer`)
     .nullable(),
   startsOn: z.iso.date("Start date is required"),
-  endsOn: z.iso.date().nullable(),
 });
 
 /** A card purchase bills a card; income and expenses move a wallet. */
@@ -92,23 +97,13 @@ export const hasInstallmentsWhenFixed = (value: {
 }) =>
   value.recurrenceType !== RecurrenceType.FIXED || Boolean(value.installments);
 
-export const endsAfterStart = (value: {
-  startsOn: string;
-  endsOn: string | null;
-}) => !value.endsOn || value.endsOn >= value.startsOn;
-
 export const RecurringFormSchema = RecurringFieldsSchema.refine(
   hasMatchingAccount,
   { message: RECURRING_ACCOUNT_MESSAGE, path: ["walletId"] },
-)
-  .refine(hasInstallmentsWhenFixed, {
-    message: RECURRING_INSTALLMENTS_MESSAGE,
-    path: ["installments"],
-  })
-  .refine(endsAfterStart, {
-    message: "End date cannot be before the start date",
-    path: ["endsOn"],
-  });
+).refine(hasInstallmentsWhenFixed, {
+  message: RECURRING_INSTALLMENTS_MESSAGE,
+  path: ["installments"],
+});
 
 export type RecurringFormDto = z.infer<typeof RecurringFieldsSchema>;
 

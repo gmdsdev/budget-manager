@@ -108,9 +108,11 @@ export class RecurringRepository {
   async create({
     userId,
     recurring,
+    endsOn,
   }: {
     userId: string;
     recurring: RecurringFormDto;
+    endsOn: string;
   }) {
     return this.db.transaction(async (tx) => {
       const templates = await tx
@@ -140,7 +142,7 @@ export class RecurringRepository {
         interval: recurring.interval,
         installments: recurring.installments,
         startsOn: recurring.startsOn,
-        endsOn: recurring.endsOn,
+        endsOn,
       });
 
       return template.id;
@@ -151,10 +153,12 @@ export class RecurringRepository {
     id,
     userId,
     recurring,
+    endsOn,
   }: {
     id: string;
     userId: string;
     recurring: RecurringFormDto;
+    endsOn: string;
   }) {
     return this.db.transaction(async (tx) => {
       const templates = await tx
@@ -188,7 +192,7 @@ export class RecurringRepository {
           interval: recurring.interval,
           installments: recurring.installments,
           startsOn: recurring.startsOn,
-          endsOn: recurring.endsOn,
+          endsOn,
           updatedAt: new Date(),
         })
         .where(

@@ -1,7 +1,6 @@
 import { RecurringFieldsSchema, RecurringFormSchema } from "@budget-manager/schemas";
 import { z } from "zod";
 import {
-  endsAfterStart,
   hasInstallmentsWhenFixed,
   hasMatchingAccount,
   RECURRING_ACCOUNT_MESSAGE,
@@ -20,10 +19,6 @@ export const UpdateRecurringInput = RecurringFieldsSchema.extend({
   .refine(hasInstallmentsWhenFixed, {
     message: RECURRING_INSTALLMENTS_MESSAGE,
     path: ["installments"],
-  })
-  .refine(endsAfterStart, {
-    message: "End date cannot be before the start date",
-    path: ["endsOn"],
   });
 
 export const RecurringIdInput = z.object({ id: z.uuid() });

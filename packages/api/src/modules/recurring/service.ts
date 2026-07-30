@@ -9,7 +9,7 @@ import { formatDate } from "../../dates";
 import { ConflictError, NotFoundError } from "../../errors";
 import type { CreditCardService } from "../credit-card";
 import type { RecurringRepository } from "./repository";
-import { occurrenceDates } from "./schedule";
+import { occurrenceDates, seriesEndsOn } from "./schedule";
 
 export class RecurringService {
   constructor(
@@ -45,8 +45,15 @@ export class RecurringService {
   }) {
     await this.assertReferences({ userId, recurring });
 
-    const id = await this.repository.create({ userId, recurring });
-    const generated = await this.generate({ id, userId, recurring, now });
+    const endsOn = seriesEndsOn(recurring.startsOn);
+    const id = await this.repository.create({ userId, recurring, endsOn });
+    const generated = await this.generate({
+      id,
+      userId,
+      recurring,
+      endsOn,
+      now,
+    });
 
     return { id, generated };
   }
@@ -70,7 +77,13 @@ export class RecurringService {
 
     await this.assertReferences({ userId, recurring });
 
-    const updated = await this.repository.update({ id, userId, recurring });
+    const endsOn = seriesEndsOn(recurring.startsOn);
+    const updated = await this.repository.update({
+      id,
+      userId,
+      recurring,
+      endsOn,
+    });
 
     if (!updated) {
       throw new NotFoundError("Recurring transaction");
@@ -85,7 +98,7 @@ export class RecurringService {
 
     // A paused series is edited but not re-scheduled until it resumes.
     const generated = existing.isActive
-      ? await this.generate({ id, userId, recurring, now })
+      ? await this.generate({ id, userId, recurring, endsOn, now })
       : 0;
 
     return { id, generated, removed };
@@ -136,8 +149,9 @@ export class RecurringService {
         interval: existing.interval,
         installments: existing.installments,
         startsOn: existing.startsOn,
-        endsOn: existing.endsOn,
       },
+      // Resuming keeps the end date the row already carries.
+      endsOn: existing.endsOn,
       now,
     });
 
@@ -180,11 +194,13 @@ export class RecurringService {
     id,
     userId,
     recurring,
+    endsOn,
     now,
   }: {
     id: string;
     userId: string;
     recurring: RecurringFormDto;
+    endsOn: string | null;
     now: Date;
   }) {
     const today = formatDate(now);
@@ -193,7 +209,7 @@ export class RecurringService {
       interval: recurring.interval,
       installments: recurring.installments,
       startsOn: recurring.startsOn,
-      endsOn: recurring.endsOn,
+      endsOn,
       today,
     });
 

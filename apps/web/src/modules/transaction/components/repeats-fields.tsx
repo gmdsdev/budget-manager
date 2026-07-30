@@ -1,9 +1,9 @@
 import {
+  RECURRENCE_YEARS,
   RecurrenceType,
   RecurrenceTypeLabelMap,
 } from "@budget-manager/schemas";
 import { Checkbox } from "@budget-manager/ui/components/checkbox";
-import { DatePicker } from "@budget-manager/ui/components/date-picker";
 import {
   Field,
   FieldDescription,
@@ -24,7 +24,6 @@ export type RepeatState = {
   recurrenceType: RecurrenceType;
   interval: number;
   installments: number | null;
-  endsOn: string | null;
 };
 
 export const NO_REPEAT_STATE: RepeatState = {
@@ -32,7 +31,6 @@ export const NO_REPEAT_STATE: RepeatState = {
   recurrenceType: RecurrenceType.MONTHLY,
   interval: 1,
   installments: 12,
-  endsOn: null,
 };
 
 const RECURRENCE_ITEMS = Object.values(RecurrenceType).map((type) => ({
@@ -105,6 +103,12 @@ export function RepeatsFields({
                 ))}
               </SelectContent>
             </Select>
+            {!isFixed && (
+              <FieldDescription>
+                Repeats for the next {RECURRENCE_YEARS} years; a year is
+                scheduled at a time.
+              </FieldDescription>
+            )}
           </Field>
 
           <Field>
@@ -123,7 +127,7 @@ export function RepeatsFields({
             </FieldDescription>
           </Field>
 
-          {isFixed ? (
+          {isFixed && (
             <Field>
               <FieldLabel htmlFor="transaction-repeat-installments">
                 Installments
@@ -142,24 +146,6 @@ export function RepeatsFields({
                   })
                 }
               />
-            </Field>
-          ) : (
-            <Field>
-              <FieldLabel htmlFor="transaction-repeat-ends">
-                Repeat until
-              </FieldLabel>
-              <DatePicker
-                id="transaction-repeat-ends"
-                clearable
-                placeholder="No end date"
-                value={value.endsOn}
-                onValueChange={(next) =>
-                  onChange({ ...value, endsOn: next || null })
-                }
-              />
-              <FieldDescription>
-                Leave empty to keep repeating; a year is scheduled at a time.
-              </FieldDescription>
             </Field>
           )}
         </>

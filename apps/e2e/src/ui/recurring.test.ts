@@ -73,7 +73,8 @@ describe("recurrence lives on the transaction form", () => {
 
     await setCheckbox(dialog(page), "Enable recurrence", true);
 
-    // Monthly by default, so a "Repeat until" date rather than a count.
+    // Monthly by default: a type and an interval, and no end date to fill in —
+    // an open-ended series is bounded by the derived 50-year end.
     expect(
       await dialog(page).getByLabel("Recurrence type", { exact: true }).count(),
     ).toBe(1);
@@ -82,7 +83,10 @@ describe("recurrence lives on the transaction form", () => {
     );
     expect(
       await dialog(page).getByLabel("Repeat until", { exact: true }).count(),
-    ).toBe(1);
+    ).toBe(0);
+    expect(
+      await dialog(page).getByLabel("Ends on", { exact: true }).count(),
+    ).toBe(0);
 
     await pickSelect(
       page,
@@ -91,13 +95,10 @@ describe("recurrence lives on the transaction form", () => {
       "Fixed installments",
     );
 
-    // A fixed series is bounded by a count, so the end date gives way to it.
+    // A fixed series is the one shape that carries a bound of its own.
     expect(
       await dialog(page).getByLabel("Installments", { exact: true }).count(),
     ).toBe(1);
-    expect(
-      await dialog(page).getByLabel("Repeat until", { exact: true }).count(),
-    ).toBe(0);
 
     await setCheckbox(dialog(page), "Enable recurrence", false);
 

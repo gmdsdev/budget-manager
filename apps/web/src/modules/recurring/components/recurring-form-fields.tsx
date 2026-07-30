@@ -3,6 +3,7 @@ import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-cre
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
 import {
   CategoryType,
+  RECURRENCE_YEARS,
   RECURRING_KINDS,
   RecurrenceType,
   RecurrenceTypeLabelMap,
@@ -268,7 +269,7 @@ export function RecurringFormFields({
               <FieldDescription>
                 {isFixed
                   ? "A set number of monthly installments."
-                  : "Repeats until the end date, or a year ahead."}
+                  : `Repeats for the next ${RECURRENCE_YEARS} years; a year is materialized at a time.`}
               </FieldDescription>
               <FieldError errors={showErrors ? field.state.meta.errors : []} />
             </Field>
@@ -353,34 +354,6 @@ export function RecurringFormFields({
           );
         }}
       </form.Field>
-
-      {!isFixed && (
-        <form.Field name="endsOn">
-          {(field) => {
-            const showErrors = invalid(field);
-
-            return (
-              <Field data-invalid={showErrors}>
-                <FieldLabel htmlFor={field.name}>Ends on</FieldLabel>
-                <DatePicker
-                  id={field.name}
-                  name={field.name}
-                  clearable
-                  placeholder="No end date"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onValueChange={(value) => field.handleChange(value || null)}
-                  aria-invalid={showErrors || undefined}
-                />
-                <FieldDescription>
-                  Leave empty to keep going; a year is materialized at a time.
-                </FieldDescription>
-                <FieldError errors={showErrors ? field.state.meta.errors : []} />
-              </Field>
-            );
-          }}
-        </form.Field>
-      )}
 
       <form.Field name="categoryId">
         {(field) => {

@@ -39,7 +39,6 @@ export function EditRecurringDialog({
       interval: series.interval,
       installments: series.installments,
       startsOn: series.startsOn,
-      endsOn: series.endsOn,
     },
     onSubmit: async (values) => {
       await updateMutation.mutateAsync({ ...values, id: series.id });

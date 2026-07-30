@@ -250,6 +250,15 @@ choosing a schedule routes the same submit to `recurring.create` instead of
 (`One-off` vs `Monthly` / `6× monthly`) and series actions — edit / pause / delete series —
 on any row that carries a `templateId`. Don't reintroduce a separate screen for them.
 
+**Nobody is asked when a series ends.** `endsOn` is not a form field or a tRPC input: an
+open-ended series runs for `RECURRENCE_YEARS` (50) and `seriesEndsOn` derives the date from
+`startsOn` — clamping a Feb 29 anchor the same way the steps do — which `create`/`update` store
+on the rule row. Fifty years is not fifty years of rows: the horizon below is still what gets
+materialized, so the stored date is the schedule's limit, not its size. A `fixed` series is the
+one shape that carries a bound of its own (`installments`), which is why it is the only one
+still showing a count. Rule rows written before this keep whatever end date they were given,
+and `setActive` re-schedules against the stored value rather than re-deriving it.
+
 The generator materializes a 12-month horizon (`HORIZON_MONTHS`), or exactly `installments`
 dates for a `fixed` series, which is what lets a 12× purchase land as 12 rows past the horizon.
 `occurrenceDates` clamps a month-end anchor (31 Jan → 28 Feb → **31** Mar, never drifting
@@ -438,8 +447,9 @@ wrong semantics for something that navigates.
 picker as a recipe rather than a file, so `packages/ui/src/components/date-picker.tsx` is that
 composition (Popover + Calendar, react-day-picker under the hood) with the app's contract
 bolted on: it reads and writes `yyyy-MM-dd` **strings**, which is what every schema, form and
-tRPC input already carries, and `clearable` is what optional fields (`endsOn`) use to get back
-to empty. Parse with date-fns `parseISO`, never `new Date(value)` — the latter reads a date-only
+tRPC input already carries, and `clearable` is how an optional field gets back to empty (no
+form uses it today — `date-picker.test.tsx` is what keeps it honest). Parse with date-fns
+`parseISO`, never `new Date(value)` — the latter reads a date-only
 string as UTC midnight, so west-of-UTC users see the previous day; `date-picker.test.tsx` pins
 that. The trigger is a `<button>` carrying the field's `id`, so `FieldLabel htmlFor` and
 Playwright's `getByLabel` both still resolve, and its popup has `role="dialog"` — a

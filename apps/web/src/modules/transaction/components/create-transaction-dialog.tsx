@@ -70,10 +70,6 @@ export function CreateTransactionDialog() {
               ? repeat.installments
               : null,
           startsOn: values.occurrenceDate,
-          endsOn:
-            repeat.recurrenceType === RecurrenceType.FIXED
-              ? null
-              : repeat.endsOn,
         });
       }
 

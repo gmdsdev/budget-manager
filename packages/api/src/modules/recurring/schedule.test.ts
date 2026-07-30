@@ -1,7 +1,12 @@
-import { RecurrenceType } from "@budget-manager/schemas";
+import { RECURRENCE_YEARS, RecurrenceType } from "@budget-manager/schemas";
 import { describe, expect, test } from "bun:test";
 
-import { HORIZON_MONTHS, MAX_OCCURRENCES, occurrenceDates } from "./schedule";
+import {
+  HORIZON_MONTHS,
+  MAX_OCCURRENCES,
+  occurrenceDates,
+  seriesEndsOn,
+} from "./schedule";
 
 const TODAY = "2026-07-01";
 
@@ -249,6 +254,31 @@ describe("yearly", () => {
     // History matters: a series that began in the past keeps its earlier rows.
     expect(result[0]).toBe("2026-05-10");
     expect(result.length).toBe(4);
+  });
+});
+
+describe("derived end date", () => {
+  test("lands the same day and month, 50 years on", () => {
+    expect(seriesEndsOn("2026-07-05")).toBe("2076-07-05");
+    expect(RECURRENCE_YEARS).toBe(50);
+  });
+
+  test("keeps a month-end anchor", () => {
+    expect(seriesEndsOn("2026-01-31")).toBe("2076-01-31");
+  });
+
+  test("clamps a Feb 29 anchor into a common year", () => {
+    // 2078 is not a leap year, so the end date is the 28th rather than March.
+    expect(seriesEndsOn("2028-02-29")).toBe("2078-02-28");
+  });
+
+  test("bounds an open-ended series that outlives the horizon", () => {
+    const startsOn = "2026-07-05";
+
+    const result = dates({ startsOn, endsOn: seriesEndsOn(startsOn) });
+
+    // The horizon is the nearer limit, so the 50-year end never truncates it.
+    expect(result.length).toBe(HORIZON_MONTHS);
   });
 });
 

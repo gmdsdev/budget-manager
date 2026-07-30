@@ -1,4 +1,4 @@
-import { RecurrenceType } from "@budget-manager/schemas";
+import { RECURRENCE_YEARS, RecurrenceType } from "@budget-manager/schemas";
 import { formatDate, parseDateString, shiftMonths } from "../../dates";
 
 /** How far ahead a non-finite series is materialized. */
@@ -36,6 +36,17 @@ function step(anchor: Date, type: RecurrenceType, interval: number, n: number) {
   );
 
   return new Date(target.getFullYear(), target.getMonth(), day);
+}
+
+/**
+ * Where an open-ended series stops. Nobody is asked for an end date, so it is
+ * derived from the start and stored, keeping the rule row a complete record of
+ * the schedule.
+ */
+export function seriesEndsOn(startsOn: string): string {
+  return formatDate(
+    step(parseDateString(startsOn), RecurrenceType.YEARLY, RECURRENCE_YEARS, 1),
+  );
 }
 
 /**
