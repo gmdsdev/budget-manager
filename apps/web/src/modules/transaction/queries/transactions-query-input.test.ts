@@ -1,11 +1,28 @@
-import { TransactionKind, TransactionStatus } from "@budget-manager/schemas";
+import {
+  FILTER_NONE,
+  TransactionKind,
+  TransactionRepeats,
+  TransactionStatus,
+} from "@budget-manager/schemas";
 import { describe, expect, test } from "bun:test";
 
 import { PAGE_SIZE } from "@/lib/pagination";
-import { EMPTY_TRANSACTION_FILTERS, isTransactionFiltered } from "../types";
+import {
+  cardAccountValue,
+  EMPTY_TRANSACTION_FILTERS,
+  isTransactionFiltered,
+  parseAccountValue,
+  TRANSACTION_FILTER_ALL,
+  walletAccountValue,
+  type TransactionFiltersState,
+} from "../types";
 import { transactionsQueryInput } from "./use-transactions-query";
 
 const FIRST_PAGE = { limit: PAGE_SIZE, offset: 0 };
+
+const WALLET_ID = "aeb0f2c2-0d4c-4f14-9b2b-2b6e63b4dcb5";
+
+const CARD_ID = "1f0f0b2e-6b3c-4c2a-9d51-6a1b2c3d4e5f";
 
 describe("transactionsQueryInput", () => {
   test("sends only pagination for the default state", () => {
@@ -33,6 +50,45 @@ describe("transactionsQueryInput", () => {
       kind: TransactionKind.EXPENSE,
       status: TransactionStatus.PAID,
       dateFrom: "2026-07-01",
+    });
+  });
+
+  test("sends a wallet choice as walletId and a card choice as creditCardId", () => {
+    expect(
+      transactionsQueryInput({
+        ...EMPTY_TRANSACTION_FILTERS,
+        accountId: walletAccountValue(WALLET_ID),
+      }),
+    ).toEqual({ ...FIRST_PAGE, walletId: WALLET_ID });
+
+    expect(
+      transactionsQueryInput({
+        ...EMPTY_TRANSACTION_FILTERS,
+        accountId: cardAccountValue(CARD_ID),
+      }),
+    ).toEqual({ ...FIRST_PAGE, creditCardId: CARD_ID });
+  });
+
+  test("passes the uncategorized sentinel through untouched", () => {
+    expect(
+      transactionsQueryInput({
+        ...EMPTY_TRANSACTION_FILTERS,
+        categoryId: FILTER_NONE,
+      }),
+    ).toEqual({ ...FIRST_PAGE, categoryId: FILTER_NONE });
+  });
+
+  test("sends the search term and the repeats choice", () => {
+    expect(
+      transactionsQueryInput({
+        ...EMPTY_TRANSACTION_FILTERS,
+        search: "coffee",
+        repeats: TransactionRepeats.RECURRING,
+      }),
+    ).toEqual({
+      ...FIRST_PAGE,
+      search: "coffee",
+      repeats: TransactionRepeats.RECURRING,
     });
   });
 
@@ -75,8 +131,47 @@ describe("isTransactionFiltered", () => {
     expect(
       isTransactionFiltered({
         ...EMPTY_TRANSACTION_FILTERS,
-        walletId: "aeb0f2c2-0d4c-4f14-9b2b-2b6e63b4dcb5",
+        accountId: walletAccountValue(WALLET_ID),
       }),
     ).toBe(true);
+  });
+
+  test("is true for a search term", () => {
+    expect(
+      isTransactionFiltered({ ...EMPTY_TRANSACTION_FILTERS, search: "coffee" }),
+    ).toBe(true);
+  });
+
+  test("is true for every filter the bar exposes", () => {
+    const set: TransactionFiltersState[] = [
+      { ...EMPTY_TRANSACTION_FILTERS, search: "coffee" },
+      { ...EMPTY_TRANSACTION_FILTERS, accountId: cardAccountValue(CARD_ID) },
+      { ...EMPTY_TRANSACTION_FILTERS, categoryId: FILTER_NONE },
+      { ...EMPTY_TRANSACTION_FILTERS, kind: TransactionKind.EXPENSE },
+      { ...EMPTY_TRANSACTION_FILTERS, repeats: TransactionRepeats.RECURRING },
+      { ...EMPTY_TRANSACTION_FILTERS, status: TransactionStatus.PAID },
+      { ...EMPTY_TRANSACTION_FILTERS, dateFrom: "2026-07-01" },
+      { ...EMPTY_TRANSACTION_FILTERS, dateTo: "2026-07-31" },
+    ];
+
+    expect(set.every(isTransactionFiltered)).toBe(true);
+  });
+});
+
+describe("parseAccountValue", () => {
+  test("routes a wallet choice to walletId", () => {
+    expect(parseAccountValue(walletAccountValue(WALLET_ID))).toEqual({
+      walletId: WALLET_ID,
+    });
+  });
+
+  test("routes a card choice to creditCardId", () => {
+    expect(parseAccountValue(cardAccountValue(CARD_ID))).toEqual({
+      creditCardId: CARD_ID,
+    });
+  });
+
+  test("resolves an unprefixed value to neither", () => {
+    expect(parseAccountValue(TRANSACTION_FILTER_ALL)).toEqual({});
   });
 });

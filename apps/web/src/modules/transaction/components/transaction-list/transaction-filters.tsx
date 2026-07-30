@@ -1,35 +1,41 @@
+import { FilterBar } from "@/components/filter-bar";
+import { FilterSearch } from "@/components/filter-search";
+import { FilterSelect, type FilterItem } from "@/components/filter-select";
 import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
+import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
 import {
+  FILTER_NONE,
   TransactionKind,
   TransactionKindLabelMap,
+  TransactionRepeats,
+  TransactionRepeatsLabelMap,
   TransactionStatus,
   TransactionStatusLabelMap,
 } from "@budget-manager/schemas";
-import { Button } from "@budget-manager/ui/components/button";
 import { DatePicker } from "@budget-manager/ui/components/date-picker";
-import { Field, FieldLabel } from "@budget-manager/ui/components/field";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@budget-manager/ui/components/select";
-import {
+  cardAccountValue,
   EMPTY_TRANSACTION_FILTERS,
-  TRANSACTION_FILTER_ALL,
   isTransactionFiltered,
+  TRANSACTION_FILTER_ALL,
+  walletAccountValue,
   type TransactionFiltersState,
 } from "../../types";
-
-type FilterItem = { label: string; value: string };
 
 const KIND_ITEMS: FilterItem[] = [
   { label: "All kinds", value: TRANSACTION_FILTER_ALL },
   ...Object.values(TransactionKind).map((kind) => ({
     label: TransactionKindLabelMap[kind],
     value: kind,
+  })),
+];
+
+const REPEATS_ITEMS: FilterItem[] = [
+  { label: "All rows", value: TRANSACTION_FILTER_ALL },
+  ...Object.values(TransactionRepeats).map((repeats) => ({
+    label: TransactionRepeatsLabelMap[repeats],
+    value: repeats,
   })),
 ];
 
@@ -41,43 +47,6 @@ const STATUS_ITEMS: FilterItem[] = [
   })),
 ];
 
-function FilterSelect({
-  id,
-  label,
-  items,
-  value,
-  onValueChange,
-}: {
-  id: string;
-  label: string;
-  items: FilterItem[];
-  value: string;
-  onValueChange: (value: string) => void;
-}) {
-  return (
-    <Field orientation="horizontal" className="w-auto">
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <Select<string>
-        items={items}
-        id={id}
-        value={value}
-        onValueChange={(next) => onValueChange(next as string)}
-      >
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {items.map((item) => (
-            <SelectItem key={item.value} value={item.value}>
-              {item.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </Field>
-  );
-}
-
 export function TransactionFilters({
   filters,
   onFiltersChange,
@@ -86,18 +55,24 @@ export function TransactionFilters({
   onFiltersChange: (filters: TransactionFiltersState) => void;
 }) {
   const { data: wallets } = useWalletOptionsQuery();
+  const { data: cards } = useCreditCardOptionsQuery();
   const { data: categories } = useCategoryOptionsQuery();
 
-  const walletItems: FilterItem[] = [
-    { label: "All wallets", value: TRANSACTION_FILTER_ALL },
+  const accountItems: FilterItem[] = [
+    { label: "All accounts", value: TRANSACTION_FILTER_ALL },
     ...(wallets ?? []).map((wallet) => ({
       label: wallet.name,
-      value: wallet.id,
+      value: walletAccountValue(wallet.id),
+    })),
+    ...(cards ?? []).map((card) => ({
+      label: card.name,
+      value: cardAccountValue(card.id),
     })),
   ];
 
   const categoryItems: FilterItem[] = [
     { label: "All categories", value: TRANSACTION_FILTER_ALL },
+    { label: "Uncategorized", value: FILTER_NONE },
     ...(categories ?? []).map((category) => ({
       label: category.name,
       value: category.id,
@@ -108,10 +83,54 @@ export function TransactionFilters({
     onFiltersChange({ ...filters, ...next });
   }
 
-  const isFiltered = isTransactionFiltered(filters);
-
   return (
-    <div className="flex flex-row flex-wrap items-end gap-4 pb-4">
+    <FilterBar
+      isFiltered={isTransactionFiltered(filters)}
+      onClear={() => onFiltersChange(EMPTY_TRANSACTION_FILTERS)}
+    >
+      <DatePicker
+        id="transaction-date-from"
+        aria-label="From"
+        clearable
+        placeholder="From date"
+        className="w-36"
+        value={filters.dateFrom}
+        onValueChange={(value) => patch({ dateFrom: value })}
+      />
+
+      <DatePicker
+        id="transaction-date-to"
+        aria-label="To"
+        clearable
+        placeholder="To date"
+        className="w-36"
+        value={filters.dateTo}
+        onValueChange={(value) => patch({ dateTo: value })}
+      />
+
+      <FilterSearch
+        id="transaction-description-filter"
+        label="Description"
+        value={filters.search}
+        onValueChange={(search) => patch({ search })}
+      />
+
+      <FilterSelect
+        id="transaction-account-filter"
+        label="Account"
+        items={accountItems}
+        value={filters.accountId}
+        onValueChange={(accountId) => patch({ accountId })}
+      />
+
+      <FilterSelect
+        id="transaction-category-filter"
+        label="Category"
+        items={categoryItems}
+        value={filters.categoryId}
+        onValueChange={(categoryId) => patch({ categoryId })}
+      />
+
       <FilterSelect
         id="transaction-kind-filter"
         label="Kind"
@@ -119,6 +138,16 @@ export function TransactionFilters({
         value={filters.kind}
         onValueChange={(value) =>
           patch({ kind: value as TransactionFiltersState["kind"] })
+        }
+      />
+
+      <FilterSelect
+        id="transaction-repeats-filter"
+        label="Repeats"
+        items={REPEATS_ITEMS}
+        value={filters.repeats}
+        onValueChange={(value) =>
+          patch({ repeats: value as TransactionFiltersState["repeats"] })
         }
       />
 
@@ -131,55 +160,6 @@ export function TransactionFilters({
           patch({ status: value as TransactionFiltersState["status"] })
         }
       />
-
-      <FilterSelect
-        id="transaction-wallet-filter"
-        label="Wallet"
-        items={walletItems}
-        value={filters.walletId}
-        onValueChange={(value) => patch({ walletId: value })}
-      />
-
-      <FilterSelect
-        id="transaction-category-filter"
-        label="Category"
-        items={categoryItems}
-        value={filters.categoryId}
-        onValueChange={(value) => patch({ categoryId: value })}
-      />
-
-      <Field orientation="horizontal" className="w-auto">
-        <FieldLabel htmlFor="transaction-date-from">From</FieldLabel>
-        <DatePicker
-          id="transaction-date-from"
-          clearable
-          placeholder="Any date"
-          className="w-32"
-          value={filters.dateFrom}
-          onValueChange={(value) => patch({ dateFrom: value })}
-        />
-      </Field>
-
-      <Field orientation="horizontal" className="w-auto">
-        <FieldLabel htmlFor="transaction-date-to">To</FieldLabel>
-        <DatePicker
-          id="transaction-date-to"
-          clearable
-          placeholder="Any date"
-          className="w-32"
-          value={filters.dateTo}
-          onValueChange={(value) => patch({ dateTo: value })}
-        />
-      </Field>
-
-      {isFiltered && (
-        <Button
-          variant="ghost"
-          onClick={() => onFiltersChange(EMPTY_TRANSACTION_FILTERS)}
-        >
-          Clear filters
-        </Button>
-      )}
-    </div>
+    </FilterBar>
   );
 }

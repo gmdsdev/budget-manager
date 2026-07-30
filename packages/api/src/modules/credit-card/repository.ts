@@ -4,8 +4,9 @@ import { creditCardBills } from "@budget-manager/db/schema/creditCardBill";
 import { transactionOccurrences } from "@budget-manager/db/schema/transactionOccurrence";
 import { transactionTemplates } from "@budget-manager/db/schema/transactionTemplate";
 import { wallets } from "@budget-manager/db/schema/wallet";
-import type { CreditCardFormDto } from "@budget-manager/schemas";
-import { and, asc, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { FILTER_NONE, type CreditCardFormDto } from "@budget-manager/schemas";
+import { and, asc, desc, eq, ilike, isNotNull, isNull, sql } from "drizzle-orm";
+import { containsPattern } from "../../search";
 import type { BillCycle } from "./cycle";
 
 const CREDIT_CARD_PUBLIC_COLUMNS = {
@@ -68,16 +69,45 @@ function pickCreditCardUpdate(
   return set;
 }
 
+export type CreditCardFilters = {
+  search?: string;
+  currencyCode?: string;
+  defaultBillingWalletId?: string;
+};
+
 function creditCardFilter({
   userId,
   includeArchived,
-}: {
+  search,
+  currencyCode,
+  defaultBillingWalletId,
+}: CreditCardFilters & {
   userId: string;
   includeArchived: boolean;
 }) {
-  return includeArchived
-    ? eq(creditCards.userId, userId)
-    : and(eq(creditCards.userId, userId), eq(creditCards.isArchived, false));
+  const conditions = [eq(creditCards.userId, userId)];
+
+  if (!includeArchived) {
+    conditions.push(eq(creditCards.isArchived, false));
+  }
+
+  if (search) {
+    conditions.push(ilike(creditCards.name, containsPattern(search)));
+  }
+
+  if (currencyCode) {
+    conditions.push(eq(creditCards.currencyCode, currencyCode));
+  }
+
+  if (defaultBillingWalletId === FILTER_NONE) {
+    conditions.push(isNull(creditCards.defaultBillingWalletId));
+  } else if (defaultBillingWalletId) {
+    conditions.push(
+      eq(creditCards.defaultBillingWalletId, defaultBillingWalletId),
+    );
+  }
+
+  return and(...conditions);
 }
 
 export class CreditCardRepository {
@@ -88,7 +118,8 @@ export class CreditCardRepository {
     includeArchived,
     limit,
     offset,
-  }: {
+    ...filters
+  }: CreditCardFilters & {
     userId: string;
     includeArchived: boolean;
     limit: number;
@@ -101,7 +132,7 @@ export class CreditCardRepository {
       })
       .from(creditCards)
       .leftJoin(wallets, eq(wallets.id, creditCards.defaultBillingWalletId))
-      .where(creditCardFilter({ userId, includeArchived }))
+      .where(creditCardFilter({ userId, includeArchived, ...filters }))
       .orderBy(asc(creditCards.name), asc(creditCards.id))
       .limit(limit)
       .offset(offset);
@@ -110,13 +141,14 @@ export class CreditCardRepository {
   async count({
     userId,
     includeArchived,
-  }: {
+    ...filters
+  }: CreditCardFilters & {
     userId: string;
     includeArchived: boolean;
   }) {
     return this.db.$count(
       creditCards,
-      creditCardFilter({ userId, includeArchived }),
+      creditCardFilter({ userId, includeArchived, ...filters }),
     );
   }
 

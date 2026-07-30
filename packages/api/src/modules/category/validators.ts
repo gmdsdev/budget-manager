@@ -4,6 +4,7 @@ import {
   CategoryType,
 } from "@budget-manager/schemas";
 import { z } from "zod";
+import { SearchTermInput } from "../../search";
 
 export const CreateCategoryInput = CategoryFormSchema;
 
@@ -19,6 +20,7 @@ export const CategoryOptionsInput = z
 
 export const ListCategoriesInput = z
   .object({
+    search: SearchTermInput,
     type: z.enum(Object.values(CategoryType)).optional(),
     includeArchived: z.boolean().default(false),
     limit: z.number().int().min(1).max(100).default(50),

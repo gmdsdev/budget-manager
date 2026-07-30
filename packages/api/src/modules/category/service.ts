@@ -1,26 +1,35 @@
 import type { CategoryFormDto, CategoryType } from "@budget-manager/schemas";
 import { ConflictError, NotFoundError } from "../../errors";
-import type { CategoryRepository, CategoryUpdatePatch } from "./repository";
+import type {
+  CategoryFilters,
+  CategoryRepository,
+  CategoryUpdatePatch,
+} from "./repository";
 
 export class CategoryService {
   constructor(private readonly repository: CategoryRepository) {}
 
   async getAll({
     userId,
-    type,
     includeArchived,
     limit,
     offset,
-  }: {
+    ...filters
+  }: CategoryFilters & {
     userId: string;
-    type?: CategoryType;
     includeArchived: boolean;
     limit: number;
     offset: number;
   }) {
     const [rows, total] = await Promise.all([
-      this.repository.getAll({ userId, type, includeArchived, limit, offset }),
-      this.repository.count({ userId, type, includeArchived }),
+      this.repository.getAll({
+        userId,
+        includeArchived,
+        limit,
+        offset,
+        ...filters,
+      }),
+      this.repository.count({ userId, includeArchived, ...filters }),
     ]);
 
     return { rows, total, limit, offset };

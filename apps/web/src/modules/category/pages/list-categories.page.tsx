@@ -11,24 +11,24 @@ import {
   EmptyTitle,
 } from "@budget-manager/ui/components/empty";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
-import { CategoryTypeFilter } from "../components/category-list/category-type-filter";
+import { CategoryFilters } from "../components/category-list/category-filters";
 import { categoryColumns } from "../components/category-list/columns";
 import { CreateCategoryDialog } from "../components/create-category-dialog";
 import { useCategoriesQuery } from "../queries/use-categories-query";
 import {
-  CATEGORY_TYPE_FILTER_ALL,
-  type CategoryTypeFilterValue,
+  EMPTY_CATEGORY_FILTERS,
+  isCategoryFiltered,
+  type CategoryFiltersState,
 } from "../types";
 
 export default function ListCategoriesPage() {
   const { filters, page, setFilters, setPage } =
-    usePagedFilters<CategoryTypeFilterValue>(CATEGORY_TYPE_FILTER_ALL);
+    usePagedFilters<CategoryFiltersState>(EMPTY_CATEGORY_FILTERS);
 
   const { data, isPending, isError, error, refetch, isRefetching, isFetching } =
-    useCategoriesQuery({
-      type: filters === CATEGORY_TYPE_FILTER_ALL ? undefined : filters,
-      page,
-    });
+    useCategoriesQuery(filters, page);
+
+  const isFiltered = isCategoryFiltered(filters);
 
   return (
     <div>
@@ -37,9 +37,7 @@ export default function ListCategoriesPage() {
         <CreateCategoryDialog />
       </header>
 
-      <div className="flex flex-row items-center justify-end pb-4">
-        <CategoryTypeFilter value={filters} onValueChange={setFilters} />
-      </div>
+      <CategoryFilters filters={filters} onFiltersChange={setFilters} />
 
       {isPending ? (
         <div
@@ -74,14 +72,14 @@ export default function ListCategoriesPage() {
               <Empty>
                 <EmptyHeader>
                   <EmptyTitle>
-                    {filters === CATEGORY_TYPE_FILTER_ALL
-                      ? "No categories yet"
-                      : "No categories match this type"}
+                    {isFiltered
+                      ? "No categories match these filters"
+                      : "No categories yet"}
                   </EmptyTitle>
                   <EmptyDescription>
-                    {filters === CATEGORY_TYPE_FILTER_ALL
-                      ? "Create your first category to classify your transactions."
-                      : "Try a different type, or create a category for it."}
+                    {isFiltered
+                      ? "Try a different type or name, or create a category for it."
+                      : "Create your first category to classify your transactions."}
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>

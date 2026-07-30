@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table";
 import { Pagination } from "@/components/pagination";
+import { usePagedFilters } from "@/hooks/use-paged-filters";
 import { getErrorMessage } from "@/utils/error-message";
 import { Button } from "@budget-manager/ui/components/button";
 import {
@@ -10,15 +11,24 @@ import {
   EmptyTitle,
 } from "@budget-manager/ui/components/empty";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
-import { useState } from "react";
 import { CreateWalletDialog } from "../components/create-wallet-dialog";
 import { walletColumns } from "../components/wallet-list/columns";
+import { WalletFilters } from "../components/wallet-list/wallet-filters";
 import { useWalletsQuery } from "../queries/use-wallets-query";
+import {
+  EMPTY_WALLET_FILTERS,
+  isWalletFiltered,
+  type WalletFiltersState,
+} from "../types";
 
 export default function ListWalletsPage() {
-  const [page, setPage] = useState(1);
+  const { filters, page, setFilters, setPage } =
+    usePagedFilters<WalletFiltersState>(EMPTY_WALLET_FILTERS);
+
   const { data, isPending, isError, error, refetch, isRefetching, isFetching } =
-    useWalletsQuery(page);
+    useWalletsQuery(filters, page);
+
+  const isFiltered = isWalletFiltered(filters);
 
   return (
     <div>
@@ -26,6 +36,8 @@ export default function ListWalletsPage() {
         <h1 className="text-2xl font-semibold">Wallets</h1>
         <CreateWalletDialog />
       </header>
+
+      <WalletFilters filters={filters} onFiltersChange={setFilters} />
 
       {isPending ? (
         <div className="space-y-2" role="status" aria-label="Loading wallets">
@@ -55,9 +67,15 @@ export default function ListWalletsPage() {
             emptyState={
               <Empty>
                 <EmptyHeader>
-                  <EmptyTitle>No wallets yet</EmptyTitle>
+                  <EmptyTitle>
+                    {isFiltered
+                      ? "No wallets match these filters"
+                      : "No wallets yet"}
+                  </EmptyTitle>
                   <EmptyDescription>
-                    Create your first wallet to start tracking your finances.
+                    {isFiltered
+                      ? "Try a different type or currency, or clear a filter."
+                      : "Create your first wallet to start tracking your finances."}
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>

@@ -3,6 +3,8 @@ import {
   RecurrenceType,
   RecurrenceTypeLabelMap,
   TransactionKindLabelMap,
+  TransactionRepeats,
+  TransactionRepeatsLabelMap,
   TransactionStatusLabelMap,
 } from "@budget-manager/schemas";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
@@ -50,7 +52,11 @@ export const transactionColumns: ColumnDef<TransactionRow>[] = [
         row.original;
 
       if (!recurrenceType) {
-        return <span className="text-xs text-muted-foreground">One-off</span>;
+        return (
+          <span className="text-xs text-muted-foreground">
+            {TransactionRepeatsLabelMap[TransactionRepeats.ONE_OFF]}
+          </span>
+        );
       }
 
       const type = recurrenceType as RecurrenceType;

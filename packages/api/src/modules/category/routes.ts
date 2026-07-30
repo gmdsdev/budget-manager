@@ -11,12 +11,14 @@ export const categoryRouter = router({
   getAll: protectedProcedure
     .input(ListCategoriesInput)
     .query(async ({ input, ctx }) => {
+      const { limit, offset, includeArchived, ...filters } = input;
+
       return await ctx.services.category.getAll({
         userId: ctx.session.user.id,
-        type: input.type,
-        includeArchived: input.includeArchived,
-        limit: input.limit,
-        offset: input.offset,
+        includeArchived,
+        limit,
+        offset,
+        ...filters,
       });
     }),
 

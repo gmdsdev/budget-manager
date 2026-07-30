@@ -1,3 +1,5 @@
+import { FILTER_ALL, type WalletCurrency } from "@budget-manager/schemas";
+
 export type CreditCardRow = {
   id: string;
   name: string;
@@ -14,3 +16,25 @@ export type CreditCardRow = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export const CREDIT_CARD_FILTER_ALL = FILTER_ALL;
+
+export type CreditCardFiltersState = {
+  search: string;
+  currencyCode: WalletCurrency | typeof CREDIT_CARD_FILTER_ALL;
+  defaultBillingWalletId: string;
+};
+
+export const EMPTY_CREDIT_CARD_FILTERS: CreditCardFiltersState = {
+  search: "",
+  currencyCode: CREDIT_CARD_FILTER_ALL,
+  defaultBillingWalletId: CREDIT_CARD_FILTER_ALL,
+};
+
+export function isCreditCardFiltered(filters: CreditCardFiltersState) {
+  return (
+    filters.search !== "" ||
+    filters.currencyCode !== CREDIT_CARD_FILTER_ALL ||
+    filters.defaultBillingWalletId !== CREDIT_CARD_FILTER_ALL
+  );
+}

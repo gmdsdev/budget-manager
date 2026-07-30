@@ -4,8 +4,9 @@ import { creditCardBills } from "@budget-manager/db/schema/creditCardBill";
 import { transactionOccurrences } from "@budget-manager/db/schema/transactionOccurrence";
 import { transactionTemplates } from "@budget-manager/db/schema/transactionTemplate";
 import { wallets } from "@budget-manager/db/schema/wallet";
-import type { WalletFormDto } from "@budget-manager/schemas";
-import { and, asc, eq, isNotNull, sql } from "drizzle-orm";
+import type { WalletFormDto, WalletType } from "@budget-manager/schemas";
+import { and, asc, eq, ilike, isNotNull, sql } from "drizzle-orm";
+import { containsPattern } from "../../search";
 
 const WALLET_PUBLIC_COLUMNS = {
   id: wallets.id,
@@ -47,16 +48,41 @@ function pickWalletUpdate(patch: WalletUpdatePatch): WalletUpdatePatch {
   return set;
 }
 
+export type WalletFilters = {
+  search?: string;
+  type?: WalletType;
+  currencyCode?: string;
+};
+
 function walletFilter({
   userId,
   includeArchived,
-}: {
+  search,
+  type,
+  currencyCode,
+}: WalletFilters & {
   userId: string;
   includeArchived: boolean;
 }) {
-  return includeArchived
-    ? eq(wallets.userId, userId)
-    : and(eq(wallets.userId, userId), eq(wallets.isArchived, false));
+  const conditions = [eq(wallets.userId, userId)];
+
+  if (!includeArchived) {
+    conditions.push(eq(wallets.isArchived, false));
+  }
+
+  if (search) {
+    conditions.push(ilike(wallets.name, containsPattern(search)));
+  }
+
+  if (type) {
+    conditions.push(eq(wallets.type, type));
+  }
+
+  if (currencyCode) {
+    conditions.push(eq(wallets.currencyCode, currencyCode));
+  }
+
+  return and(...conditions);
 }
 
 export class WalletRepository {
@@ -67,7 +93,8 @@ export class WalletRepository {
     includeArchived,
     limit,
     offset,
-  }: {
+    ...filters
+  }: WalletFilters & {
     userId: string;
     includeArchived: boolean;
     limit: number;
@@ -76,7 +103,7 @@ export class WalletRepository {
     return this.db
       .select(WALLET_PUBLIC_COLUMNS)
       .from(wallets)
-      .where(walletFilter({ userId, includeArchived }))
+      .where(walletFilter({ userId, includeArchived, ...filters }))
       .orderBy(asc(wallets.name), asc(wallets.id))
       .limit(limit)
       .offset(offset);
@@ -85,11 +112,15 @@ export class WalletRepository {
   async count({
     userId,
     includeArchived,
-  }: {
+    ...filters
+  }: WalletFilters & {
     userId: string;
     includeArchived: boolean;
   }) {
-    return this.db.$count(wallets, walletFilter({ userId, includeArchived }));
+    return this.db.$count(
+      wallets,
+      walletFilter({ userId, includeArchived, ...filters }),
+    );
   }
 
   /**

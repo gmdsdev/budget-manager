@@ -3,7 +3,8 @@ import { categories } from "@budget-manager/db/schema/category";
 import { transactionOccurrences } from "@budget-manager/db/schema/transactionOccurrence";
 import { transactionTemplates } from "@budget-manager/db/schema/transactionTemplate";
 import type { CategoryFormDto, CategoryType } from "@budget-manager/schemas";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, ilike } from "drizzle-orm";
+import { containsPattern } from "../../search";
 
 const CATEGORY_PUBLIC_COLUMNS = {
   id: categories.id,
@@ -39,19 +40,28 @@ function pickCategoryUpdate(patch: CategoryUpdatePatch): CategoryUpdatePatch {
   return set;
 }
 
+export type CategoryFilters = {
+  search?: string;
+  type?: CategoryType;
+};
+
 function categoryFilter({
   userId,
+  search,
   type,
   includeArchived,
-}: {
+}: CategoryFilters & {
   userId: string;
-  type?: CategoryType;
   includeArchived: boolean;
 }) {
   const conditions = [eq(categories.userId, userId)];
 
   if (!includeArchived) {
     conditions.push(eq(categories.isArchived, false));
+  }
+
+  if (search) {
+    conditions.push(ilike(categories.name, containsPattern(search)));
   }
 
   if (type) {
@@ -66,13 +76,12 @@ export class CategoryRepository {
 
   async getAll({
     userId,
-    type,
     includeArchived,
     limit,
     offset,
-  }: {
+    ...filters
+  }: CategoryFilters & {
     userId: string;
-    type?: CategoryType;
     includeArchived: boolean;
     limit: number;
     offset: number;
@@ -80,7 +89,7 @@ export class CategoryRepository {
     const rows = await this.db
       .select(CATEGORY_PUBLIC_COLUMNS)
       .from(categories)
-      .where(categoryFilter({ userId, type, includeArchived }))
+      .where(categoryFilter({ userId, includeArchived, ...filters }))
       .orderBy(asc(categories.name), asc(categories.id))
       .limit(limit)
       .offset(offset);
@@ -90,16 +99,15 @@ export class CategoryRepository {
 
   async count({
     userId,
-    type,
     includeArchived,
-  }: {
+    ...filters
+  }: CategoryFilters & {
     userId: string;
-    type?: CategoryType;
     includeArchived: boolean;
   }) {
     return this.db.$count(
       categories,
-      categoryFilter({ userId, type, includeArchived }),
+      categoryFilter({ userId, includeArchived, ...filters }),
     );
   }
 

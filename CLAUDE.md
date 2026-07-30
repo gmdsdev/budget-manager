@@ -42,7 +42,7 @@ kept in TypeScript — see the balances note below.
 
 ```bash
 bun run db:start && bun run db:migrate && bun run dev   # prerequisites
-bun run test:e2e          # 63 checks: API + browser
+bun run test:e2e          # 234 checks: API + browser
 bun run test:e2e:api      # server only, ~2s
 bun run test:e2e:ui       # Playwright flows
 ```
@@ -146,7 +146,10 @@ the page — so the UI can render "Showing 21–25 of 25" and disable Next. `opt
 `getAll`: a page size that hides a wallet or category the user needs to pick is the same
 silent-truncation bug pagination exists to fix. `options` also omits archived rows, so they
 cannot be assigned to new records. Both use a shared filter builder (`walletFilter`,
-`categoryFilter`, `transactionFilter`) so a page's `total` can never disagree with its rows.
+`categoryFilter`, `creditCardFilter`, `transactionFilter`) so a page's `total` can never
+disagree with its rows — a new list filter belongs in that builder, never in `getAll` alone.
+Each takes an exported `XFilters` type that routes and services spread through untouched, so
+adding a filter means editing the validator and the builder rather than five signatures.
 Mutations must invalidate `options` alongside `getAll` — otherwise a newly created wallet is
 missing from the transaction form until a reload.
 
@@ -270,6 +273,50 @@ their state in `usePagedFilters`, which keeps filters and the page number in **o
 state so changing a filter always resets to page 1. Two `useState` calls would let a caller
 forget the reset and strand the user on a page that no longer exists. `PAGE_SIZE` and the
 offset math live in `src/lib/pagination.ts`.
+
+**A column on a listing table gets a filter for it.** All four list pages follow this: wallets
+(name, type, currency), categories (name, type), cards (name, currency, billing wallet) and
+transactions (date range, description, account, category, kind, repeats, status). The controls
+are ordered to match the columns, and the bar is **left-aligned** — `FilterBar`
+(`src/components/filter-bar.tsx`) owns that alignment and the `Clear filters` button, so no
+page positions its own. `FilterSelect` and `FilterSearch` are the two control shapes;
+`FilterSearch` debounces, because a request per keystroke is not a filter. Each module keeps a
+`XFiltersState` + `EMPTY_X_FILTERS` + `isXFiltered` trio in `types.ts` and one
+`xQueryInput(filters?, page?)` builder that drops sentinel values — the route loaders call it
+with no arguments, so it must always work bare.
+
+**The bar has no visible labels; each control names its own column.** A `FilterSelect` trigger
+reads as the column name (`Category`) while that column is unfiltered and switches to the
+chosen row's label (`Uncategorized`) once it is not — `SelectValue` takes a formatter function
+for exactly this, and the popup keeps its explicit `All categories` row so resetting one column
+stays a visible choice (e2e clicks those by name). `FilterSearch` puts the column in the
+placeholder (`Filter by description`). Neither renders a `FieldLabel`, so **both must carry an
+`aria-label`** — that is the only thing labelling them, and it is also what
+`getByLabel`/`getByLabelText` resolve in the tests. Dropping it silently breaks both
+accessibility and every e2e that touches a filter. `FILTER_ALL`
+(`packages/schemas/src/filters.ts`) is the shared unset sentinel the four `*_FILTER_ALL`
+constants alias; `FilterSelect` compares against it to decide whether to show the column name,
+so a module inventing its own string would render a stale label instead.
+
+Three deliberate gaps in that rule. **Money columns have no range filter**: wallet
+`balanceCents`, card `outstandingCents` and `availableCents` are derived in TypeScript after
+the page is fetched, so filtering them would mean either duplicating the derivation in SQL
+(which the balances note forbids) or moving pagination out of the repository; the real columns
+(`openingBalanceCents`, `limitCents`, `amountCents`) are left out too, for symmetry. The card
+**Cycle** column is a display-only composite of two config fields. And the statements dialog
+(`credit-card-bills-dialog.tsx`) and the dashboard lists are outside it — the dialog is scoped
+to one card and its most useful filter (`Status`) is derived by `deriveBillStatus`, and the
+dashboard exists to show what needs acting on, which filtering would defeat.
+
+Two filters span more than one column's worth of data. The transaction **Account** filter
+covers both wallets and cards, because the Account column shows whichever owns the row; wallet
+and card ids come from different tables, so the select value is prefixed (`walletAccountValue`
+/ `cardAccountValue`) and `parseAccountValue` splits it into `walletId` or `creditCardId`
+rather than leaving the server to guess. `FILTER_NONE` (`packages/schemas/src/filters.ts`) is
+the shared sentinel for an empty column — `Uncategorized`, `No billing wallet` — which the
+repositories turn into `IS NULL`. Search terms go through `containsPattern`
+(`packages/api/src/search.ts`), which escapes `%` and `_` so a term containing them is matched
+literally; every new search filter must use it rather than interpolating a pattern.
 
 Forms use TanStack Form with the shared Zod schema as the **single** `onDynamic` validator
 under `revalidateLogic({ mode: "change", modeAfterSubmission: "change" })`

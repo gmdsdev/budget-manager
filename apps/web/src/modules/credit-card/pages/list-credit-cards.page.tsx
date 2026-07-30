@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table";
 import { Pagination } from "@/components/pagination";
+import { usePagedFilters } from "@/hooks/use-paged-filters";
 import { getErrorMessage } from "@/utils/error-message";
 import { Button } from "@budget-manager/ui/components/button";
 import {
@@ -10,15 +11,24 @@ import {
   EmptyTitle,
 } from "@budget-manager/ui/components/empty";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
-import { useState } from "react";
 import { creditCardColumns } from "../components/credit-card-list/columns";
+import { CreditCardFilters } from "../components/credit-card-list/credit-card-filters";
 import { CreateCreditCardDialog } from "../components/create-credit-card-dialog";
 import { useCreditCardsQuery } from "../queries/use-credit-cards-query";
+import {
+  EMPTY_CREDIT_CARD_FILTERS,
+  isCreditCardFiltered,
+  type CreditCardFiltersState,
+} from "../types";
 
 export default function ListCreditCardsPage() {
-  const [page, setPage] = useState(1);
+  const { filters, page, setFilters, setPage } =
+    usePagedFilters<CreditCardFiltersState>(EMPTY_CREDIT_CARD_FILTERS);
+
   const { data, isPending, isError, error, refetch, isRefetching, isFetching } =
-    useCreditCardsQuery(page);
+    useCreditCardsQuery(filters, page);
+
+  const isFiltered = isCreditCardFiltered(filters);
 
   return (
     <div>
@@ -26,6 +36,8 @@ export default function ListCreditCardsPage() {
         <h1 className="text-2xl font-semibold">Credit Cards</h1>
         <CreateCreditCardDialog />
       </header>
+
+      <CreditCardFilters filters={filters} onFiltersChange={setFilters} />
 
       {isPending ? (
         <div className="space-y-2" role="status" aria-label="Loading cards">
@@ -55,9 +67,15 @@ export default function ListCreditCardsPage() {
             emptyState={
               <Empty>
                 <EmptyHeader>
-                  <EmptyTitle>No cards yet</EmptyTitle>
+                  <EmptyTitle>
+                    {isFiltered
+                      ? "No cards match these filters"
+                      : "No cards yet"}
+                  </EmptyTitle>
                   <EmptyDescription>
-                    Add a card to track its limit and what you owe on it.
+                    {isFiltered
+                      ? "Try a different currency or billing wallet, or clear a filter."
+                      : "Add a card to track its limit and what you owe on it."}
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>

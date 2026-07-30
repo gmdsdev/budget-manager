@@ -2,8 +2,10 @@ import {
   CardPaymentFormSchema,
   CardPurchaseFormSchema,
   DISTINCT_WALLETS_ERROR,
+  FILTER_NONE,
   TransactionFormSchema,
   TransactionKind,
+  TransactionRepeats,
   TransactionSchema,
   TransactionStatus,
   TransferFormFieldsSchema,
@@ -12,6 +14,7 @@ import {
   hasDistinctWallets,
 } from "@budget-manager/schemas";
 import { z } from "zod";
+import { SearchTermInput } from "../../search";
 
 export const CreateTransactionInput = TransactionFormSchema;
 
@@ -43,10 +46,13 @@ export const UpdateCardPaymentInput = CardPaymentFormSchema.extend({
 
 export const ListTransactionsInput = z
   .object({
+    search: SearchTermInput,
     kind: z.enum(Object.values(TransactionKind)).optional(),
     status: z.enum(Object.values(TransactionStatus)).optional(),
     walletId: z.uuid().optional(),
-    categoryId: z.uuid().optional(),
+    creditCardId: z.uuid().optional(),
+    categoryId: z.union([z.uuid(), z.literal(FILTER_NONE)]).optional(),
+    repeats: z.enum(Object.values(TransactionRepeats)).optional(),
     dateFrom: z.iso.date().optional(),
     dateTo: z.iso.date().optional(),
     limit: z.number().int().min(1).max(100).default(50),

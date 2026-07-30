@@ -2,20 +2,25 @@ import { PAGE_SIZE, toOffset } from "@/lib/pagination";
 import { trpc } from "@/utils/trpc";
 import type {
   TransactionKind,
+  TransactionRepeats,
   TransactionStatus,
 } from "@budget-manager/schemas";
 import { useQuery } from "@tanstack/react-query";
 import {
+  parseAccountValue,
   TRANSACTION_FILTER_ALL,
   type TransactionFiltersState,
   type TransactionRow,
 } from "../types";
 
 type TransactionsQueryInput = {
+  search?: string;
   kind?: TransactionKind;
   status?: TransactionStatus;
   walletId?: string;
+  creditCardId?: string;
   categoryId?: string;
+  repeats?: TransactionRepeats;
   dateFrom?: string;
   dateTo?: string;
   limit: number;
@@ -35,20 +40,36 @@ export function transactionsQueryInput(
     return input;
   }
 
-  if (filters.kind !== TRANSACTION_FILTER_ALL) {
-    input.kind = filters.kind;
+  if (filters.search) {
+    input.search = filters.search;
   }
 
-  if (filters.status !== TRANSACTION_FILTER_ALL) {
-    input.status = filters.status;
-  }
+  if (filters.accountId !== TRANSACTION_FILTER_ALL) {
+    const { walletId, creditCardId } = parseAccountValue(filters.accountId);
 
-  if (filters.walletId !== TRANSACTION_FILTER_ALL) {
-    input.walletId = filters.walletId;
+    if (walletId) {
+      input.walletId = walletId;
+    }
+
+    if (creditCardId) {
+      input.creditCardId = creditCardId;
+    }
   }
 
   if (filters.categoryId !== TRANSACTION_FILTER_ALL) {
     input.categoryId = filters.categoryId;
+  }
+
+  if (filters.kind !== TRANSACTION_FILTER_ALL) {
+    input.kind = filters.kind;
+  }
+
+  if (filters.repeats !== TRANSACTION_FILTER_ALL) {
+    input.repeats = filters.repeats;
+  }
+
+  if (filters.status !== TRANSACTION_FILTER_ALL) {
+    input.status = filters.status;
   }
 
   if (filters.dateFrom) {

@@ -11,11 +11,14 @@ export const creditCardRouter = router({
   getAll: protectedProcedure
     .input(ListCreditCardsInput)
     .query(async ({ input, ctx }) => {
+      const { limit, offset, includeArchived, ...filters } = input;
+
       return await ctx.services.creditCard.getAll({
         userId: ctx.session.user.id,
-        includeArchived: input.includeArchived,
-        limit: input.limit,
-        offset: input.offset,
+        includeArchived,
+        limit,
+        offset,
+        ...filters,
       });
     }),
 

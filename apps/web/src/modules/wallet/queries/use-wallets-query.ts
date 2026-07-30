@@ -1,16 +1,52 @@
 import { PAGE_SIZE, toOffset } from "@/lib/pagination";
 import { trpc } from "@/utils/trpc";
-import type { WalletType } from "@budget-manager/schemas";
+import type { WalletCurrency, WalletType } from "@budget-manager/schemas";
 import { useQuery } from "@tanstack/react-query";
-import type { WalletRow } from "../types";
+import {
+  WALLET_FILTER_ALL,
+  type WalletFiltersState,
+  type WalletRow,
+} from "../types";
 
-export function walletsQueryInput(page = 1) {
-  return { limit: PAGE_SIZE, offset: toOffset(page) };
+type WalletsQueryInput = {
+  search?: string;
+  type?: WalletType;
+  currencyCode?: WalletCurrency;
+  limit: number;
+  offset: number;
+};
+
+export function walletsQueryInput(
+  filters?: WalletFiltersState,
+  page = 1,
+): WalletsQueryInput {
+  const input: WalletsQueryInput = {
+    limit: PAGE_SIZE,
+    offset: toOffset(page),
+  };
+
+  if (!filters) {
+    return input;
+  }
+
+  if (filters.search) {
+    input.search = filters.search;
+  }
+
+  if (filters.type !== WALLET_FILTER_ALL) {
+    input.type = filters.type;
+  }
+
+  if (filters.currencyCode !== WALLET_FILTER_ALL) {
+    input.currencyCode = filters.currencyCode;
+  }
+
+  return input;
 }
 
-export function useWalletsQuery(page = 1) {
+export function useWalletsQuery(filters?: WalletFiltersState, page = 1) {
   return useQuery({
-    ...trpc.wallet.getAll.queryOptions(walletsQueryInput(page)),
+    ...trpc.wallet.getAll.queryOptions(walletsQueryInput(filters, page)),
     select: (data) => ({
       total: data.total,
       rows: data.rows.map(

@@ -5,7 +5,9 @@ import { recurrenceRules } from "@budget-manager/db/schema/recurrenceRule";
 import { transactionOccurrences } from "@budget-manager/db/schema/transactionOccurrence";
 import { wallets } from "@budget-manager/db/schema/wallet";
 import {
+  FILTER_NONE,
   TransactionKind,
+  TransactionRepeats,
   type CardPaymentFormDto,
   type CardPurchaseFormDto,
   type CategoryType,
@@ -13,7 +15,20 @@ import {
   type TransactionStatus,
   type TransferFormDto,
 } from "@budget-manager/schemas";
-import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  sql,
+} from "drizzle-orm";
+import { containsPattern } from "../../search";
 
 const LISTED_KINDS = Object.values(TransactionKind);
 
@@ -112,10 +127,13 @@ function pickTransactionUpdate(
 }
 
 export type TransactionFilters = {
+  search?: string;
   kind?: TransactionKind;
   status?: TransactionStatus;
   walletId?: string;
+  creditCardId?: string;
   categoryId?: string;
+  repeats?: TransactionRepeats;
   dateFrom?: string;
   dateTo?: string;
 };
@@ -127,10 +145,13 @@ export type TransactionFilters = {
  */
 function transactionFilter({
   userId,
+  search,
   kind,
   status,
   walletId,
+  creditCardId,
   categoryId,
+  repeats,
   dateFrom,
   dateTo,
 }: TransactionFilters & { userId: string }) {
@@ -141,6 +162,12 @@ function transactionFilter({
       : inArray(transactionOccurrences.kind, LISTED_KINDS),
   ];
 
+  if (search) {
+    conditions.push(
+      ilike(transactionOccurrences.name, containsPattern(search)),
+    );
+  }
+
   if (status) {
     conditions.push(eq(transactionOccurrences.status, status));
   }
@@ -149,8 +176,20 @@ function transactionFilter({
     conditions.push(eq(transactionOccurrences.walletId, walletId));
   }
 
-  if (categoryId) {
+  if (creditCardId) {
+    conditions.push(eq(transactionOccurrences.creditCardId, creditCardId));
+  }
+
+  if (categoryId === FILTER_NONE) {
+    conditions.push(isNull(transactionOccurrences.categoryId));
+  } else if (categoryId) {
     conditions.push(eq(transactionOccurrences.categoryId, categoryId));
+  }
+
+  if (repeats === TransactionRepeats.ONE_OFF) {
+    conditions.push(isNull(transactionOccurrences.templateId));
+  } else if (repeats === TransactionRepeats.RECURRING) {
+    conditions.push(isNotNull(transactionOccurrences.templateId));
   }
 
   if (dateFrom) {
