@@ -7,6 +7,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@budget-manager/ui/components/navigation-menu";
+import { Logo } from "./logo";
 import { ModeToggle } from "./mode-toggle";
 import UserMenu from "./user-menu";
 
@@ -45,10 +46,18 @@ export default function Header() {
 
   return (
     <div className="flex flex-row items-center justify-between container mx-auto py-2 border-b">
-      <nav className="flex gap-4 text-lg">
-        <NavigationMenu>
-          <NavigationMenuList>
-            {/* <NavigationMenuItem>
+      <div className="flex items-center gap-4">
+        <Link
+          to="/dashboard"
+          aria-label="Budget Manager dashboard"
+          className="shrink-0 text-foreground"
+        >
+          <Logo className="size-6" aria-hidden />
+        </Link>
+        <nav className="flex gap-4 text-lg">
+          <NavigationMenu>
+            <NavigationMenuList>
+              {/* <NavigationMenuItem>
                 <NavigationMenuTrigger>Getting started</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="w-96">
@@ -67,17 +76,18 @@ export default function Header() {
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem> */}
-            {links.map((link) => (
-              <NavigationMenuItem key={link.to}>
-                <NavigationMenuLink
-                  className={navigationMenuTriggerStyle()}
-                  render={<Link to={link.to}>{link.label}</Link>}
-                />
-              </NavigationMenuItem>
-            ))}
-          </NavigationMenuList>
-        </NavigationMenu>
-      </nav>
+              {links.map((link) => (
+                <NavigationMenuItem key={link.to}>
+                  <NavigationMenuLink
+                    className={navigationMenuTriggerStyle()}
+                    render={<Link to={link.to}>{link.label}</Link>}
+                  />
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
+        </nav>
+      </div>
       <div className="flex items-center gap-2">
         <ModeToggle />
         <UserMenu />
