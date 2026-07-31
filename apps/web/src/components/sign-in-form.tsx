@@ -60,7 +60,7 @@ export default function SignInForm({
   }
 
   return (
-    <div className="mx-auto mt-10 w-full max-w-md border-2 border-border bg-card p-6 shadow-brutal">
+    <div className="w-full max-w-md border-2 border-border bg-card p-6 shadow-brutal">
       <div className="mb-6 flex flex-col items-center gap-6">
         <Logotipo
           className="h-8 text-foreground"
