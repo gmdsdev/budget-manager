@@ -1,3 +1,4 @@
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 
 import { KivoLockup, KivoMark } from "./logo";
@@ -12,13 +13,22 @@ const NAV_LINK_CLASS =
 const NAV_LINK_ACTIVE_CLASS =
   "border-border bg-card text-foreground shadow-brutal-xs";
 
-function SidebarLink({ to, label }: { to: string; label: string }) {
+function SidebarLink({
+  to,
+  label,
+  icon: Icon,
+}: {
+  to: string;
+  label: string;
+  icon: PhosphorIcon;
+}) {
   return (
     <Link
       to={to}
       className={NAV_LINK_CLASS}
       activeProps={{ className: NAV_LINK_ACTIVE_CLASS }}
     >
+      <Icon aria-hidden className="size-4 shrink-0" />
       {label}
     </Link>
   );
@@ -39,7 +49,12 @@ export function Sidebar() {
 
       <nav aria-label="Main" className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
         {[...MAIN_LINKS, ...SETTINGS_LINKS].map((link) => (
-          <SidebarLink key={link.to} to={link.to} label={link.label} />
+          <SidebarLink
+            key={link.to}
+            to={link.to}
+            label={link.label}
+            icon={link.icon}
+          />
         ))}
       </nav>
 

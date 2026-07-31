@@ -63,12 +63,13 @@ export function MobileNav() {
               key={link.to}
               to={link.to}
               onClick={close}
-              className="flex min-h-11 items-center border border-transparent px-2 text-sm font-semibold tracking-wide uppercase text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              className="flex min-h-11 items-center gap-2.5 border border-transparent px-2 text-sm font-semibold tracking-wide uppercase text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               activeProps={{
                 className:
                   "border-border bg-card text-foreground shadow-brutal-xs",
               }}
             >
+              <link.icon aria-hidden className="size-4 shrink-0" />
               {link.label}
             </Link>
           ))}
