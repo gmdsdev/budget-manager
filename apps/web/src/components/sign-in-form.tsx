@@ -60,14 +60,14 @@ export default function SignInForm({
   }
 
   return (
-    <div className="mx-auto w-full mt-10 max-w-md p-6">
+    <div className="mx-auto mt-10 w-full max-w-md border-2 border-border bg-card p-6 shadow-brutal">
       <div className="mb-6 flex flex-col items-center gap-6">
         <Logotipo
           className="h-8 text-foreground"
           role="img"
           aria-label="Budget Manager"
         />
-        <h1 className="text-center text-3xl font-bold">Welcome Back</h1>
+        <h1 className="text-center text-2xl font-bold tracking-wide uppercase">Welcome Back</h1>
       </div>
 
       <form
@@ -92,7 +92,7 @@ export default function SignInForm({
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
+                  <p key={error?.message} className="text-xs text-destructive">
                     {error?.message}
                   </p>
                 ))}
@@ -115,7 +115,7 @@ export default function SignInForm({
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
                 {field.state.meta.errors.map((error) => (
-                  <p key={error?.message} className="text-red-500">
+                  <p key={error?.message} className="text-xs text-destructive">
                     {error?.message}
                   </p>
                 ))}

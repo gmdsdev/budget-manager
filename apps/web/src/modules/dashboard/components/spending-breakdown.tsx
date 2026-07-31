@@ -72,7 +72,10 @@ export function SpendingBreakdown({
                       </span>
                     </span>
                   </div>
-                  <div className="h-1.5 w-full bg-muted" role="presentation">
+                  <div
+                    className="h-2.5 w-full border border-border bg-chart-track/40"
+                    role="presentation"
+                  >
                     <div
                       className="h-full"
                       style={{

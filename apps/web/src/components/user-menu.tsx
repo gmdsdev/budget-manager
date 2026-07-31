@@ -1,11 +1,13 @@
 import {
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@budget-manager/ui/components/navigation-menu";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@budget-manager/ui/components/dropdown-menu";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
+import { CaretUpIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 
 import { useSignOut } from "@/hooks/use-sign-out";
@@ -16,43 +18,40 @@ export default function UserMenu() {
   const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
-    return (
-      <NavigationMenuItem>
-        <Skeleton className="h-9 w-24" />
-      </NavigationMenuItem>
-    );
+    return <Skeleton className="h-12 w-full" />;
   }
 
   if (!session) {
     return (
-      <NavigationMenuItem>
-        <NavigationMenuLink
-          className={navigationMenuTriggerStyle()}
-          render={<Link to="/login">Sign In</Link>}
-        />
-      </NavigationMenuItem>
+      <Link
+        to="/login"
+        className="flex h-10 items-center justify-center border border-border bg-card px-3 text-xs font-semibold tracking-wide uppercase shadow-brutal-xs transition-colors hover:bg-accent"
+      >
+        Sign In
+      </Link>
     );
   }
 
   return (
-    <NavigationMenuItem>
-      <NavigationMenuTrigger>{session.user.name}</NavigationMenuTrigger>
-      <NavigationMenuContent>
-        <ul className="w-48">
-          <li className="p-2 text-xs text-muted-foreground">
+    <DropdownMenu>
+      <DropdownMenuTrigger className="flex w-full min-w-0 items-center gap-2 border border-border bg-card px-3 py-2 text-left shadow-brutal-xs transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/40 aria-expanded:bg-accent">
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-xs font-bold tracking-wide uppercase">
+            {session.user.name}
+          </span>
+          <span className="truncate text-[10px] text-muted-foreground">
             {session.user.email}
-          </li>
-          <li>
-            <NavigationMenuLink
-              closeOnClick
-              className="w-full text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
-              render={<button type="button" onClick={signOut} />}
-            >
-              Sign Out
-            </NavigationMenuLink>
-          </li>
-        </ul>
-      </NavigationMenuContent>
-    </NavigationMenuItem>
+          </span>
+        </span>
+        <CaretUpIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="top" className="w-(--anchor-width)">
+        <DropdownMenuLabel>{session.user.email}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onClick={signOut}>
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

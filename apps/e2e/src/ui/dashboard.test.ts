@@ -95,8 +95,8 @@ describe("dashboard", () => {
     // same numbers, reachable without colour or hover.
     const body = await bodyText(page);
 
-    expect(body).toContain("Cash flow");
-    expect(body).toContain("Wallets");
+    expect(body).toMatch(/cash flow/i);
+    expect(body).toMatch(/wallets/i);
     expect(body).toContain("Checking");
     expect(
       await page
@@ -167,7 +167,7 @@ describe("dashboard", () => {
 
     const body = await bodyText(page);
 
-    expect(body).toContain("Awaiting payment");
+    expect(body).toMatch(/awaiting payment/i);
     expect(body).toContain("R$ 2.000,00");
     // A past-due row must be visible and called out, not silently dropped.
     expect(body).toContain("Overdue");
@@ -209,7 +209,7 @@ describe("dashboard", () => {
     const body = await bodyText(page);
 
     expect(body).toContain("1 card");
-    expect(body).toContain("On cards");
+    expect(body).toMatch(/on cards/i);
     expect(body).toContain("R$ 1.200,00"); // outstanding
     expect(body).toContain("R$ 3.800,00"); // credit available
   }, 60_000);
@@ -217,7 +217,7 @@ describe("dashboard", () => {
   test("lists the overdue statement and flags it", async () => {
     const body = await bodyText(page);
 
-    expect(body).toContain("Card statements");
+    expect(body).toMatch(/card statements/i);
     expect(body).toContain("Visa");
     expect(body).toContain("Overdue");
     expect(body).toContain("past its due date");

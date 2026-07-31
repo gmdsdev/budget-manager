@@ -44,7 +44,7 @@ export function StatementsDueList({
             Nothing outstanding on your cards.
           </p>
         ) : (
-          <ul className="divide-y">
+          <ul className="divide-y divide-border/25">
             {statements.map((bill) => {
               const overdue = bill.dueAt < today;
               const partiallyPaid = bill.paidCents > 0;

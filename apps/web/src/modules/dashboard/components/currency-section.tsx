@@ -32,7 +32,7 @@ export function CurrencySection({
   return (
     <section className="space-y-4" aria-label={`${summary.currencyCode} summary`}>
       <div className="flex flex-row flex-wrap items-baseline gap-x-2 gap-y-1">
-        <h2 className="font-heading text-sm font-medium">
+        <h2 className="font-heading text-sm font-bold tracking-wide uppercase">
           {summary.currencyCode}
         </h2>
         <p className="text-xs text-muted-foreground">

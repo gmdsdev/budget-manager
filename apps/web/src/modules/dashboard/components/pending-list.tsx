@@ -39,7 +39,7 @@ export function PendingList({
             Nothing outstanding — you're all caught up.
           </p>
         ) : (
-          <ul className="divide-y">
+          <ul className="divide-y divide-border/25">
             {items.map((item) => {
               const overdue = item.occurrenceDate < today;
 

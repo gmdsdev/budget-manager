@@ -96,7 +96,7 @@ export const transactionColumns: ColumnDef<TransactionRow>[] = [
       return (
         <span
           className={`block text-right tabular-nums ${
-            isCredit ? "text-emerald-600 dark:text-emerald-400" : ""
+            isCredit ? "text-success" : ""
           }`}
         >
           {isCredit ? "+" : "−"}

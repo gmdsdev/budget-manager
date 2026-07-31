@@ -35,7 +35,7 @@ export function CategoryColorPicker({
             title={CategoryColorLabelMap[color]}
             onClick={() => onValueChange(color)}
             className={cn(
-              "size-7 rounded-full outline-none transition-[box-shadow]",
+              "size-7 rounded-none border border-border outline-none transition-[box-shadow]",
               "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               // Selection reads as a ring against the page rather than as a
               // change of tint, so it holds up on every hue in the palette.

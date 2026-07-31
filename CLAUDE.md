@@ -412,8 +412,11 @@ accident:
 
 - The root layout in `__root.tsx` is `grid-cols-1`, i.e. `minmax(0, 1fr)`. An `auto` track sizes
   to its **max-content**, so a single wide table used to widen the whole document and every page
-  scrolled horizontally. The two grid items (`<header>`, the `container`) carry `min-w-0` for the
-  same reason.
+  scrolled horizontally. `AuthLayout` (`routes/_auth/route.tsx`) adds the desktop shell inside it:
+  `md:grid-cols-[15rem_minmax(0,1fr)]` with the nav `Sidebar` in the first track and the content
+  column carrying `min-w-0` — drop that `minmax(0,…)`/`min-w-0` pair and every page scrolls
+  sideways again. Below `md` the sidebar is gone and a top bar (`Header`) with the sheet nav
+  takes over.
 - `container` has no padding of its own in Tailwind v4, so the two call sites add `px-4 sm:px-6`.
   Without it, text sits flush against the screen edge on a phone.
 - `sr-only` does **not** hide a `<table>`: `width: 1px` is a *minimum* for a table box, so it grows
@@ -468,6 +471,20 @@ in the list below it is worse than a long one — and compacts the locale's own 
 
 Primitives in `packages/ui/src/components` are shadcn (`style: base-lyra`, `iconLibrary: remixicon`) on top of **@base-ui/react**, not Radix. Base UI composes via the `render` prop, not `asChild`: `<DialogTrigger render={<Button>Create</Button>} />`. Design tokens live in `packages/ui/src/styles/globals.css` (Tailwind v4, CSS-first).
 
+**The design language is pastel neobrutalism, and it is carried by tokens plus a handful of
+recurring classes.** One mono face everywhere (`JetBrains Mono Variable` is both `--font-sans`
+and `--font-heading`); `--radius` is `0rem` and every `--radius-*` step is pinned to it, so
+nothing is ever rounded; surfaces are warm — oatmeal page, warm-white cards, warm charcoal in
+dark — and `--border`/`--input`/`--ring` are the ink, not a hairline grey. Elevation is the
+hard offset shadow, never blur: `--shadow-brutal-xs/sm/(default)/lg` all cast
+`var(--shadow-hard)` (ink in light, black in dark). The recurring grammar: plates (cards,
+tables, dialogs, popovers) are `border border-border bg-… shadow-brutal*`; pressables add the
+press effect (`active:translate-x-0.5 active:translate-y-0.5 active:shadow-none`, already in
+`buttonVariants` — ghost and the date-picker triggers deliberately opt out); headings, buttons,
+labels and table headers are bold uppercase with tracking. Swatches and chart marks are square
+with an ink outline (`border border-border`), which doubles as the contrast relief for the
+pastel fills. New components should speak this grammar rather than invent a parallel one.
+
 Add shared primitives from the root: `npx shadcn@latest add <name> -c packages/ui`. Run the shadcn CLI from `apps/web` only for app-specific blocks.
 
 **Charts are recharts behind the shadcn `chart.tsx` wrapper, and colour is a token, never a
@@ -480,11 +497,12 @@ re-ordering, and never generate a ninth. `--chart-income` (green) and `--chart-e
 alias slots 6 and 8: that pair sits in the colourblind-safety warn band, which is why the bars
 are also positionally fixed (income always left) and legended. `--chart-track` is the meter
 track, `--success`/`--warning` are status inks. The steps are not taste: they were run through a
-colourblind-separation and contrast check against this app's own surfaces — light `#ffffff`
-(`--card`) and dark `#171717`, **not** the page plane — and three light-mode hues (aqua, yellow,
-magenta) sit below 3:1 there, so anything using them owes the reader a visible label or the table
-view. Re-run that check before changing a step or a surface; a hue that "looks different enough"
-routinely is not under deuteranopia.
+colourblind-separation and contrast check against this app's own surfaces — light `#fcfaf4`
+(`--card`) and dark `#25221d`, **not** the page plane. The steps are deliberately pastel
+(OKLCH C ≈ 0.10–0.13), so several light-mode fills sit below 3:1 there; the ink stroke every
+bar and swatch carries, the legend, and the chart's table twin are the mandated relief — a
+pastel fill may never be the only way to read a value. Re-run that check before changing a step
+or a surface; a hue that "looks different enough" routinely is not under deuteranopia.
 
 **A category owns a colour, and that colour is the same ink everywhere the category appears.**
 `CategoryColor` (`packages/schemas/src/category/category-color.ts`) is a closed twelve-hue
@@ -494,10 +512,10 @@ the chart bar all have to resolve to one token, and only a closed set can carry 
 steps. `--category-*` in `globals.css` holds them, eight aliasing `--chart-1…8` (so a category
 bar and a chart series of the same hue cannot drift apart) plus four filling the gaps the chart
 ring leaves — cyan, lime, purple and a neutral slate. Those four were run through the same
-colourblind-and-contrast check as the chart steps: all four clear 3.2:1 on their own surface
-(three of the *reused* hues still do not, in light mode), and every pair separates by ΔE2000 ≥ 13
-under normal vision. Twelve hues **cannot** all stay separable under dichromacy — the worst pair
-collapses to ΔE 1.8 under protanopia — so the swatch is never the message: `CategoryLabel`
+colourblind-and-contrast check as the chart steps, tuned so picker-order neighbours stay apart
+(worst adjacent pair ΔE ≥ ~6.5 OKLab under normal vision, both modes) at pastel chroma.
+Twelve hues **cannot** all stay separable under dichromacy — pastel steps make that harder, not
+easier — so the swatch is never the message: `CategoryLabel`
 (`apps/web/src/modules/category/components/category-dot.tsx`) always pairs it with the name, and
 the dot is `aria-hidden` and contributes no text, which is what keeps the label-based filter and
 select assertions in e2e honest. Read a colour through `categoryColorVar`, never

@@ -1,52 +1,32 @@
-import {
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuTrigger,
-} from "@budget-manager/ui/components/navigation-menu";
-import { MoonIcon, SunIcon } from "@phosphor-icons/react";
+import { Button } from "@budget-manager/ui/components/button";
+import { DesktopIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
 
 import { useTheme } from "@/components/theme-provider";
 
 const themes = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-  { value: "system", label: "System" },
+  { value: "light", label: "Light theme", icon: SunIcon },
+  { value: "dark", label: "Dark theme", icon: MoonIcon },
+  { value: "system", label: "System theme", icon: DesktopIcon },
 ] as const;
 
 export function ModeToggle() {
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   return (
-    <NavigationMenuItem>
-      <NavigationMenuTrigger aria-label="Toggle theme">
-        <span className="relative flex size-4 items-center justify-center">
-          <SunIcon className="size-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-          <MoonIcon className="absolute size-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-        </span>
-      </NavigationMenuTrigger>
-      <NavigationMenuContent>
-        <ul className="w-32">
-          {themes.map((theme) => (
-            <li key={theme.value}>
-              <NavigationMenuLink
-                closeOnClick
-                className="w-full"
-                render={
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTheme(theme.value);
-                    }}
-                  />
-                }
-              >
-                {theme.label}
-              </NavigationMenuLink>
-            </li>
-          ))}
-        </ul>
-      </NavigationMenuContent>
-    </NavigationMenuItem>
+    <div role="group" aria-label="Theme" className="flex flex-row gap-1.5">
+      {themes.map((option) => (
+        <Button
+          key={option.value}
+          variant={theme === option.value ? "secondary" : "ghost"}
+          size="icon-sm"
+          className="flex-1"
+          aria-pressed={theme === option.value}
+          aria-label={option.label}
+          onClick={() => setTheme(option.value)}
+        >
+          <option.icon aria-hidden />
+        </Button>
+      ))}
+    </div>
   );
 }

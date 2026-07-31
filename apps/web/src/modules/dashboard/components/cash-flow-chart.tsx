@@ -116,7 +116,7 @@ export function CashFlowChart({
                       formatter={(value, name, item) => (
                         <div className="flex w-full items-center gap-2">
                           <span
-                            className="h-2.5 w-2.5 shrink-0"
+                            className="h-2.5 w-2.5 shrink-0 border border-border"
                             style={{ backgroundColor: item.color }}
                           />
                           <span className="text-muted-foreground">
@@ -139,14 +139,18 @@ export function CashFlowChart({
                 <Bar
                   dataKey="income"
                   fill="var(--color-income)"
+                  stroke="var(--border)"
+                  strokeWidth={1}
                   maxBarSize={24}
-                  radius={[4, 4, 0, 0]}
+                  radius={0}
                 />
                 <Bar
                   dataKey="expense"
                   fill="var(--color-expense)"
+                  stroke="var(--border)"
+                  strokeWidth={1}
                   maxBarSize={24}
-                  radius={[4, 4, 0, 0]}
+                  radius={0}
                 />
               </BarChart>
             </ChartContainer>

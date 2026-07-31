@@ -57,7 +57,7 @@ export function CardUtilisationCard({
                 </div>
 
                 <div
-                  className="h-1.5 w-full bg-chart-track"
+                  className="h-2.5 w-full border border-border bg-chart-track/40"
                   role="progressbar"
                   aria-label={`${item.name} limit used`}
                   aria-valuemin={0}

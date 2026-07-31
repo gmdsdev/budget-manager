@@ -98,14 +98,17 @@ function CardList<TData>({
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-md border p-4 text-center">
+      <div className="rounded-none border-2 border-border bg-card p-4 text-center shadow-brutal">
         {emptyState ?? "No results."}
       </div>
     );
   }
 
   return (
-    <ul aria-label={caption} className="divide-y rounded-md border">
+    <ul
+      aria-label={caption}
+      className="divide-y divide-border/25 rounded-none border-2 border-border bg-card shadow-brutal"
+    >
       {rows.map((row) => {
         const cells = new Map(
           row.getVisibleCells().map((cell) => [cell.column.id, cell]),
@@ -185,7 +188,7 @@ export function DataTable<TData, TValue>({
   }
 
   return (
-    <div className="overflow-hidden rounded-md border">
+    <div className="overflow-hidden rounded-none border-2 border-border bg-card shadow-brutal">
       <Table>
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <TableHeader>

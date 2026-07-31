@@ -26,11 +26,11 @@ export function StatTile({
   return (
     <Card className="min-w-0 justify-between gap-3">
       <CardContent className="space-y-1">
-        <p className="flex flex-row items-center gap-1.5 text-xs text-muted-foreground">
+        <p className="flex flex-row items-center gap-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
           {swatch ? (
             <span
               aria-hidden
-              className="size-2 shrink-0"
+              className="size-2 shrink-0 border border-border"
               style={{ backgroundColor: swatch }}
             />
           ) : null}

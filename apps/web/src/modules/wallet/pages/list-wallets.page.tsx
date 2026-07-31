@@ -33,7 +33,7 @@ export default function ListWalletsPage() {
   return (
     <div>
       <header className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold sm:text-2xl">Wallets</h1>
+        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">Wallets</h1>
         <CreateWalletDialog />
       </header>
 

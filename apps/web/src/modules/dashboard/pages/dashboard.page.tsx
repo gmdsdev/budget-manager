@@ -31,7 +31,7 @@ export default function DashboardPage() {
   return (
     <div className="pb-8">
       <header className="flex flex-col gap-3 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
-        <h1 className="text-xl font-semibold sm:text-2xl">Dashboard</h1>
+        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">Dashboard</h1>
 
         {/* One control row above everything it scopes: every figure and chart
             below reads the same month. The label takes the slack on a phone so

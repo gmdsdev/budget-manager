@@ -1,5 +1,4 @@
 import { Button } from "@budget-manager/ui/components/button";
-import { Separator } from "@budget-manager/ui/components/separator";
 import {
   Sheet,
   SheetContent,
@@ -58,28 +57,16 @@ export function MobileNav() {
         </SheetHeader>
 
         <nav aria-label="Main" className="flex flex-col px-2">
-          {MAIN_LINKS.map((link) => (
+          {[...MAIN_LINKS, ...SETTINGS_LINKS].map((link) => (
             <Link
               key={link.to}
               to={link.to}
               onClick={close}
-              className="flex min-h-11 items-center px-2 text-sm hover:bg-muted"
-              activeProps={{ className: "bg-muted/50 font-medium" }}
-            >
-              {link.label}
-            </Link>
-          ))}
-
-          <Separator className="my-2" />
-
-          <p className="px-2 pb-1 text-xs text-muted-foreground">Settings</p>
-          {SETTINGS_LINKS.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={close}
-              className="flex min-h-11 items-center px-2 text-sm hover:bg-muted"
-              activeProps={{ className: "bg-muted/50 font-medium" }}
+              className="flex min-h-11 items-center border border-transparent px-2 text-sm font-semibold tracking-wide uppercase text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              activeProps={{
+                className:
+                  "border-border bg-card text-foreground shadow-brutal-xs",
+              }}
             >
               {link.label}
             </Link>
@@ -122,7 +109,7 @@ export function MobileNav() {
             <Link
               to="/login"
               onClick={close}
-              className="flex min-h-11 items-center px-2 text-sm hover:bg-muted"
+              className="flex min-h-11 items-center border border-border bg-card px-2 text-sm font-semibold tracking-wide uppercase shadow-brutal-xs hover:bg-accent"
             >
               Sign In
             </Link>

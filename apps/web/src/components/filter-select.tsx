@@ -23,8 +23,8 @@ function Swatch({ color }: { color: string | null }) {
   return (
     <span
       aria-hidden
-      className={`size-2 shrink-0 rounded-full ${
-        color ? "" : "border border-muted-foreground/60"
+      className={`size-2 shrink-0 rounded-none ${
+        color ? "border border-border" : "border border-muted-foreground/60"
       }`}
       style={color ? { backgroundColor: color } : undefined}
     />

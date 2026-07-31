@@ -78,7 +78,7 @@ function DatePicker({
             data-empty={!selected}
             onBlur={onBlur}
             className={cn(
-              "w-full justify-between border-input font-normal data-[empty=true]:text-muted-foreground dark:bg-input/30",
+              "w-full justify-between border-input font-normal tracking-normal normal-case shadow-none active:translate-x-0 active:translate-y-0 data-[empty=true]:text-muted-foreground",
               className
             )}
             {...props}
@@ -189,7 +189,7 @@ function DateRangePicker({
             disabled={disabled}
             data-empty={!from || !to}
             className={cn(
-              "w-full justify-between border-input font-normal data-[empty=true]:text-muted-foreground dark:bg-input/30",
+              "w-full justify-between border-input font-normal tracking-normal normal-case shadow-none active:translate-x-0 active:translate-y-0 data-[empty=true]:text-muted-foreground",
               className
             )}
             {...props}
@@ -214,7 +214,7 @@ function DateRangePicker({
                   key={preset.label}
                   variant={active ? "secondary" : "ghost"}
                   size="sm"
-                  className="justify-start font-normal"
+                  className="justify-start font-normal tracking-normal normal-case shadow-none active:translate-x-0 active:translate-y-0"
                   onClick={() => commit(range)}
                 >
                   {preset.label}

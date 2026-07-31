@@ -41,7 +41,7 @@ function formatDay(value: string) {
 const STATUS_TONE: Record<BillStatus, string> = {
   open: "text-muted-foreground",
   awaiting_payment: "text-destructive",
-  paid: "text-emerald-600 dark:text-emerald-400",
+  paid: "text-success",
 };
 
 type BillRow = {
@@ -68,7 +68,7 @@ function BillCards({
   currencyCode: string;
 }) {
   return (
-    <ul aria-label="Statements" className="divide-y rounded-md border">
+    <ul aria-label="Statements" className="divide-y divide-border/25 rounded-none border border-border">
       {bills.map((bill) => (
         <li key={bill.id} className="space-y-2 p-3">
           <div className="flex flex-row items-start justify-between gap-2">
@@ -151,7 +151,7 @@ export function CreditCardBillsDialog({
             {isCompact ? (
               <BillCards bills={data.rows} currencyCode={data.currencyCode} />
             ) : (
-            <div className="overflow-x-auto rounded-md border">
+            <div className="overflow-x-auto rounded-none border border-border">
               <Table>
                 <TableHeader>
                   <TableRow>
