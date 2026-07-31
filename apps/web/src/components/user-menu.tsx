@@ -2,10 +2,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@budget-manager/ui/components/dropdown-menu";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
-import { CaretUpIcon } from "@phosphor-icons/react";
+import { CaretUpIcon, GearIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 
 import { useSignOut } from "@/hooks/use-sign-out";
@@ -44,6 +45,15 @@ export default function UserMenu() {
         <CaretUpIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" className="w-(--anchor-width)">
+        <DropdownMenuItem
+          render={
+            <Link to="/settings/user">
+              <GearIcon aria-hidden />
+              Settings
+            </Link>
+          }
+        />
+        <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={signOut}>
           Sign Out
         </DropdownMenuItem>

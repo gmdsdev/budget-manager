@@ -1,3 +1,4 @@
+import { AuthActionError } from "@/lib/auth-error";
 import { TRPCClientError } from "@trpc/client";
 
 const GENERIC = "Something went wrong. Please try again.";
@@ -19,6 +20,10 @@ type ErrorData = {
 };
 
 export function getErrorMessage(error: unknown): string {
+  if (error instanceof AuthActionError) {
+    return error.message || GENERIC;
+  }
+
   if (!(error instanceof TRPCClientError)) {
     return GENERIC;
   }

@@ -154,6 +154,30 @@ indistinguishable bars. It ships a hand-added `UPDATE` that deals the palette ou
 a spread of hues the first time it loaded. A generated migration is fine to extend this way —
 the snapshot only tracks DDL, so `db:generate` still reports no changes afterwards.
 
+**User settings are better-auth's, not a tRPC module.** `/settings/user` edits the name through
+`authClient.updateUser` and the password through `authClient.changePassword` — there is no
+`user` router, service or repository, because better-auth already owns password verification,
+session revocation and the `user` row. `preferredCurrency` rides along as the one
+`user.additionalFields` entry, declared **once** in `USER_ADDITIONAL_FIELDS`
+(`packages/schemas/src/user/user.schema.ts`) and spread into both the server instance and the
+client's `inferAdditionalFields`, so the field's name, optionality and default cannot drift
+between the two. Its `validator.input` is the same Zod enum the form uses, so an unsupported
+code is rejected server-side. Read it through `usePreferredCurrency`, never off the session
+directly: `toPreferredCurrency` falls back to `DEFAULT_PREFERRED_CURRENCY` for a stored code
+that is no longer in `WalletCurrency`, which is what keeps a dropped currency from reaching a
+`<Select>` as a value with no matching item. It is a *default*, not a scope — the create
+dialogs preselect it and the dashboard opens on it, but both still fall back (the dashboard to
+the first currency the API returned), so it can never hide data. Because those dialogs read it
+from the session, they `form.reset()` on **open** as well as close.
+
+Every mutation on that screen goes through `runAuthAction` (`apps/web/src/lib/auth-error.ts`),
+which turns better-auth's `{ data, error }` into a thrown `AuthActionError` so the shared
+`MutationCache` toast fires; `getErrorMessage` special-cases it to surface the library's own
+copy (`Invalid password`) instead of the generic string. Anything calling better-auth from a
+mutation must go through it rather than reading `error` inline. The colour scheme is the one
+setting that is **not** server state — it stays in next-themes' `kivo-theme` localStorage, so
+the mode in state is the mode on screen and the logo artwork ternary has nothing to guess.
+
 Workspace packages export raw TypeScript from `src/` (no build step) — only `apps/server` bundles, via tsdown with `noExternal: [/@budget-manager\/.*/]`. Shared dependency versions live in the root `package.json` `workspaces.catalog`; declare them as `"catalog:"` in each package.
 
 ### Backend layering (packages/api)

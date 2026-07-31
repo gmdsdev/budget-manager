@@ -1,5 +1,6 @@
 import {
   CreditCardIcon,
+  GearIcon,
   ReceiptIcon,
   SquaresFourIcon,
   TagIcon,
@@ -16,4 +17,5 @@ export const SETTINGS_LINKS = [
   { to: "/wallet", label: "Wallets", icon: WalletIcon },
   { to: "/credit-card", label: "Credit Cards", icon: CreditCardIcon },
   { to: "/category", label: "Categories", icon: TagIcon },
+  { to: "/settings/user", label: "Settings", icon: GearIcon },
 ] as const;

@@ -1,4 +1,4 @@
-import { WalletCurrency } from "@budget-manager/schemas";
+import { usePreferredCurrency } from "@/hooks/use-preferred-currency";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -20,6 +20,7 @@ export function CreateCreditCardDialog() {
   const formId = useId();
 
   const createMutation = useCreateCreditCardMutation();
+  const preferredCurrency = usePreferredCurrency();
 
   const form = useCreditCardForm({
     defaultValues: {
@@ -28,7 +29,7 @@ export function CreateCreditCardDialog() {
       closeDay: 1,
       dueDay: 10,
       defaultBillingWalletId: null,
-      currencyCode: WalletCurrency.BRL,
+      currencyCode: preferredCurrency,
     },
     onSubmit: async (values) => {
       await createMutation.mutateAsync(values);
@@ -38,10 +39,7 @@ export function CreateCreditCardDialog() {
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
-
-    if (!nextOpen) {
-      form.reset();
-    }
+    form.reset();
   }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

@@ -1,4 +1,5 @@
-import { WalletCurrency, WalletType } from "@budget-manager/schemas";
+import { usePreferredCurrency } from "@/hooks/use-preferred-currency";
+import { WalletType } from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -20,12 +21,13 @@ export function CreateWalletDialog() {
   const formId = useId();
 
   const createMutation = useCreateWalletMutation();
+  const preferredCurrency = usePreferredCurrency();
 
   const form = useWalletForm({
     defaultValues: {
       name: "",
       type: WalletType.CHECKING,
-      currencyCode: WalletCurrency.BRL,
+      currencyCode: preferredCurrency,
       openingBalanceCents: 0,
     },
     onSubmit: async (values) => {
@@ -36,10 +38,7 @@ export function CreateWalletDialog() {
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
-
-    if (!nextOpen) {
-      form.reset();
-    }
+    form.reset();
   }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

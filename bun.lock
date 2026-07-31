@@ -148,6 +148,7 @@
       "dependencies": {
         "@budget-manager/db": "workspace:*",
         "@budget-manager/env": "workspace:*",
+        "@budget-manager/schemas": "workspace:*",
         "better-auth": "catalog:",
         "dotenv": "catalog:",
         "zod": "catalog:",

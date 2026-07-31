@@ -1,3 +1,4 @@
+import { usePreferredCurrency } from "@/hooks/use-preferred-currency";
 import { getErrorMessage } from "@/utils/error-message";
 import {
   Button,
@@ -30,6 +31,7 @@ import { currentMonth, formatMonthLabel, shiftMonth } from "../utils/month";
 export default function DashboardPage() {
   const [month, setMonth] = useState(currentMonth());
   const [currencyCode, setCurrencyCode] = useState<string | null>(null);
+  const preferredCurrency: string = usePreferredCurrency();
   const { data, isPending, isError, error, refetch, isRefetching, isFetching } =
     useDashboardQuery(month);
 
@@ -37,11 +39,13 @@ export default function DashboardPage() {
   const isCurrentMonth = month === currentMonth();
 
   // One currency is in view at a time, and it is the whole page's scope: the
-  // stored code is only a preference, so a currency that stops existing (or a
-  // first load that has none yet) falls back to the first one the API returned.
+  // account's default is only a preference, so a currency that stops existing
+  // (or a first load that has none yet) falls back to the first one the API
+  // returned.
   const currencies = data?.currencies ?? [];
   const summary =
     currencies.find((entry) => entry.currencyCode === currencyCode) ??
+    currencies.find((entry) => entry.currencyCode === preferredCurrency) ??
     currencies[0];
   const activeCurrency = summary?.currencyCode;
 

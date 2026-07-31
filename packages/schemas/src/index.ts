@@ -5,4 +5,5 @@ export * from "./credit-card/credit-card.schema";
 export * from "./filters";
 export * from "./recurring/recurring.schema";
 export * from "./transaction/transaction.schema";
+export * from "./user/user.schema";
 export * from "./wallet/wallet.schema";
