@@ -2,8 +2,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@budget-manager/ui/components/dropdown-menu";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
@@ -46,8 +44,6 @@ export default function UserMenu() {
         <CaretUpIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" className="w-(--anchor-width)">
-        <DropdownMenuLabel>{session.user.email}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={signOut}>
           Sign Out
         </DropdownMenuItem>

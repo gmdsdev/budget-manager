@@ -30,7 +30,7 @@ export default function DashboardPage() {
 
   return (
     <div className="pb-8">
-      <header className="flex flex-col gap-3 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
+      <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
         <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">Dashboard</h1>
 
         {/* One control row above everything it scopes: every figure and chart
