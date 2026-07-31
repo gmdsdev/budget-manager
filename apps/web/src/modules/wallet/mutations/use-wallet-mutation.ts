@@ -6,6 +6,8 @@ const WALLET_INVALIDATIONS = [
   trpc.wallet.getAll.queryFilter(),
   // The select inputs read from `options`, not the paged list.
   trpc.wallet.options.queryFilter(),
+  // An opening balance and an archive flag both move the transaction totals.
+  trpc.transaction.summary.queryFilter(),
   trpc.dashboard.getSummary.queryFilter(),
 ];
 

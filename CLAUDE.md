@@ -55,7 +55,9 @@ letting every test time out. Chromium needs `bunx playwright install chromium` o
 
 Three hard-won details in `src/support/web.ts`:
 
-- Assert on row *counts* via `waitForRowCount` rather than sleeping.
+- Assert on row *counts* via `waitForRowCount` rather than sleeping. Its selector is scoped to
+  `[data-list-table]` — the marker `DataTable` puts on its own `<table>` — so a second table on
+  the page (the transaction totals) can never inflate a count.
 - Read text through `rowTexts`/`bodyText`, which flatten the non-breaking spaces `Intl` money
   formatting emits (a plain `"R$ 300,00"` never matches raw `innerText`).
 - **One shared Chromium, a fresh context per suite** (`openApp`/`closeApp`). Launching a browser
@@ -217,6 +219,21 @@ Each takes an exported `XFilters` type that routes and services spread through u
 adding a filter means editing the validator and the builder rather than five signatures.
 Mutations must invalidate `options` alongside `getAll` — otherwise a newly created wallet is
 missing from the transaction form until a reload.
+
+**The transaction list has a third shape, `summary`, and it is not a page of anything.** It takes
+the *same* filters as `getAll` minus `limit`/`offset` — both are built from one
+`TRANSACTION_FILTER_FIELDS` object, so a filter cannot exist on the list and not on its totals —
+and returns one row per currency: settled and projected wallet balances, income, expenses and
+net. Dropping pagination is the point: the figures describe every matching row, so paging must
+neither change them nor refetch them. Three plain `GROUP BY` queries feed the unit-tested
+`buildTransactionSummary`, which reuses `computeWalletBalances` so the totals can never disagree
+with the wallet page, and `periodRole` (`packages/schemas`) so income/expense means exactly what
+the dashboard means by it — transfers and card payments count as neither, a card purchase is the
+expense. Two scopes deliberately meet in that payload, which is what the caption on screen
+states: **balances cover every active wallet up to `dateTo`** (an opening balance cannot be scoped
+to a category or a search term without becoming nonsense), while income and expenses cover
+exactly the rows the filters matched. `getWalletMovementTotals` takes that `dateTo` so a balance
+reads "as of the end of the range in view" rather than always meaning today.
 
 The `dashboard` module is read-only and composes the others — it owns no rules of its own, and
 reuses `computeWalletBalances`, `computeCardBalances` and `computeBillTotals` so it can never
@@ -383,6 +400,22 @@ is a preference, not a source of truth — the page falls back to the first curr
 returned (they arrive sorted by code), which is what covers the first render and a currency that
 stops existing. Spending, wallet and meter bars are plain HTML rather than recharts:
 they carry long category names and their own value labels, which an SVG bar would clip.
+
+**The transaction list closes with a totals table, between the rows and the pagination.**
+`transaction-summary.tsx` is a plain shadcn `<Table>` rather than a `DataTable`: its rows are the
+*figures* (`In wallets`, `Income`, `Expenses`, `Net`) and its columns are `Effective` /
+`Projected` per currency, under a two-level header naming each currency. That way the common case
+— one currency — is three columns wide and needs no card fallback, and a second currency costs two
+columns instead of doubling the rows. Totals are still never summed across currencies. It has its
+own query hook keyed on the filters alone (`useTransactionSummaryQuery`), with
+`keepPreviousData` so a new filter holds the previous figures at reduced opacity instead of
+dropping the table out and shoving the pagination around; the route loader prefetches it beside
+the list. Two details are load-bearing: the explanatory note lives in a `<p>` *outside* the
+`<Table>`, because with two currencies the table scrolls sideways in its own container and would
+carry the note off-screen; and the row-label column is `sticky left-0` with `bg-card`, since a
+figure whose row label has scrolled away is unreadable (its `group-hover` is what keeps the row
+highlight whole). Mutations on transactions, series and wallets all invalidate
+`trpc.transaction.summary` — every figure is derived.
 
 **A column on a listing table gets a filter for it.** All four list pages follow this: wallets
 (name, type, currency), categories (name, type), cards (name, currency, billing wallet) and

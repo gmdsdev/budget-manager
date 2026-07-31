@@ -17,6 +17,8 @@ import { CreateTransactionDialog } from "../components/create-transaction-dialog
 import { CreateTransferDialog } from "../components/create-transfer-dialog";
 import { transactionColumns } from "../components/transaction-list/columns";
 import { TransactionFilters } from "../components/transaction-list/transaction-filters";
+import { TransactionSummary } from "../components/transaction-list/transaction-summary";
+import { useTransactionSummaryQuery } from "../queries/use-transaction-summary-query";
 import { useTransactionsQuery } from "../queries/use-transactions-query";
 import { formatDateString } from "../utils/date";
 import {
@@ -31,6 +33,10 @@ export default function ListTransactionsPage() {
 
   const { data, isPending, isError, error, refetch, isRefetching, isFetching } =
     useTransactionsQuery(filters, page);
+
+  // Its own query, keyed on the filters alone: the totals cover every matching
+  // row, so turning a page must not refetch them.
+  const summary = useTransactionSummaryQuery(filters);
 
   const isFiltered = isTransactionFiltered(filters);
 
@@ -98,6 +104,13 @@ export default function ListTransactionsPage() {
               </Empty>
             }
           />
+          {summary.data ? (
+            <TransactionSummary
+              currencies={summary.data.currencies}
+              rangeTo={filters.dateTo}
+              isFetching={summary.isFetching}
+            />
+          ) : null}
           <Pagination
             page={page}
             total={data.total}

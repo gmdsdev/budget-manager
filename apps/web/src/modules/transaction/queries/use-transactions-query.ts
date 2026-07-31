@@ -15,7 +15,7 @@ import {
   type TransactionRow,
 } from "../types";
 
-type TransactionsQueryInput = {
+export type TransactionFiltersInput = {
   search?: string;
   kind?: TransactionKind;
   status?: TransactionStatus;
@@ -25,25 +25,28 @@ type TransactionsQueryInput = {
   repeats?: TransactionRepeats;
   dateFrom: string;
   dateTo: string;
+};
+
+type TransactionsQueryInput = TransactionFiltersInput & {
   limit: number;
   offset: number;
 };
 
 /**
+ * Every sentinel is dropped here and nowhere else, so the list and the totals
+ * below it can never disagree about what is in scope.
+ *
  * The date range is part of every request, so a caller with no filters — the
  * route loader — asks for the same current month the page opens on, and a range
  * that somehow arrives empty falls back to it instead of listing all time.
  */
-export function transactionsQueryInput(
+export function transactionFiltersInput(
   filters?: TransactionFiltersState,
-  page = 1,
-): TransactionsQueryInput {
+): TransactionFiltersInput {
   const resolved = filters ?? defaultTransactionFilters();
   const fallback = currentMonthRange();
 
-  const input: TransactionsQueryInput = {
-    limit: PAGE_SIZE,
-    offset: toOffset(page),
+  const input: TransactionFiltersInput = {
     dateFrom: resolved.dateFrom || fallback.from,
     dateTo: resolved.dateTo || fallback.to,
   };
@@ -85,6 +88,17 @@ export function transactionsQueryInput(
   }
 
   return input;
+}
+
+export function transactionsQueryInput(
+  filters?: TransactionFiltersState,
+  page = 1,
+): TransactionsQueryInput {
+  return {
+    ...transactionFiltersInput(filters),
+    limit: PAGE_SIZE,
+    offset: toOffset(page),
+  };
 }
 
 export function useTransactionsQuery(

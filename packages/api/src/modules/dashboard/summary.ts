@@ -1,11 +1,9 @@
 import { formatDate, parseDateString } from "../../dates";
 import {
   type CategoryColor,
-  MONTH_EXPENSE_KINDS,
-  MONTH_INCOME_KINDS,
   TransactionStatus,
-  isTransactionKind,
   isTransactionStatus,
+  periodRole,
 } from "@budget-manager/schemas";
 
 /**
@@ -139,19 +137,6 @@ export function monthRange(month: string): { from: string; to: string } {
   };
 }
 
-/**
- * Transfers move money between the user's own wallets, and a card payment
- * settles a debt the purchase already counted — both would inflate a month that
- * gained and lost nothing, so neither side claims them.
- */
-function monthRole(kind: string): "income" | "expense" | null {
-  if (!isTransactionKind(kind)) return null;
-  if (MONTH_INCOME_KINDS.includes(kind)) return "income";
-  if (MONTH_EXPENSE_KINDS.includes(kind)) return "expense";
-
-  return null;
-}
-
 /** The `YYYY-MM` months ending at `month`, oldest first. */
 export function trailingMonths(month: string, count: number): string[] {
   const anchor = parseDateString(monthRange(month).from);
@@ -181,7 +166,7 @@ function trendByCurrency(movements: TrendMovement[], months: string[]) {
 
   for (const movement of movements) {
     const slot = slotOf.get(movement.month);
-    const role = monthRole(movement.kind);
+    const role = periodRole(movement.kind);
 
     if (slot === undefined || role === null || !counts(movement.status)) {
       continue;

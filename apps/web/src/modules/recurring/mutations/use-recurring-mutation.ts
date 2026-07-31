@@ -9,6 +9,7 @@ import type {
 const RECURRING_INVALIDATIONS = [
   trpc.recurring.getAll.queryFilter(),
   trpc.transaction.getAll.queryFilter(),
+  trpc.transaction.summary.queryFilter(),
   trpc.wallet.getAll.queryFilter(),
   trpc.creditCard.getAll.queryFilter(),
   trpc.creditCard.bills.queryFilter(),

@@ -88,6 +88,19 @@ export function isTransactionKind(value: string): value is TransactionKind {
   return (Object.values(TransactionKind) as string[]).includes(value);
 }
 
+/**
+ * Whether a kind counts as money earned or money spent over a period. Transfers
+ * move money between the user's own wallets and a card payment settles a debt
+ * the purchase already counted, so neither side claims them.
+ */
+export function periodRole(kind: string): "income" | "expense" | null {
+  if (!isTransactionKind(kind)) return null;
+  if (MONTH_INCOME_KINDS.includes(kind)) return "income";
+  if (MONTH_EXPENSE_KINDS.includes(kind)) return "expense";
+
+  return null;
+}
+
 export function signedAmountCents(
   kind: TransactionKind,
   amountCents: number,

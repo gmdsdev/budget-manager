@@ -1,13 +1,22 @@
-import { TransactionKind, TransactionStatus } from "@budget-manager/schemas";
+import {
+  TransactionKind,
+  TransactionStatus,
+  WalletCurrency,
+} from "@budget-manager/schemas";
 import { beforeAll, describe, expect, test } from "bun:test";
 
 import { errorCodeOf, signUpClient, type ApiClient } from "../support/api";
 import { requireServer } from "../support/env";
 import {
   balanceOf,
+  card,
+  cardPayment,
+  cardPurchase,
   listTransactions,
   seedBasics,
   transaction,
+  transfer,
+  wallet,
 } from "../support/fixtures";
 
 let api: ApiClient;
@@ -248,6 +257,154 @@ describe("transaction", () => {
     expect(firstPage.length).toBe(1);
     expect(firstPage[0]?.id).toBe(all[0]?.id);
     expect(secondPage[0]?.id).toBe(all[1]?.id);
+  });
+
+  test("summary reads balances as of the range end and totals only its rows", async () => {
+    const client = (await signUpClient()).client;
+    const local = await seedBasics(client);
+
+    await client.transaction.create.mutate(
+      transaction(local.checking.id, {
+        kind: TransactionKind.INCOME,
+        amountCents: 500_000,
+        categoryId: local.salary.id,
+        occurrenceDate: "2026-07-10",
+      }),
+    );
+    await client.transaction.create.mutate(
+      transaction(local.checking.id, {
+        amountCents: 25_000,
+        occurrenceDate: "2026-07-20",
+        status: TransactionStatus.WAITING_PAYMENT,
+      }),
+    );
+    // Dated after the range: outside every figure below.
+    await client.transaction.create.mutate(
+      transaction(local.checking.id, {
+        amountCents: 90_000,
+        occurrenceDate: "2026-08-05",
+      }),
+    );
+
+    const { currencies } = await client.transaction.summary.query({
+      dateFrom: "2026-07-01",
+      dateTo: "2026-07-31",
+    });
+
+    expect(currencies).toHaveLength(1);
+    expect(currencies[0]).toMatchObject({
+      currencyCode: "BRL",
+      // Two wallets open at 100.000 and 0, plus July's settled income.
+      balanceCents: 600_000,
+      projectedBalanceCents: 575_000,
+      incomeCents: 500_000,
+      expenseCents: 0,
+      projectedExpenseCents: 25_000,
+      netCents: 500_000,
+      projectedNetCents: 475_000,
+    });
+  });
+
+  test("summary follows the list's filters and never mixes currencies", async () => {
+    const client = (await signUpClient()).client;
+    const local = await seedBasics(client);
+    const euro = await client.wallet.create.mutate(
+      wallet({ name: "Euro", currencyCode: WalletCurrency.EUR, openingBalanceCents: 0 }),
+    );
+
+    await client.transaction.create.mutate(
+      transaction(local.checking.id, {
+        amountCents: 25_000,
+        occurrenceDate: "2026-07-10",
+        categoryId: local.groceries.id,
+      }),
+    );
+    await client.transaction.create.mutate(
+      transaction(euro.id, { amountCents: 4_000, occurrenceDate: "2026-07-11" }),
+    );
+
+    const range = { dateFrom: "2026-07-01", dateTo: "2026-07-31" };
+    const all = await client.transaction.summary.query(range);
+
+    expect(all.currencies.map((row) => row.currencyCode)).toEqual([
+      WalletCurrency.BRL,
+      WalletCurrency.EUR,
+    ]);
+    expect(all.currencies[1]).toMatchObject({ expenseCents: 4_000 });
+
+    const byCategory = await client.transaction.summary.query({
+      ...range,
+      categoryId: local.groceries.id,
+    });
+
+    // A row filter narrows the totals; the balances still cover every wallet.
+    expect(byCategory.currencies[0]).toMatchObject({
+      currencyCode: WalletCurrency.BRL,
+      expenseCents: 25_000,
+      balanceCents: 75_000,
+    });
+    // The euro row's spending is filtered out while its balance still carries
+    // it: an opening balance cannot be scoped to a category.
+    expect(byCategory.currencies[1]).toMatchObject({
+      currencyCode: WalletCurrency.EUR,
+      expenseCents: 0,
+      balanceCents: -4_000,
+    });
+  });
+
+  test("summary counts a card purchase as spending and its payment as neither", async () => {
+    const client = (await signUpClient()).client;
+    const local = await seedBasics(client);
+    const visa = await client.creditCard.create.mutate(card());
+
+    await client.transaction.createCardPurchase.mutate(
+      cardPurchase(visa.id, {
+        amountCents: 30_000,
+        occurrenceDate: "2026-07-05",
+      }),
+    );
+    await client.transaction.createCardPayment.mutate(
+      cardPayment(visa.id, local.checking.id, {
+        amountCents: 30_000,
+        occurrenceDate: "2026-07-20",
+      }),
+    );
+
+    const { currencies } = await client.transaction.summary.query({
+      dateFrom: "2026-07-01",
+      dateTo: "2026-07-31",
+    });
+
+    expect(currencies[0]).toMatchObject({
+      // The purchase is the expense; paying the bill only settles the debt.
+      expenseCents: 30_000,
+      // The payment still leaves the wallet.
+      balanceCents: 70_000,
+    });
+  });
+
+  test("summary leaves transfers out of income and expenses", async () => {
+    const client = (await signUpClient()).client;
+    const local = await seedBasics(client);
+
+    await client.transaction.createTransfer.mutate(
+      transfer(local.checking.id, local.savings.id, {
+        amountCents: 30_000,
+        occurrenceDate: "2026-07-15",
+      }),
+    );
+
+    const { currencies } = await client.transaction.summary.query({
+      dateFrom: "2026-07-01",
+      dateTo: "2026-07-31",
+    });
+
+    expect(currencies[0]).toMatchObject({
+      incomeCents: 0,
+      expenseCents: 0,
+      // Both legs land in wallets the user owns, so nothing left the position.
+      balanceCents: 100_000,
+    });
   });
 
   test("deletes a plain transaction", async () => {

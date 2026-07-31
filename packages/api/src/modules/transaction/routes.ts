@@ -6,6 +6,7 @@ import {
   CreateTransferInput,
   ListTransactionsInput,
   TransactionIdInput,
+  TransactionSummaryInput,
   TransferGroupIdInput,
   UpdateCardPaymentInput,
   UpdateCardPurchaseInput,
@@ -24,6 +25,15 @@ export const transactionRouter = router({
         limit,
         offset,
         ...filters,
+      });
+    }),
+
+  summary: protectedProcedure
+    .input(TransactionSummaryInput)
+    .query(async ({ input, ctx }) => {
+      return await ctx.services.transaction.getSummary({
+        userId: ctx.session.user.id,
+        ...input,
       });
     }),
 

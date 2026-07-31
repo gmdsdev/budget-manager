@@ -13,6 +13,7 @@ import { randomUUID } from "node:crypto";
 import { ConflictError, NotFoundError } from "../../errors";
 import type { CreditCardService } from "../credit-card";
 import type { TransactionFilters, TransactionRepository } from "./repository";
+import { buildTransactionSummary } from "./summary";
 
 const KIND_TO_CATEGORY_TYPE: Record<TransactionFormKind, CategoryType> = {
   [TransactionKind.INCOME]: CategoryType.INCOME,
@@ -48,6 +49,32 @@ export class TransactionService {
     ]);
 
     return { rows, total, limit, offset };
+  }
+
+  /**
+   * The figures under the list. Takes the list's own filters minus pagination:
+   * they describe every matching row, so turning a page must not refetch them.
+   */
+  async getSummary({
+    userId,
+    ...filters
+  }: TransactionFilters & { userId: string }) {
+    const [wallets, walletMovements, rangeMovements] = await Promise.all([
+      this.repository.listActiveWallets({ userId }),
+      this.repository.getWalletMovementTotals({
+        userId,
+        dateTo: filters.dateTo,
+      }),
+      this.repository.getCurrencyMovementTotals({ userId, ...filters }),
+    ]);
+
+    return {
+      currencies: buildTransactionSummary({
+        wallets,
+        walletMovements,
+        rangeMovements,
+      }),
+    };
   }
 
   async getTransfer({

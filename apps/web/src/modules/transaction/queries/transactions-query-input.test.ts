@@ -17,6 +17,7 @@ import {
   walletAccountValue,
   type TransactionFiltersState,
 } from "../types";
+import { transactionSummaryQueryInput } from "./use-transaction-summary-query";
 import { transactionsQueryInput } from "./use-transactions-query";
 
 const DEFAULT_FILTERS = defaultTransactionFilters();
@@ -161,6 +162,35 @@ describe("transactionsQueryInput", () => {
       offset: PAGE_SIZE,
       kind: TransactionKind.INCOME,
     });
+  });
+});
+
+describe("transactionSummaryQueryInput", () => {
+  test("carries the filters without any pagination", () => {
+    expect(transactionSummaryQueryInput(DEFAULT_FILTERS)).toEqual({
+      dateFrom: CURRENT_MONTH.from,
+      dateTo: CURRENT_MONTH.to,
+    });
+  });
+
+  test("matches the loader input when nothing is filtered", () => {
+    expect(transactionSummaryQueryInput(DEFAULT_FILTERS)).toEqual(
+      transactionSummaryQueryInput(),
+    );
+  });
+
+  test("is the list input minus limit and offset, so paging never refetches it", () => {
+    const filters: TransactionFiltersState = {
+      ...DEFAULT_FILTERS,
+      search: "coffee",
+      kind: TransactionKind.EXPENSE,
+      accountId: walletAccountValue(WALLET_ID),
+    };
+
+    const { limit: _limit, offset: _offset, ...listInput } =
+      transactionsQueryInput(filters, 3);
+
+    expect(transactionSummaryQueryInput(filters)).toEqual(listInput);
   });
 });
 

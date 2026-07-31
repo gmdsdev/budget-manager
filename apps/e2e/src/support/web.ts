@@ -163,10 +163,12 @@ export async function bodyText(page: Page) {
 }
 
 /**
- * Data rows only: the transaction table interleaves `data-group-header` rows
- * (one per date), which are not rows in any assertion's sense.
+ * Data rows of the listing itself: `[data-list-table]` is the `DataTable`, so a
+ * summary or breakdown table on the same page never inflates a count, and
+ * `data-group-header` rows (one per date on the transaction list) are not rows
+ * in any assertion's sense.
  */
-const DATA_ROW_SELECTOR = "tbody tr:not([data-group-header])";
+const DATA_ROW_SELECTOR = "[data-list-table] tbody tr:not([data-group-header])";
 
 export function rows(page: Page) {
   return page.locator(DATA_ROW_SELECTOR);
@@ -192,6 +194,25 @@ export async function rowTexts(page: Page) {
       Array.from(tr.querySelectorAll("td")).map((td) =>
         (td as HTMLElement).innerText.replace(/[\u00a0\u202f]/g, " ").trim(),
       ),
+    ),
+  );
+}
+
+/**
+ * The figures under the transaction list, keyed by their row label — each value
+ * is one cell per column, so a single currency reads
+ * `{ Expenses: [effective, projected] }`. The key comes from `textContent`, not
+ * `innerText`: table headers are uppercased in CSS, which `innerText` reports.
+ */
+export async function summaryFigures(page: Page) {
+  return page.$$eval("section[aria-label='Totals'] tbody tr", (trs) =>
+    Object.fromEntries(
+      trs.map((tr) => [
+        (tr.querySelector("th")?.textContent ?? "").trim(),
+        Array.from(tr.querySelectorAll("td")).map((td) =>
+          (td as HTMLElement).innerText.replace(/[\u00a0\u202f]/g, " ").trim(),
+        ),
+      ]),
     ),
   );
 }

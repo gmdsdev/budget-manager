@@ -33,6 +33,12 @@ import { containsPattern } from "../../search";
 
 const LISTED_KINDS = Object.values(TransactionKind);
 
+/**
+ * An occurrence belongs to a wallet or to a card, never both, so the owning
+ * account's currency is whichever join matched.
+ */
+const ownerCurrency = sql<string>`coalesce(${wallets.currencyCode}, ${creditCards.currencyCode})`;
+
 const TRANSACTION_PUBLIC_COLUMNS = {
   id: transactionOccurrences.id,
   kind: transactionOccurrences.kind,
@@ -58,10 +64,7 @@ const TRANSACTION_LIST_COLUMNS = {
   ...TRANSACTION_PUBLIC_COLUMNS,
   walletName: wallets.name,
   creditCardName: creditCards.name,
-  // A card purchase has no wallet, so the currency comes from whichever
-  // account owns the row.
-  walletCurrencyCode:
-    sql<string>`coalesce(${wallets.currencyCode}, ${creditCards.currencyCode})`,
+  walletCurrencyCode: ownerCurrency,
   categoryName: categories.name,
   categoryColor: categories.color,
   recurrenceType: recurrenceRules.recurrenceType,
@@ -266,6 +269,88 @@ export class TransactionRepository {
       transactionOccurrences,
       transactionFilter({ userId, ...filters }),
     );
+  }
+
+  /** The wallets the summary's balance rows cover. */
+  async listActiveWallets({ userId }: { userId: string }) {
+    return this.db
+      .select({
+        id: wallets.id,
+        currencyCode: wallets.currencyCode,
+        openingBalanceCents: wallets.openingBalanceCents,
+      })
+      .from(wallets)
+      .where(and(eq(wallets.userId, userId), eq(wallets.isArchived, false)));
+  }
+
+  /**
+   * Wallet movements up to a day, so a balance can read "as of the end of the
+   * range in view" instead of always meaning today. A plain GROUP BY with no
+   * CASE: which kinds credit or debit is `computeWalletBalances`' business.
+   */
+  async getWalletMovementTotals({
+    userId,
+    dateTo,
+  }: {
+    userId: string;
+    dateTo?: string;
+  }) {
+    const conditions = [
+      eq(transactionOccurrences.userId, userId),
+      isNotNull(transactionOccurrences.walletId),
+    ];
+
+    if (dateTo) {
+      conditions.push(lte(transactionOccurrences.occurrenceDate, dateTo));
+    }
+
+    return this.db
+      .select({
+        walletId: transactionOccurrences.walletId,
+        kind: transactionOccurrences.kind,
+        status: transactionOccurrences.status,
+        totalCents: sql<number>`sum(${transactionOccurrences.amountCents})`.mapWith(
+          Number,
+        ),
+      })
+      .from(transactionOccurrences)
+      .where(and(...conditions))
+      .groupBy(
+        transactionOccurrences.walletId,
+        transactionOccurrences.kind,
+        transactionOccurrences.status,
+      );
+  }
+
+  /**
+   * One row per (currency, kind, status) over the same filter the list runs, so
+   * the totals describe every matching row rather than the page on screen.
+   */
+  async getCurrencyMovementTotals({
+    userId,
+    ...filters
+  }: TransactionFilters & { userId: string }) {
+    return this.db
+      .select({
+        currencyCode: ownerCurrency,
+        kind: transactionOccurrences.kind,
+        status: transactionOccurrences.status,
+        totalCents: sql<number>`sum(${transactionOccurrences.amountCents})`.mapWith(
+          Number,
+        ),
+      })
+      .from(transactionOccurrences)
+      .leftJoin(wallets, eq(wallets.id, transactionOccurrences.walletId))
+      .leftJoin(
+        creditCards,
+        eq(creditCards.id, transactionOccurrences.creditCardId),
+      )
+      .where(transactionFilter({ userId, ...filters }))
+      .groupBy(
+        ownerCurrency,
+        transactionOccurrences.kind,
+        transactionOccurrences.status,
+      );
   }
 
   async findById({ id, userId }: { id: string; userId: string }) {

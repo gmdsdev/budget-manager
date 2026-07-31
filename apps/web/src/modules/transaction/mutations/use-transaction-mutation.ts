@@ -11,6 +11,8 @@ import type {
 
 const TRANSACTION_INVALIDATIONS = [
   trpc.transaction.getAll.queryFilter(),
+  // The figures under the list are derived, so they move with every row.
+  trpc.transaction.summary.queryFilter(),
   trpc.transaction.getTransfer.queryFilter(),
   trpc.wallet.getAll.queryFilter(),
   // Card purchases and payments move a card's outstanding balance.

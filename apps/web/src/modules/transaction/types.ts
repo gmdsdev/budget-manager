@@ -34,6 +34,23 @@ export type TransactionRow = {
   updatedAt: Date;
 };
 
+/**
+ * One currency's figures under the list. `balanceCents` covers every wallet as
+ * of the range end; the income and expense figures cover exactly the rows the
+ * filters matched.
+ */
+export type TransactionSummaryRow = {
+  currencyCode: string;
+  balanceCents: number;
+  projectedBalanceCents: number;
+  incomeCents: number;
+  projectedIncomeCents: number;
+  expenseCents: number;
+  projectedExpenseCents: number;
+  netCents: number;
+  projectedNetCents: number;
+};
+
 export const TRANSACTION_FILTER_ALL = FILTER_ALL;
 
 export const TRANSACTION_CATEGORY_NONE = "none";

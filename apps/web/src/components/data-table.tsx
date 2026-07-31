@@ -238,7 +238,9 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="overflow-hidden rounded-none border-2 border-border bg-card shadow-brutal">
-      <Table>
+      {/* Marked so the e2e row helpers count this table's rows and not those of
+          a summary or breakdown table sharing the page. */}
+      <Table data-list-table="">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
