@@ -120,4 +120,26 @@ describe("CurrencyInput", () => {
 
     expect(screen.getByTestId("value").textContent).toBe("0");
   });
+
+  test("puts the caret at the end after clearing everything", () => {
+    render(<Harness initial={1234} />);
+    const input = amountInput();
+
+    fireEvent.change(input, { target: { value: "" } });
+
+    expect(input.selectionStart).toBe(input.value.length);
+
+    const next = input.value + "5";
+
+    fireEvent.change(input, {
+      target: {
+        value: next,
+        selectionStart: next.length,
+        selectionEnd: next.length,
+      },
+    });
+
+    expect(screen.getByTestId("value").textContent).toBe("5");
+    expect(input.value).toContain("0,05");
+  });
 });

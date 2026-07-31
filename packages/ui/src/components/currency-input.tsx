@@ -76,10 +76,9 @@ export function CurrencyInput({
 
     element.value = nextDisplay;
 
-    const position = offsetAfterDigit(
-      nextDisplay,
-      rejected ? targetDigits - 1 : targetDigits,
-    );
+    const position = /\d/.test(typed)
+      ? offsetAfterDigit(nextDisplay, rejected ? targetDigits - 1 : targetDigits)
+      : nextDisplay.length;
     element.setSelectionRange(position, position);
 
     if (next !== value) {
