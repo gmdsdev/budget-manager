@@ -28,6 +28,22 @@
         "vercel": "^54.18.6",
       },
     },
+    "apps/demo-seed": {
+      "name": "@budget-manager/demo-seed",
+      "version": "0.0.0",
+      "dependencies": {
+        "@budget-manager/api": "workspace:*",
+        "@budget-manager/money": "workspace:*",
+        "@budget-manager/schemas": "workspace:*",
+        "@trpc/client": "catalog:",
+        "@trpc/server": "catalog:",
+      },
+      "devDependencies": {
+        "@budget-manager/config": "workspace:*",
+        "@types/bun": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
     "apps/e2e": {
       "name": "@budget-manager/e2e",
       "version": "0.0.0",
@@ -343,6 +359,8 @@
     "@budget-manager/config": ["@budget-manager/config@workspace:packages/config"],
 
     "@budget-manager/db": ["@budget-manager/db@workspace:packages/db"],
+
+    "@budget-manager/demo-seed": ["@budget-manager/demo-seed@workspace:apps/demo-seed"],
 
     "@budget-manager/e2e": ["@budget-manager/e2e@workspace:apps/e2e"],
 

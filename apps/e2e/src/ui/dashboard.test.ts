@@ -7,12 +7,18 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Page } from "playwright";
 
 import { WEB_URL, requireWeb } from "../support/env";
-import { listWallets, seedBasics, transaction } from "../support/fixtures";
+import {
+  listWallets,
+  seedBasics,
+  transaction,
+  wallet,
+} from "../support/fixtures";
 import {
   closeApp,
   apiForPage,
   bodyText,
   openApp,
+  pickSelect,
   signUpThroughUi,
   type Session,
 } from "../support/web";
@@ -259,6 +265,50 @@ describe("dashboard", () => {
     const body = await bodyText(page);
 
     expect(body).not.toContain("past its due date");
+  }, 60_000);
+
+  test("scopes the page to one currency, chosen at the top", async () => {
+    const api = await apiForPage(page);
+    const savings = await api.wallet.create.mutate(
+      wallet({
+        name: "Savings USD",
+        currencyCode: WalletCurrency.USD,
+        openingBalanceCents: 0,
+      }),
+    );
+
+    await api.transaction.create.mutate(
+      transaction(savings.id, {
+        kind: TransactionKind.INCOME,
+        name: "Consulting",
+        amountCents: 150_000,
+        occurrenceDate: todayIso(),
+      }),
+    );
+
+    await page.reload({ waitUntil: "networkidle" });
+    await page
+      .getByLabel("Currency", { exact: true })
+      .waitFor({ state: "visible", timeout: 15_000 });
+
+    // BRL sorts first, so the page opens on it and the USD wallet is nowhere in
+    // view — one currency at a time is the whole point of the control.
+    let body = await bodyText(page);
+
+    expect(body).toContain("Checking");
+    expect(body).not.toContain("Savings USD");
+
+    await pickSelect(page, page, "Currency", "USD");
+    await page
+      .getByText("Savings USD", { exact: false })
+      .first()
+      .waitFor({ state: "visible", timeout: 15_000 });
+
+    body = await bodyText(page);
+
+    expect(body).toContain("$1,500.00");
+    expect(body).toContain("1 wallet");
+    expect(body).not.toContain("Checking");
   }, 60_000);
 
   test("no console or page errors", () => {

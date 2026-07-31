@@ -28,17 +28,11 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
       {
-        title: "budget-manager",
+        title: "Kivo",
       },
       {
         name: "description",
-        content: "budget-manager is a web application",
-      },
-    ],
-    links: [
-      {
-        rel: "icon",
-        href: "/favicon.ico",
+        content: "Kivo is a personal finance app for wallets, cards and bills",
       },
     ],
   }),
@@ -48,12 +42,7 @@ function RootComponent() {
   return (
     <>
       <HeadContent />
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        disableTransitionOnChange
-        storageKey="vite-ui-theme"
-      >
+      <ThemeProvider>
         <TooltipProvider>
           {/* grid-cols-1 is minmax(0,1fr), not auto: an auto track sizes to its
               max-content, so one wide table used to widen the whole document

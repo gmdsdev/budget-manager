@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-import { Logotipo } from "./logotipo";
+import { KivoLockup, KivoMark } from "./logo";
 import { MobileNav } from "./mobile-nav";
 import { ModeToggle } from "./mode-toggle";
 import { MAIN_LINKS, SETTINGS_LINKS } from "./nav-links";
@@ -30,14 +30,11 @@ export function Sidebar() {
       <div className="border-b-2 border-border px-4 py-5">
         <Link
           to="/dashboard"
-          aria-label="Budget Manager dashboard"
+          aria-label="Kivo dashboard"
           className="block text-foreground"
         >
-          <Logotipo className="h-6" aria-hidden />
+          <KivoLockup className="h-10" alt="" />
         </Link>
-        <p className="mt-2 text-[10px] font-semibold tracking-[0.2em] text-muted-foreground uppercase">
-          Total control
-        </p>
       </div>
 
       <nav aria-label="Main" className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
@@ -61,12 +58,12 @@ export default function Header() {
         <div className="flex min-w-0 flex-1 items-center">
           <Link
             to="/dashboard"
-            aria-label="Budget Manager dashboard"
-            // The negative margin buys the 24px wordmark a 40px tap area
+            aria-label="Kivo dashboard"
+            // The negative margin buys the 32px mark a 48px tap area
             // without changing how tall the header draws.
             className="-m-2 shrink-0 p-2 text-foreground"
           >
-            <Logotipo className="h-6" aria-hidden />
+            <KivoMark className="h-8" alt="" />
           </Link>
         </div>
 

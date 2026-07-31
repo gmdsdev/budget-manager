@@ -40,6 +40,7 @@
     "test:e2e": "turbo run test:e2e -F @budget-manager/e2e",
     "test:e2e:api": "turbo run test:e2e:api -F @budget-manager/e2e",
     "test:e2e:ui": "turbo run test:e2e:ui -F @budget-manager/e2e",
+    "seed:demo": "bun apps/demo-seed/src/index.ts",
     "dev:web": "turbo run dev -F web",
     "dev:server": "turbo run dev -F server",
     "db:push": "turbo run db:push -F @budget-manager/db",

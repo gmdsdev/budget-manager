@@ -70,6 +70,39 @@ time, which Bun scopes to whichever test file imports RTL *first*, so cleanup
 silently becomes filename-order-dependent and unrelated suites start failing on
 leftover DOM.
 
+### Demo data
+
+`apps/demo-seed` signs up a throwaway account and fills it with a year of history plus a year of
+scheduled rows, against a live stack:
+
+```bash
+bun run db:start && bun run dev          # prerequisites
+bun run seed:demo                        # prints the email, password and a summary
+bun run seed:demo --seed 7               # same seed, same account
+bun run seed:demo --past-months 3 --future-months 1
+```
+
+Like `apps/e2e`, it drives a real `createTRPCClient<AppRouter>` and **never writes SQL**: wallets,
+cards, categories, series, transfers, purchases and bill payments all go through the same routes
+the UI calls, so a renamed procedure breaks its `check-types` instead of quietly seeding garbage.
+It declares no `test` script, so `turbo run test` stays hermetic.
+
+Four things the ordering encodes, all of them consequences of rules documented further down:
+
+- **Series first, bills last.** `recurring.create` materializes history *and* the next 12 months in
+  one call, and a statement's total is summed from the purchases linked to it — so paying a bill
+  before every purchase exists would settle the wrong figure.
+- **Generated occurrences are always written as `waiting_payment`, even in the past**, so the script
+  sweeps `transaction.getAll` for past pending rows and `markPaid`s them the way a user would. The
+  deliberately overdue rows are written *after* that sweep, or it would settle them too.
+- Statuses are never hand-picked: `calendar.statusFor(date)` settles anything already dated and
+  leaves the rest waiting, which is what keeps the account readable on any day it is seeded.
+- The catalog in `src/catalog.ts` is **balanced around `SALARY_MAJOR`**: monthly spending plus the
+  transfers out of the checking wallet have to leave a small surplus, and the cash wallet needs its
+  own transfer because the weekly market series is the only thing spending from it. Balances are
+  derived, so the run prints every wallet and card — a change that pushes the account into the red
+  shows up there.
+
 ### Database
 
 Postgres runs via `packages/db/docker-compose.yml`; `drizzle.config.ts` reads `DATABASE_URL` from `apps/server/.env`.
@@ -308,14 +341,23 @@ forget the reset and strand the user on a page that no longer exists. `PAGE_SIZE
 offset math live in `src/lib/pagination.ts`.
 
 **The dashboard reads top-down: figures, then charts, then the lists that need acting on.**
-`dashboard.page.tsx` owns only the month control and the two global lists (statements, awaiting
-payment); everything currency-scoped lives in `CurrencySection`, repeated per currency because
-totals are never summed across them. Inside a section the order is fixed — stat tiles (`In
+`dashboard.page.tsx` owns only the two controls and the statements / awaiting-payment lists;
+everything else lives in `CurrencySection`. Inside a section the order is fixed — stat tiles (`In
 wallets`, `Income`, `Expenses`, `Net` with a sparkline; a second row of card figures when the
 user has cards), then `CashFlowChart` beside `SpendingBreakdown`, then the per-account
-breakdowns. The month control sits **above everything it scopes**, never inside a card, and a
+breakdowns. Both controls sit **above everything they scope**, never inside a card, and a
 refetch holds the previous render at reduced opacity instead of flashing skeletons, so changing
-month never jumps the page. Spending, wallet and meter bars are plain HTML rather than recharts:
+month never jumps the page.
+
+**One currency is in view at a time, chosen next to the month.** Totals are never summed across
+currencies, but stacking a section per currency read as one long page of near-identical figures,
+so the header carries a currency select and the page renders that one `CurrencySection` — and
+the two lists below are filtered to it as well, since a control above them scopes them like the
+month does. The select only appears once there is a second currency, and the query still returns
+every currency in one payload: switching is client-side, so it costs no refetch. The stored code
+is a preference, not a source of truth — the page falls back to the first currency the API
+returned (they arrive sorted by code), which is what covers the first render and a currency that
+stops existing. Spending, wallet and meter bars are plain HTML rather than recharts:
 they carry long category names and their own value labels, which an SVG bar would clip.
 
 **A column on a listing table gets a filter for it.** All four list pages follow this: wallets
@@ -484,6 +526,23 @@ press effect (`active:translate-x-0.5 active:translate-y-0.5 active:shadow-none`
 labels and table headers are bold uppercase with tracking. Swatches and chart marks are square
 with an ink outline (`border border-border`), which doubles as the contrast relief for the
 pastel fills. New components should speak this grammar rather than invent a parallel one.
+
+**The app is Kivo, and the logo is a pair of files per shape, not a `currentColor` SVG.**
+`apps/web/src/assets/logos/` holds the light and dark artwork for the mark and the lockup
+(which carries the "Personal finance" tagline, so nothing should print a second one beneath
+it); `components/logo.tsx` imports all four as URLs and picks one with a ternary on
+`useThemeMode()`. That ternary is why **there is no system theme**: `ThemeProvider` runs
+next-themes with `enableSystem={false}` over `THEME_MODES` (`light | dark`) under the
+`kivo-theme` key, so the mode in state is always the mode on screen — a `system` setting would
+mean guessing which artwork the OS is showing. `useThemeMode` is the only theme hook the app
+uses; it narrows to `ThemeMode` so a stale stored value can never reach a `src`. The lockup is
+the brand everywhere it fits (sidebar, sheet nav, auth cards, ≥36px so the tagline is legible)
+and the mark is for the tight spots (the phone top bar); `kivo-favicon.svg` is a mark without
+the offset shadow and is wired up in `index.html`, so it is Vite that hashes it and there is no
+`public/` copy to drift. Both components render an `<img>` with `w-fit`, not `w-auto`: a flex
+column stretches an `auto` cross size, and an `<img>` obeys the stretch while the SVG's own
+`preserveAspectRatio` re-centres the artwork inside it — the logo silently drifts to the middle
+of a `SheetHeader`.
 
 Add shared primitives from the root: `npx shadcn@latest add <name> -c packages/ui`. Run the shadcn CLI from `apps/web` only for app-specific blocks.
 

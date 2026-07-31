@@ -10,7 +10,7 @@ import { authClient } from "@/lib/auth-client";
 import { invalidateSessionCache } from "@/lib/session";
 
 import Loader from "./loader";
-import { Logotipo } from "./logotipo";
+import { KivoLockup } from "./logo";
 
 export default function SignUpForm({
   onSwitchToSignIn,
@@ -65,11 +65,7 @@ export default function SignUpForm({
   return (
     <div className="w-full max-w-md border-2 border-border bg-card p-6 shadow-brutal">
       <div className="mb-6 flex flex-col items-center gap-6">
-        <Logotipo
-          className="h-8 text-foreground"
-          role="img"
-          aria-label="Budget Manager"
-        />
+        <KivoLockup className="h-12" />
         <h1 className="text-center text-2xl font-bold tracking-wide uppercase">Create Account</h1>
       </div>
 

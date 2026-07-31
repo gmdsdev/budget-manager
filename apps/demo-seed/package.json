@@ -1,0 +1,22 @@
+{
+  "name": "@budget-manager/demo-seed",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "seed": "bun src/index.ts"
+  },
+  "dependencies": {
+    "@budget-manager/api": "workspace:*",
+    "@budget-manager/money": "workspace:*",
+    "@budget-manager/schemas": "workspace:*",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:"
+  },
+  "devDependencies": {
+    "@budget-manager/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}

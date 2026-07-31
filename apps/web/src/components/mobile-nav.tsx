@@ -14,13 +14,13 @@ import { useState } from "react";
 
 import { useSignOut } from "@/hooks/use-sign-out";
 import { authClient } from "@/lib/auth-client";
-import { useTheme } from "@/components/theme-provider";
+import { useThemeMode } from "@/components/theme-provider";
+import { KivoLockup } from "./logo";
 import { MAIN_LINKS, SETTINGS_LINKS } from "./nav-links";
 
 const THEMES = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
-  { value: "system", label: "System" },
 ] as const;
 
 /**
@@ -30,7 +30,7 @@ const THEMES = [
  */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { mode, setMode } = useThemeMode();
   const signOut = useSignOut();
   const { data: session } = authClient.useSession();
 
@@ -50,6 +50,7 @@ export function MobileNav() {
       />
       <SheetContent side="right" className="w-4/5 max-w-xs overflow-y-auto">
         <SheetHeader>
+          <KivoLockup className="mb-3 h-9" alt="" />
           <SheetTitle>Menu</SheetTitle>
           {session ? (
             <SheetDescription>{session.user.email}</SheetDescription>
@@ -76,18 +77,21 @@ export function MobileNav() {
         <SheetFooter>
           <div className="flex flex-col gap-2">
             <p className="flex flex-row items-center gap-1.5 text-xs text-muted-foreground">
-              <SunIcon aria-hidden className="size-3.5 dark:hidden" />
-              <MoonIcon aria-hidden className="hidden size-3.5 dark:block" />
+              {mode === "dark" ? (
+                <MoonIcon aria-hidden className="size-3.5" />
+              ) : (
+                <SunIcon aria-hidden className="size-3.5" />
+              )}
               Theme
             </p>
             <div className="flex flex-row gap-2">
               {THEMES.map((option) => (
                 <Button
                   key={option.value}
-                  variant={theme === option.value ? "secondary" : "outline"}
+                  variant={mode === option.value ? "secondary" : "outline"}
                   className="flex-1"
-                  aria-pressed={theme === option.value}
-                  onClick={() => setTheme(option.value)}
+                  aria-pressed={mode === option.value}
+                  onClick={() => setMode(option.value)}
                 >
                   {option.label}
                 </Button>
