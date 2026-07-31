@@ -6,31 +6,35 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@budget-manager/ui/components/field";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { useId } from "react";
 import { SettingsSection } from "./settings-section";
 
 const THEME_LABELS = {
-  light: { label: "Light", icon: SunIcon },
-  dark: { label: "Dark", icon: MoonIcon },
+  light: { label: "common.light", icon: SunIcon },
+  dark: { label: "common.dark", icon: MoonIcon },
 } as const;
 
 export function AppearanceForm() {
+  const t = useTranslate();
   const groupId = useId();
   const { mode, setMode } = useThemeMode();
 
   return (
     <SettingsSection
-      title="Appearance"
-      description="Pick the colour scheme the app renders in."
+      title={t("settings.appearance.title")}
+      description={t("settings.appearance.description")}
     >
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor={groupId}>Colour scheme</FieldLabel>
+          <FieldLabel htmlFor={groupId}>
+            {t("settings.appearance.scheme")}
+          </FieldLabel>
           <div
             id={groupId}
             role="group"
-            aria-label="Colour scheme"
+            aria-label={t("settings.appearance.scheme")}
             className="flex flex-row gap-2"
           >
             {THEME_MODES.map((value) => {
@@ -46,13 +50,13 @@ export function AppearanceForm() {
                   onClick={() => setMode(value)}
                 >
                   <Icon aria-hidden />
-                  {label}
+                  {t(label)}
                 </Button>
               );
             })}
           </div>
           <FieldDescription>
-            Applied immediately and remembered on this device.
+            {t("settings.appearance.hint")}
           </FieldDescription>
         </Field>
       </FieldGroup>

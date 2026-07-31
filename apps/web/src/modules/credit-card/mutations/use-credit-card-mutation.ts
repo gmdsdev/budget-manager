@@ -1,5 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { trpc } from "@/utils/trpc";
+import { t } from "@budget-manager/i18n";
 import type {
   CreditCardFormDto,
   DeleteCreditCardDto,
@@ -14,7 +15,7 @@ const CREDIT_CARD_INVALIDATIONS = [
 export function useCreateCreditCardMutation() {
   return useApiMutation<unknown, CreditCardFormDto>({
     mutationFn: trpc.creditCard.create.mutationOptions().mutationFn,
-    successMessage: "Card created successfully",
+    successMessage: t("creditCard.toast.created"),
     invalidateQueries: CREDIT_CARD_INVALIDATIONS,
   });
 }
@@ -22,7 +23,7 @@ export function useCreateCreditCardMutation() {
 export function useUpdateCreditCardMutation() {
   return useApiMutation<unknown, CreditCardFormDto & { id: string }>({
     mutationFn: trpc.creditCard.update.mutationOptions().mutationFn,
-    successMessage: "Card updated successfully",
+    successMessage: t("creditCard.toast.updated"),
     invalidateQueries: CREDIT_CARD_INVALIDATIONS,
   });
 }
@@ -30,7 +31,7 @@ export function useUpdateCreditCardMutation() {
 export function useArchiveCreditCardMutation() {
   return useApiMutation<unknown, DeleteCreditCardDto>({
     mutationFn: trpc.creditCard.archive.mutationOptions().mutationFn,
-    successMessage: "Card archived",
+    successMessage: t("creditCard.toast.archived"),
     invalidateQueries: CREDIT_CARD_INVALIDATIONS,
   });
 }
@@ -38,7 +39,7 @@ export function useArchiveCreditCardMutation() {
 export function useUnarchiveCreditCardMutation() {
   return useApiMutation<unknown, DeleteCreditCardDto>({
     mutationFn: trpc.creditCard.unarchive.mutationOptions().mutationFn,
-    successMessage: "Card restored",
+    successMessage: t("creditCard.toast.restored"),
     invalidateQueries: CREDIT_CARD_INVALIDATIONS,
   });
 }
@@ -46,7 +47,7 @@ export function useUnarchiveCreditCardMutation() {
 export function useDeleteCreditCardMutation() {
   return useApiMutation<unknown, DeleteCreditCardDto>({
     mutationFn: trpc.creditCard.delete.mutationOptions().mutationFn,
-    successMessage: "Card deleted successfully",
+    successMessage: t("creditCard.toast.deleted"),
     invalidateQueries: CREDIT_CARD_INVALIDATIONS,
   });
 }

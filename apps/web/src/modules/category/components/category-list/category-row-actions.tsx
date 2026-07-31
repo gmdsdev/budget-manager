@@ -6,6 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@budget-manager/ui/components/dropdown-menu";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { ArchiveCategoryDialog } from "../archive-category-dialog";
@@ -15,6 +16,7 @@ import type { CategoryRow } from "../../types";
 type RowDialog = "edit" | "archive" | null;
 
 export function CategoryRowActions({ category }: { category: CategoryRow }) {
+  const t = useTranslate();
   const [dialog, setDialog] = useState<RowDialog>(null);
 
   return (
@@ -24,20 +26,22 @@ export function CategoryRowActions({ category }: { category: CategoryRow }) {
           render={
             <Button variant="ghost" size="icon">
               <DotsThreeIcon />
-              <span className="sr-only">Actions for {category.name}</span>
+              <span className="sr-only">
+                {t("common.actionsFor", { name: category.name })}
+              </span>
             </Button>
           }
         />
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setDialog("edit")}>
-            Edit
+            {t("common.edit")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
             onClick={() => setDialog("archive")}
           >
-            Archive
+            {t("common.archive")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

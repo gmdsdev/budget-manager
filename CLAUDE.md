@@ -14,18 +14,19 @@ bun run dev:server         # server only
 bun run check-types        # tsc across every workspace
 bun run lint               # single flat ESLint config at the root
 bun run lint:fix
-bun run test               # turbo test (apps/web + packages/api + packages/money + packages/schemas)
+bun run test               # turbo test (apps/web + packages/api + packages/i18n + packages/money + packages/schemas)
 bun run build
 ```
 
 ### Single test
 
-Tests are `bun:test`. Turbo wires `test` in `apps/web`, `packages/api`, `packages/money` and `packages/schemas`; run a single file from inside that workspace so `bunfig.toml` preloads happy-dom:
+Tests are `bun:test`. Turbo wires `test` in `apps/web`, `packages/api`, `packages/i18n`, `packages/money` and `packages/schemas`; run a single file from inside that workspace so `bunfig.toml` preloads happy-dom:
 
 ```bash
 cd apps/web && bun test src/modules/wallet/components/currency-input.test.tsx
 cd apps/web && bun test -t "reads typed digits"    # filter by test name
 cd packages/api && bun test
+cd packages/i18n && bun test
 cd packages/money && bun test
 cd packages/schemas && bun test
 ```
@@ -42,7 +43,7 @@ kept in TypeScript — see the balances note below.
 
 ```bash
 bun run db:start && bun run db:migrate && bun run dev   # prerequisites
-bun run test:e2e          # 240 checks: API + browser
+bun run test:e2e          # 255 checks: API + browser
 bun run test:e2e:api      # server only, ~2s
 bun run test:e2e:ui       # Playwright flows
 ```
@@ -65,6 +66,12 @@ Three hard-won details in `src/support/web.ts`:
   give the same cookie isolation for a fraction of the cost. Teardown hooks also need an
   explicit timeout — bun's 5s default is not always enough to close a context, and a timed-out
   teardown leaks it into the next suite.
+
+`src/ui/i18n.test.ts` is the language suite: it switches to Portuguese in the settings
+form and then asserts the nav, a listing, an empty state and a shared Zod message against
+the **catalog** rather than against copy pasted into the test, so a reworded translation
+does not break it but a screen that stops reading from the catalog does. It folds case on
+both sides, because headings and buttons are uppercased in CSS and `innerText` reports that.
 
 `apps/web/test-setup.ts` registers a global `afterEach(cleanup)`. Don't rely on
 `@testing-library/react`'s built-in auto-cleanup: it registers its hook at import
@@ -131,6 +138,7 @@ packages/api     tRPC routers + business logic (routes → service → repositor
 packages/db      Drizzle schema, migrations, the `db` singleton
 packages/auth    better-auth instance (drizzle adapter)
 packages/schemas Zod schemas + enums shared by client and server
+packages/i18n    Message catalogs, `translate`, locale-aware date formatting (no deps but React, on a subpath)
 packages/money   Minor-unit math and currency formatting (no deps)
 packages/ui      shadcn primitives built on @base-ui/react
 packages/env     @t3-oss/env-core validated env (`/server` and `/web` entries)
@@ -557,6 +565,124 @@ buttons become a 2×2 grid, and `FilterBar` lays its controls out two per column
 seven stacked full-width controls would push the list itself off the first screen. `FilterSearch`
 takes a whole row anyway, since its placeholder is the only thing naming the column.
 
+### Language
+
+**The app ships English and Portuguese, and no user-visible string is written at
+its call site.** `packages/i18n` owns the words. It has no dependencies but
+React, and that only on the `./react` subpath, so `packages/schemas` and
+`packages/api` can import the root entry without dragging React onto the server.
+
+The catalog is **one file per namespace holding every language side by side**:
+
+```ts
+"wallet.empty.title": { en: "No wallets yet", "pt-BR": "Nenhuma carteira ainda" },
+```
+
+Two files, one per locale, drift the moment a key is added to one of them. Here
+a missing translation is a *compile* error on the line that added the key —
+`as const satisfies MessageTable` — the same bargain the repo makes with
+`AppRouter` and the e2e client. `translate` reads a message's placeholders off
+its **English literal** (`Placeholders<S>`), so `t("pagination.wallets.summary")`
+without `{from,to,total}` does not compile, and neither does passing a name the
+message never declares. What the types cannot see is a *translation* that drops
+or renames a placeholder, so `i18n.test.ts` checks that every locale declares
+the same set — and that no key is left blank.
+
+**English is the default and its copy is verbatim what it was before i18n.** The
+e2e browser suites assert on that copy; rewording an English message means
+updating `apps/e2e`.
+
+Three consumers, three ways in, and they are not interchangeable:
+
+- **React** uses `useI18n()` / `useTranslate()` from `@budget-manager/i18n/react`.
+  It must, not merely should: `I18nProvider` passes `children` through, so React
+  bails out of re-rendering a subtree whose element identity has not changed. A
+  component calling the module-scoped `t()` keeps its old words until something
+  else re-renders it. `i18n.test.tsx` pins that.
+- **Outside React** — the `QueryCache`/`MutationCache` toasts, `getErrorMessage`,
+  `useApiMutation`'s `successMessage`, the router's `head` — uses the
+  module-scoped `t()`, which reads the active locale `AppI18nProvider` keeps
+  current.
+- **The server** never sets an active locale. It translates with the locale on
+  the *request*, which is what keeps two concurrent requests in two languages
+  from reading each other's.
+
+**Zod messages resolve at parse time, not at definition time.** Every message in
+`packages/schemas` is `{ error: () => t("validation.…") }` rather than a string,
+so the shared schema a form validates with speaks the reader's language without
+a single form, `FieldError` or validator signature changing. This is the whole
+reason a language switch needs nothing rebuilt. The deliberate exception is the
+server: it does *not* set the module-scoped locale (a process global would race
+across concurrent requests), so a `zodError` payload is always English — and it
+only reaches a caller who bypassed the client-side validator, since the web app
+validates with the same schema first.
+
+**Domain errors carry a key, not a sentence.** `NotFoundError` and
+`ConflictError` take a `MessageKey` plus its params (generic over the key, so
+placeholders are checked at the `throw`); `mapDomainErrors` translates with
+`ctx.locale` on the way out. The tRPC client sends `x-locale` on every request,
+`createContext` reads it — falling back to `Accept-Language` for a caller with
+no preference of its own, like the e2e API suite — and the server's CORS config
+has to allow that header or the preflight fails. A sentence embedding a domain
+word ("A {categoryType} category cannot be used…") passes `ref("enum.…")` rather
+than the raw enum, so the embedded word is translated too.
+
+**Enum labels are derived from the value, not kept in a second map.** The
+`XLabelMap` constants that used to live in `packages/schemas` are gone; the
+enums stayed (both sides of the wire read them) and the words became catalog
+entries keyed `enum.<enum>.<value>`. `useEnumLabels()` (`lib/enum-labels.ts`) is
+how the app reads one — TypeScript resolves the template literal to a real key,
+so a new enum member is a compile error until it is translated. The two that
+take a plain `string` (currency, transaction kind) are fed by `text` columns and
+echo a code they do not recognise.
+
+**A row count is keyed per resource, not built from a noun.** `Pagination` takes
+`resource="wallets"`, not `label="wallets"`: "No {label}" needs an article in
+Portuguese and the article follows the noun's gender — *Nenhuma carteira* but
+*Nenhum cartão* — so one parameterised sentence cannot be written correctly for
+both. The same reasoning is why `FilterSearch` builds its placeholder from
+`common.filterBy` instead of lowercasing the column name.
+
+**Where the locale comes from.** `preferredLocale` is a better-auth
+`additionalField` beside `preferredCurrency`, declared once in
+`USER_ADDITIONAL_FIELDS` and backed by `user.preferred_locale` (migration
+`0008`) — a language belongs to the person, so a second device must not put the
+app back into English. `AppI18nProvider` (`lib/i18n.tsx`) derives it from the
+session during render and mirrors it to `kivo-locale` in localStorage; that
+mirror is what the login screen and the first paint read, before any session
+exists, and it seeds from `navigator.language` when nothing is stored. The
+active locale is applied at module load, before React mounts, because the Zod
+messages and the tRPC header both read it. Read it through `toPreferredLocale`,
+never off the session directly — it falls back for a stored code that is no
+longer in `Locale`, and matches on the language subtag, so `pt` and `pt-PT` both
+land on the Brazilian catalog. Unlike the theme, this one is server state, so
+the settings form goes through `runAuthAction` like the rest of that screen.
+
+**Dates are formatted by the app's locale; money is formatted by its currency.**
+`packages/i18n` owns `formatDate`/`formatDateString`/`formatMonthString` over a
+closed set of named `DATE_STYLES` — a `{ month: "short" }` written out four
+times drifts into four slightly different dates on screen. `toLocaleDateString(undefined, …)`
+is gone: it read the *browser's* language, not the app's. Money deliberately did
+**not** change: `formatMinorUnits` keys its locale off the currency, so BRL
+always reads `R$ 1.234,56` whoever is looking, which is what keeps an amount
+recognisable and every money assertion in the suites stable.
+
+Two layout traps a second language exposes, both already fixed and both worth
+remembering: a control sized to English clips (the transaction date-range
+trigger is `sm:w-auto sm:min-w-56`, not a fixed width, because *1 de jul. – 31 de
+jul. de 2026* is far longer than *Jul 1 – Jul 31, 2026*), and a chart's axis
+gutter has to hold the longest tick across locales, not the English one.
+
+The language selector lives on `/settings/user`, and its options are the one
+thing on that screen that is **not** translated: each language names itself
+(`LocaleLabelMap`), so a reader looking for their own language in a list they
+cannot read finds *Português*, never *Portuguese*.
+
+Default category names are **data, not copy**: they are per-user rows written at
+sign-up by `ensureDefaultCategories`, in English, and the user can rename them.
+Nothing translates existing rows, and nothing should — renaming a category the
+user may already have edited would be worse than leaving it.
+
 ### Money
 
 Amounts are integer **minor units** everywhere — DB column, tRPC payload, form state, React state (`openingBalanceCents`, `int4`, hence the `MONEY_MIN/MAX_MINOR_UNITS` bounds in `MoneyMinorUnitsSchema`). Never introduce floats. `packages/money` owns `minorUnitDigits` (zero- and three-decimal currencies), `formatMinorUnits`, `formatCompactMinorUnits`, and `parseMinorUnits`; `packages/ui/src/lib/currency.ts` just re-exports them. `CurrencyInput` reads/writes minor units directly.
@@ -696,6 +822,9 @@ pins both, plus the preset arithmetic across a leap February.
 - ESLint runs `recommendedTypeChecked`; new type-unsafe spots should be fixed rather than added to the per-file overrides at the bottom of `eslint.config.js`.
 - Zod v4 (`z.uuid()`, `z.flattenError`, `.prefault()`).
 - No explanatory code comments — the code is expected to read on its own; explain reasoning in the PR or chat instead.
+- **No user-visible string literals.** Every word on screen — including `aria-label`,
+  `placeholder`, `title`, a toast's `successMessage` and a Zod message — comes from
+  `packages/i18n`. Adding a key means adding both languages, which the types enforce.
 
 ## Deployment
 

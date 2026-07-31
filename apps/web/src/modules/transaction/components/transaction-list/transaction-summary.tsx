@@ -7,14 +7,22 @@ import {
   TableHeader,
   TableRow,
 } from "@budget-manager/ui/components/table";
+import { useI18n } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { Fragment } from "react";
 import type { TransactionSummaryRow } from "../../types";
-import { formatDateString } from "../../utils/date";
+
+/** Narrower than `MessageKey`: none of the four takes a placeholder, so `t`
+ * can be called with the label alone. */
+type MetricLabel =
+  | "transaction.summary.inWallets"
+  | "transaction.summary.income"
+  | "transaction.summary.expenses"
+  | "transaction.summary.net";
 
 type Metric = {
   key: string;
-  label: string;
+  label: MetricLabel;
   effective: (row: TransactionSummaryRow) => number;
   projected: (row: TransactionSummaryRow) => number;
 };
@@ -27,25 +35,25 @@ type Metric = {
 const METRICS: Metric[] = [
   {
     key: "wallets",
-    label: "In wallets",
+    label: "transaction.summary.inWallets",
     effective: (row) => row.balanceCents,
     projected: (row) => row.projectedBalanceCents,
   },
   {
     key: "income",
-    label: "Income",
+    label: "transaction.summary.income",
     effective: (row) => row.incomeCents,
     projected: (row) => row.projectedIncomeCents,
   },
   {
     key: "expenses",
-    label: "Expenses",
+    label: "transaction.summary.expenses",
     effective: (row) => row.expenseCents,
     projected: (row) => row.projectedExpenseCents,
   },
   {
     key: "net",
-    label: "Net",
+    label: "transaction.summary.net",
     effective: (row) => row.netCents,
     projected: (row) => row.projectedNetCents,
   },
@@ -74,13 +82,15 @@ export function TransactionSummary({
   rangeTo: string;
   isFetching?: boolean;
 }) {
+  const { t, formatDateString } = useI18n();
+
   if (currencies.length === 0) {
     return null;
   }
 
   return (
     <section
-      aria-label="Totals"
+      aria-label={t("transaction.summary.heading")}
       // Held at reduced opacity on a refetch rather than swapped for a
       // skeleton, so changing a filter never jumps the page.
       className={`mt-4 border-2 border-border bg-card shadow-brutal transition-opacity ${
@@ -89,20 +99,20 @@ export function TransactionSummary({
     >
       <div className="border-b-2 border-border px-3 py-2">
         <h2 className="font-heading text-sm font-bold tracking-wide uppercase">
-          Totals
+          {t("transaction.summary.heading")}
         </h2>
       </div>
 
       <Table>
         <TableCaption className="sr-only">
-          Effective and projected figures per currency
+          {t("transaction.summary.caption")}
         </TableCaption>
         {/* Two header rows, so the second currency costs two columns instead of
             doubling the rows. */}
         <TableHeader className="[&_tr:first-child]:border-b-0">
           <TableRow>
             <TableHead rowSpan={2} className={`${STICKY_LABEL} bg-card`}>
-              <span className="sr-only">Figure</span>
+              <span className="sr-only">{t("transaction.summary.figure")}</span>
             </TableHead>
             {currencies.map((row) => (
               <TableHead
@@ -122,10 +132,10 @@ export function TransactionSummary({
                   scope="col"
                   className="border-l border-border/25 text-right"
                 >
-                  Effective
+                  {t("transaction.summary.effective")}
                 </TableHead>
                 <TableHead scope="col" className="text-right">
-                  Projected
+                  {t("transaction.summary.projected")}
                 </TableHead>
               </Fragment>
             ))}
@@ -138,7 +148,7 @@ export function TransactionSummary({
                 scope="row"
                 className={`${STICKY_LABEL} bg-card group-hover:bg-accent/40`}
               >
-                {metric.label}
+                {t(metric.label)}
               </TableHead>
               {currencies.map((row) => {
                 const effective = metric.effective(row);
@@ -167,11 +177,9 @@ export function TransactionSummary({
       {/* Outside the table: with a second currency the table scrolls sideways
           inside its own container, which would take this note with it. */}
       <p className="border-t border-border/25 px-3 py-2 text-xs text-muted-foreground">
-        Effective counts settled rows only; projected adds what is still waiting
-        for payment. Balances cover every wallet up to{" "}
-        {formatDateString(rangeTo)}; income, expenses and net follow the filters
-        above and leave out transfers and card payments, which move money without
-        changing what you earned or spent.
+        {t("transaction.summary.note", {
+          date: formatDateString(rangeTo, "numeric"),
+        })}
       </p>
     </section>
   );

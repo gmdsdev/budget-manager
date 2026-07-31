@@ -68,7 +68,7 @@ export class WalletService {
     const wallet = await this.repository.update({ id, userId, patch });
 
     if (!wallet) {
-      throw new NotFoundError("Wallet");
+      throw new NotFoundError("error.notFound.wallet");
     }
 
     return wallet;
@@ -78,7 +78,7 @@ export class WalletService {
     const wallet = await this.repository.archive({ id, userId });
 
     if (!wallet) {
-      throw new NotFoundError("Wallet");
+      throw new NotFoundError("error.notFound.wallet");
     }
 
     return wallet;
@@ -88,7 +88,7 @@ export class WalletService {
     const wallet = await this.repository.unarchive({ id, userId });
 
     if (!wallet) {
-      throw new NotFoundError("Wallet");
+      throw new NotFoundError("error.notFound.wallet");
     }
 
     return wallet;
@@ -98,15 +98,13 @@ export class WalletService {
     const existing = await this.repository.findById({ id, userId });
 
     if (!existing) {
-      throw new NotFoundError("Wallet");
+      throw new NotFoundError("error.notFound.wallet");
     }
 
     const references = await this.repository.countReferences({ id });
 
     if (references > 0) {
-      throw new ConflictError(
-        `This wallet is used by ${references} record(s). Archive it instead of deleting.`,
-      );
+      throw new ConflictError("error.conflict.walletInUse", { references });
     }
 
     await this.repository.delete({ id, userId });

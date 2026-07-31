@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@budget-manager/ui/components/alert-dialog";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { useArchiveCreditCardMutation } from "../mutations/use-credit-card-mutation";
 import type { CreditCardRow } from "../types";
@@ -21,6 +22,7 @@ export function ArchiveCreditCardDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslate();
   const archiveMutation = useArchiveCreditCardMutation();
 
   function handleArchive() {
@@ -34,23 +36,31 @@ export function ArchiveCreditCardDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Archive “{card.name}”?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("creditCard.archive.title", { name: card.name })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
             {card.outstandingCents > 0
-              ? `This card still owes ${formatMinorUnits(card.outstandingCents, card.currencyCode)}. `
+              ? t("creditCard.archive.stillOwes", {
+                  amount: formatMinorUnits(
+                    card.outstandingCents,
+                    card.currencyCode,
+                  ),
+                })
               : ""}
-            It will be hidden from your lists and can no longer be picked for new
-            purchases. Its history is kept, and you can restore it later.
+            {t("creditCard.archive.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={archiveMutation.isPending}
             onClick={handleArchive}
           >
-            {archiveMutation.isPending ? "Archiving…" : "Archive card"}
+            {archiveMutation.isPending
+              ? t("creditCard.archive.submitting")
+              : t("creditCard.archive.submit")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

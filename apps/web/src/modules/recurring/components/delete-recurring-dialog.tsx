@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@budget-manager/ui/components/alert-dialog";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { useDeleteRecurringMutation } from "../mutations/use-recurring-mutation";
 import type { RecurringRow } from "../types";
 
@@ -20,6 +21,7 @@ export function DeleteRecurringDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslate();
   const deleteMutation = useDeleteRecurringMutation();
 
   function handleDelete() {
@@ -33,20 +35,23 @@ export function DeleteRecurringDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete “{series.name}”?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("recurring.delete.title", { name: series.name })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            Scheduled transactions still ahead of today are removed. Anything
-            already settled or in the past stays in your history.
+            {t("recurring.delete.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={deleteMutation.isPending}
             onClick={handleDelete}
           >
-            {deleteMutation.isPending ? "Deleting…" : "Delete series"}
+            {deleteMutation.isPending
+              ? t("common.deleting")
+              : t("recurring.delete.submit")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -49,6 +49,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@budget-manager/api": "workspace:*",
+        "@budget-manager/i18n": "workspace:*",
         "@budget-manager/schemas": "workspace:*",
         "@trpc/client": "catalog:",
         "@trpc/server": "catalog:",
@@ -87,6 +88,7 @@
       "dependencies": {
         "@budget-manager/api": "workspace:*",
         "@budget-manager/env": "workspace:*",
+        "@budget-manager/i18n": "workspace:*",
         "@budget-manager/schemas": "workspace:*",
         "@budget-manager/ui": "workspace:*",
         "@phosphor-icons/react": "catalog:",
@@ -131,6 +133,7 @@
         "@budget-manager/auth": "workspace:*",
         "@budget-manager/db": "workspace:*",
         "@budget-manager/env": "workspace:*",
+        "@budget-manager/i18n": "workspace:*",
         "@budget-manager/schemas": "workspace:*",
         "@trpc/client": "catalog:",
         "@trpc/server": "catalog:",
@@ -193,6 +196,18 @@
         "typescript": "catalog:",
       },
     },
+    "packages/i18n": {
+      "name": "@budget-manager/i18n",
+      "version": "0.0.0",
+      "dependencies": {
+        "react": "catalog:",
+      },
+      "devDependencies": {
+        "@budget-manager/config": "workspace:*",
+        "@types/react": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
     "packages/money": {
       "name": "@budget-manager/money",
       "version": "0.0.0",
@@ -205,6 +220,7 @@
       "name": "@budget-manager/schemas",
       "version": "0.0.0",
       "dependencies": {
+        "@budget-manager/i18n": "workspace:*",
         "@budget-manager/money": "workspace:*",
         "zod": "^4.1.13",
       },
@@ -219,6 +235,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@base-ui/react": "^1.6.0",
+        "@budget-manager/i18n": "workspace:*",
         "@budget-manager/money": "workspace:*",
         "@fontsource-variable/jetbrains-mono": "^5.2.0",
         "@remixicon/react": "^4.9.0",
@@ -366,6 +383,8 @@
     "@budget-manager/e2e": ["@budget-manager/e2e@workspace:apps/e2e"],
 
     "@budget-manager/env": ["@budget-manager/env@workspace:packages/env"],
+
+    "@budget-manager/i18n": ["@budget-manager/i18n@workspace:packages/i18n"],
 
     "@budget-manager/money": ["@budget-manager/money@workspace:packages/money"],
 

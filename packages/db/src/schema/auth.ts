@@ -15,6 +15,10 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
   preferredCurrency: text("preferred_currency").notNull().default("BRL"),
+  // `text`, not an enum: the supported languages are a product decision that
+  // changes far more often than a pg type should, and `toLocale` already
+  // narrows a stored value that is no longer offered.
+  preferredLocale: text("preferred_locale").notNull().default("en"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

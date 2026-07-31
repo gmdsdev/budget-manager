@@ -5,10 +5,9 @@ import {
   type CategoryItem,
 } from "@/modules/category/components/category-dot";
 import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
-import {
-  TransactionStatus,
-  TransactionStatusLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { TransactionStatus } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
 import { DatePicker } from "@budget-manager/ui/components/date-picker";
 import {
@@ -33,12 +32,8 @@ import type { UseCardPurchaseFormReturnType } from "../hooks/use-card-purchase-f
 import { CategoryType } from "@budget-manager/schemas";
 import { TRANSACTION_CATEGORY_NONE } from "../types";
 
-const STATUS_ITEMS = Object.values(TransactionStatus).map((status) => ({
-  label: TransactionStatusLabelMap[status],
-  value: status,
-}));
-
 function CardAmountField({ form }: { form: UseCardPurchaseFormReturnType }) {
+  const t = useTranslate();
   const creditCardId = useSelector(
     form.store,
     (state) => state.values.creditCardId,
@@ -57,7 +52,7 @@ function CardAmountField({ form }: { form: UseCardPurchaseFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Amount</FieldLabel>
+            <FieldLabel htmlFor={field.name}>{t("common.amount")}</FieldLabel>
             <CurrencyInput
               id={field.name}
               name={field.name}
@@ -69,8 +64,7 @@ function CardAmountField({ form }: { form: UseCardPurchaseFormReturnType }) {
               aria-describedby={showErrors ? errorId : undefined}
             />
             <FieldDescription>
-              Adds to what the card owes. No wallet moves until you pay the
-              bill.
+              {t("transaction.field.cardPurchaseAmountHint")}
             </FieldDescription>
             <FieldError
               id={errorId}
@@ -88,6 +82,14 @@ export function CardPurchaseFormFields({
 }: {
   form: UseCardPurchaseFormReturnType;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const statusItems = Object.values(TransactionStatus).map((status) => ({
+    label: labels.transactionStatus(status),
+    value: status,
+  }));
+
   const { data: cards, isPending: cardsPending } = useCreditCardOptionsQuery();
   // Buying on a card is spending, so only expense categories apply.
   const { data: categories, isPending: categoriesPending } =
@@ -99,7 +101,11 @@ export function CardPurchaseFormFields({
   }));
 
   const categoryItems: CategoryItem[] = [
-    { label: "Uncategorized", value: TRANSACTION_CATEGORY_NONE, color: null },
+    {
+      label: t("category.uncategorized"),
+      value: TRANSACTION_CATEGORY_NONE,
+      color: null,
+    },
     ...(categories ?? []).map((category) => ({
       label: category.name,
       value: category.id,
@@ -117,7 +123,9 @@ export function CardPurchaseFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("common.description")}
+              </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -147,7 +155,7 @@ export function CardPurchaseFormFields({
 
             return (
               <Field data-invalid={showErrors}>
-                <FieldLabel htmlFor={field.name}>Date</FieldLabel>
+                <FieldLabel htmlFor={field.name}>{t("common.date")}</FieldLabel>
                 <DatePicker
                   id={field.name}
                   name={field.name}
@@ -176,7 +184,7 @@ export function CardPurchaseFormFields({
 
             return (
               <Field data-invalid={showErrors}>
-                <FieldLabel htmlFor={field.name}>Card</FieldLabel>
+                <FieldLabel htmlFor={field.name}>{t("common.card")}</FieldLabel>
                 <Select<string>
                   items={cardItems}
                   id={field.name}
@@ -189,7 +197,7 @@ export function CardPurchaseFormFields({
                     aria-invalid={showErrors || undefined}
                     aria-describedby={showErrors ? errorId : undefined}
                   >
-                    <SelectValue placeholder="Select a card" />
+                    <SelectValue placeholder={t("transaction.field.selectACard")} />
                   </SelectTrigger>
                   <SelectContent>
                     {cardItems.map((item) => (
@@ -215,7 +223,9 @@ export function CardPurchaseFormFields({
 
             return (
               <Field data-invalid={showErrors}>
-                <FieldLabel htmlFor={field.name}>Category</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t("common.category")}
+                </FieldLabel>
                 <Select<string>
                   items={categoryItems}
                   id={field.name}
@@ -267,9 +277,9 @@ export function CardPurchaseFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Status</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.status")}</FieldLabel>
               <Select
-                items={STATUS_ITEMS}
+                items={statusItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -284,7 +294,7 @@ export function CardPurchaseFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_ITEMS.map((item) => (
+                  {statusItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -308,7 +318,7 @@ export function CardPurchaseFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.notes")}</FieldLabel>
               <Textarea
                 id={field.name}
                 name={field.name}

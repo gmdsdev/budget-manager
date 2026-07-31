@@ -1,5 +1,6 @@
 import { getErrorMessage, isUnauthorizedError } from "@/utils/error-message";
 import type { AppRouter } from "@budget-manager/api/routers/index";
+import { getActiveLocale, t } from "@budget-manager/i18n";
 import { env } from "@budget-manager/env/web";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
@@ -56,7 +57,7 @@ export const queryClient = new QueryClient({
     onError: (error, query) => {
       toast.error(getErrorMessage(error), {
         action: {
-          label: "Retry",
+          label: t("common.retry"),
           onClick: () => {
             void query.invalidate();
           },
@@ -80,6 +81,9 @@ export const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       url: `${getServerUrl(env.VITE_SERVER_URL)}/trpc`,
+      // Read per request, not captured once: the server localizes the domain
+      // errors it throws, and the language can change mid-session.
+      headers: () => ({ "x-locale": getActiveLocale() }),
       fetch(url, options) {
         return fetch(url, {
           ...options,

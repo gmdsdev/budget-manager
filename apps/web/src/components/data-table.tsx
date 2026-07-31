@@ -1,3 +1,4 @@
+import { useTranslate } from "@budget-manager/i18n/react";
 import { useIsCompact } from "@budget-manager/ui/hooks/use-media-query";
 import {
   Table,
@@ -127,6 +128,7 @@ function CardList<TData>({
   caption?: string;
   emptyState?: ReactNode;
 }) {
+  const t = useTranslate();
   const columns = table.getVisibleFlatColumns();
   const primary = columns.find((column) => slotOf(column) === "primary");
   const trailing = columns.find((column) => slotOf(column) === "trailing");
@@ -136,7 +138,7 @@ function CardList<TData>({
   if (groups.length === 0) {
     return (
       <div className="rounded-none border-2 border-border bg-card p-4 text-center shadow-brutal">
-        {emptyState ?? "No results."}
+        {emptyState ?? t("common.noResults")}
       </div>
     );
   }
@@ -213,6 +215,7 @@ export function DataTable<TData, TValue>({
   groupBy,
   groupHeader = (key) => key,
 }: DataTableProps<TData, TValue>) {
+  const t = useTranslate();
   const isCompact = useIsCompact();
   const table = useReactTable({
     data,
@@ -305,7 +308,7 @@ export function DataTable<TData, TValue>({
                 colSpan={visibleColumnCount}
                 className="h-24 text-center"
               >
-                {emptyState ?? "No results."}
+                {emptyState ?? t("common.noResults")}
               </TableCell>
             </TableRow>
           )}

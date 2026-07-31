@@ -25,21 +25,6 @@ export enum CategoryColor {
 
 export const CATEGORY_COLORS = Object.values(CategoryColor);
 
-export const CategoryColorLabelMap: Record<CategoryColor, string> = {
-  [CategoryColor.BLUE]: "Blue",
-  [CategoryColor.CYAN]: "Cyan",
-  [CategoryColor.TEAL]: "Teal",
-  [CategoryColor.GREEN]: "Green",
-  [CategoryColor.LIME]: "Lime",
-  [CategoryColor.YELLOW]: "Yellow",
-  [CategoryColor.ORANGE]: "Orange",
-  [CategoryColor.RED]: "Red",
-  [CategoryColor.PINK]: "Pink",
-  [CategoryColor.PURPLE]: "Purple",
-  [CategoryColor.VIOLET]: "Violet",
-  [CategoryColor.SLATE]: "Slate",
-};
-
 export const DEFAULT_CATEGORY_COLOR = CategoryColor.BLUE;
 
 export function isCategoryColor(value: string): value is CategoryColor {

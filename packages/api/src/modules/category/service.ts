@@ -73,7 +73,7 @@ export class CategoryService {
     const category = await this.repository.update({ id, userId, patch });
 
     if (!category) {
-      throw new NotFoundError("Category");
+      throw new NotFoundError("error.notFound.category");
     }
 
     return category;
@@ -83,7 +83,7 @@ export class CategoryService {
     const category = await this.repository.archive({ id, userId });
 
     if (!category) {
-      throw new NotFoundError("Category");
+      throw new NotFoundError("error.notFound.category");
     }
 
     return category;
@@ -93,7 +93,7 @@ export class CategoryService {
     const category = await this.repository.unarchive({ id, userId });
 
     if (!category) {
-      throw new NotFoundError("Category");
+      throw new NotFoundError("error.notFound.category");
     }
 
     return category;
@@ -103,15 +103,13 @@ export class CategoryService {
     const existing = await this.repository.findById({ id, userId });
 
     if (!existing) {
-      throw new NotFoundError("Category");
+      throw new NotFoundError("error.notFound.category");
     }
 
     const references = await this.repository.countReferences({ id });
 
     if (references > 0) {
-      throw new ConflictError(
-        `This category is used by ${references} record(s). Archive it instead of deleting.`,
-      );
+      throw new ConflictError("error.conflict.categoryInUse", { references });
     }
 
     await this.repository.delete({ id, userId });

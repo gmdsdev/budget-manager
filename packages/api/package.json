@@ -17,6 +17,7 @@
     "@budget-manager/auth": "workspace:*",
     "@budget-manager/db": "workspace:*",
     "@budget-manager/env": "workspace:*",
+    "@budget-manager/i18n": "workspace:*",
     "@budget-manager/schemas": "workspace:*",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",

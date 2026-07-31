@@ -1,3 +1,4 @@
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import type { ReactNode } from "react";
 
@@ -10,6 +11,8 @@ export function FilterBar({
   isFiltered: boolean;
   onClear: () => void;
 }) {
+  const t = useTranslate();
+
   // Two columns on a phone rather than one: seven stacked controls would push
   // the list itself off the first screen.
   return (
@@ -22,7 +25,7 @@ export function FilterBar({
           onClick={onClear}
           className="col-span-2 sm:col-span-1"
         >
-          Clear filters
+          {t("common.clearFilters")}
         </Button>
       )}
     </div>

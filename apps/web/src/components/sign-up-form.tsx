@@ -1,6 +1,8 @@
 import { Button } from "@budget-manager/ui/components/button";
 import { Input } from "@budget-manager/ui/components/input";
 import { Label } from "@budget-manager/ui/components/label";
+import { t } from "@budget-manager/i18n";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -17,6 +19,7 @@ export default function SignUpForm({
 }: {
   onSwitchToSignIn: () => void;
 }) {
+  const translate = useTranslate();
   const navigate = useNavigate({
     from: "/",
   });
@@ -41,7 +44,7 @@ export default function SignUpForm({
             void navigate({
               to: "/dashboard",
             });
-            toast.success("Sign up successful");
+            toast.success(translate("auth.signUpSuccessful"));
           },
           onError: (error) => {
             toast.error(error.error.message || error.error.statusText);
@@ -50,10 +53,16 @@ export default function SignUpForm({
       );
     },
     validators: {
+      // Resolved when the form validates, so the message follows the language
+      // the reader picked rather than the one the module was loaded in.
       onSubmit: z.object({
-        name: z.string().min(2, "Name must be at least 2 characters"),
-        email: z.email("Invalid email address"),
-        password: z.string().min(8, "Password must be at least 8 characters"),
+        name: z
+          .string()
+          .min(2, { error: () => t("validation.nameMinLength", { min: 2 }) }),
+        email: z.email({ error: () => t("validation.invalidEmail") }),
+        password: z
+          .string()
+          .min(8, { error: () => t("validation.passwordTooShort", { min: 8 }) }),
       }),
     },
   });
@@ -66,7 +75,9 @@ export default function SignUpForm({
     <div className="w-full max-w-md border-2 border-border bg-card p-6 shadow-brutal">
       <div className="mb-6 flex flex-col items-center gap-6">
         <KivoLockup className="h-12" />
-        <h1 className="text-center text-2xl font-bold tracking-wide uppercase">Create Account</h1>
+        <h1 className="text-center text-2xl font-bold tracking-wide uppercase">
+          {translate("auth.createAccount")}
+        </h1>
       </div>
 
       <form
@@ -81,7 +92,7 @@ export default function SignUpForm({
           <form.Field name="name">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor={field.name}>Name</Label>
+                <Label htmlFor={field.name}>{translate("auth.name")}</Label>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -103,7 +114,7 @@ export default function SignUpForm({
           <form.Field name="email">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor={field.name}>Email</Label>
+                <Label htmlFor={field.name}>{translate("auth.email")}</Label>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -126,7 +137,7 @@ export default function SignUpForm({
           <form.Field name="password">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor={field.name}>Password</Label>
+                <Label htmlFor={field.name}>{translate("auth.password")}</Label>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -157,7 +168,7 @@ export default function SignUpForm({
               className="w-full"
               disabled={!canSubmit || isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Sign Up"}
+              {isSubmitting ? translate("auth.submitting") : translate("auth.signUp")}
             </Button>
           )}
         </form.Subscribe>
@@ -169,7 +180,7 @@ export default function SignUpForm({
           onClick={onSwitchToSignIn}
           className="text-primary hover:text-primary/75"
         >
-          Already have an account? Sign In
+          {translate("auth.alreadyHaveAnAccount")}
         </Button>
       </div>
     </div>

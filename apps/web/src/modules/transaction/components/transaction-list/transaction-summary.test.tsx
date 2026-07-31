@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test } from "bun:test";
+import { DEFAULT_LOCALE, formatDateString } from "@budget-manager/i18n";
 import type { TransactionSummaryRow } from "../../types";
-import { formatDateString } from "../../utils/date";
 import { TransactionSummary } from "./transaction-summary";
 
 function summaryRow(
@@ -78,7 +78,7 @@ describe("TransactionSummary", () => {
 
     expect(
       flatten(screen.getByRole("region", { name: "Totals" }).textContent),
-    ).toContain(formatDateString("2026-07-31"));
+    ).toContain(formatDateString(DEFAULT_LOCALE, "2026-07-31", "numeric"));
   });
 
   test("renders nothing when the user holds no currency yet", () => {

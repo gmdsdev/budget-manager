@@ -1,5 +1,6 @@
 import { getErrorMessage } from "@/utils/error-message";
 import { TransactionKind } from "@budget-manager/schemas";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -32,6 +33,7 @@ function EditTransferForm({
   legs: TransferLeg[];
   onDone: () => void;
 }) {
+  const t = useTranslate();
   const formId = useId();
   const updateMutation = useUpdateTransferMutation();
 
@@ -67,11 +69,13 @@ function EditTransferForm({
       </form>
 
       <DialogFooter>
-        <DialogClose render={<Button variant="outline">Cancel</Button>} />
+        <DialogClose
+          render={<Button variant="outline">{t("common.cancel")}</Button>}
+        />
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" form={formId} disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : "Save changes"}
+              {isSubmitting ? t("common.saving") : t("common.saveChanges")}
             </Button>
           )}
         </form.Subscribe>
@@ -91,15 +95,16 @@ export function EditTransferDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslate();
   const { data, isPending, isError, error } = useTransferQuery(transferGroupId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Edit Transfer</DialogTitle>
+          <DialogTitle>{t("transfer.edit.title")}</DialogTitle>
           <DialogDescription>
-            Both legs of “{transaction.name}” are updated together.
+            {t("transfer.edit.description", { name: transaction.name })}
           </DialogDescription>
         </DialogHeader>
 
@@ -107,7 +112,7 @@ export function EditTransferDialog({
           <div
             className="space-y-4"
             role="status"
-            aria-label="Loading transfer"
+            aria-label={t("transfer.loading")}
           >
             <Skeleton className="h-8 w-full" />
             <Skeleton className="h-8 w-full" />

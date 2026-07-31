@@ -2,12 +2,9 @@ import {
   ChartContainer,
   type ChartConfig,
 } from "@budget-manager/ui/components/chart";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Area, AreaChart, ReferenceLine, YAxis } from "recharts";
 import type { MonthPoint } from "../types";
-
-const chartConfig = {
-  net: { label: "Net", color: "var(--muted-foreground)" },
-} satisfies ChartConfig;
 
 /**
  * The last months of net, as context for the figure beside it. No axes and no
@@ -20,6 +17,12 @@ export function NetSparkline({
   trend: MonthPoint[];
   label: string;
 }) {
+  const t = useTranslate();
+
+  const chartConfig = {
+    net: { label: t("dashboard.stat.net"), color: "var(--muted-foreground)" },
+  } satisfies ChartConfig;
+
   const data = trend.map((point) => ({
     month: point.month,
     net: point.netCents,

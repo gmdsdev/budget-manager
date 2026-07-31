@@ -8,6 +8,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@budget-manager/ui/components/sheet";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { ListIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -19,8 +20,8 @@ import { KivoLockup } from "./logo";
 import { MAIN_LINKS, SETTINGS_LINKS } from "./nav-links";
 
 const THEMES = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
+  { value: "light", label: "common.light" },
+  { value: "dark", label: "common.dark" },
 ] as const;
 
 /**
@@ -29,6 +30,7 @@ const THEMES = [
  * destination one tap away instead of off screen.
  */
 export function MobileNav() {
+  const t = useTranslate();
   const [open, setOpen] = useState(false);
   const { mode, setMode } = useThemeMode();
   const signOut = useSignOut();
@@ -42,7 +44,7 @@ export function MobileNav() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         render={
-          <Button variant="ghost" size="icon" aria-label="Open menu">
+          <Button variant="ghost" size="icon" aria-label={t("common.openMenu")}>
             <ListIcon aria-hidden />
           </Button>
         }
@@ -51,13 +53,13 @@ export function MobileNav() {
       <SheetContent side="right" className="w-4/5 max-w-xs overflow-y-auto">
         <SheetHeader>
           <KivoLockup className="mb-3 h-9" alt="" />
-          <SheetTitle>Menu</SheetTitle>
+          <SheetTitle>{t("common.menu")}</SheetTitle>
           {session ? (
             <SheetDescription>{session.user.email}</SheetDescription>
           ) : null}
         </SheetHeader>
 
-        <nav aria-label="Main" className="flex flex-col px-2">
+        <nav aria-label={t("nav.main")} className="flex flex-col px-2">
           {[...MAIN_LINKS, ...SETTINGS_LINKS].map((link) => (
             <Link
               key={link.to}
@@ -70,7 +72,7 @@ export function MobileNav() {
               }}
             >
               <link.icon aria-hidden className="size-4 shrink-0" />
-              {link.label}
+              {t(link.label)}
             </Link>
           ))}
         </nav>
@@ -83,7 +85,7 @@ export function MobileNav() {
               ) : (
                 <SunIcon aria-hidden className="size-3.5" />
               )}
-              Theme
+              {t("common.theme")}
             </p>
             <div className="flex flex-row gap-2">
               {THEMES.map((option) => (
@@ -94,7 +96,7 @@ export function MobileNav() {
                   aria-pressed={mode === option.value}
                   onClick={() => setMode(option.value)}
                 >
-                  {option.label}
+                  {t(option.label)}
                 </Button>
               ))}
             </div>
@@ -108,7 +110,7 @@ export function MobileNav() {
                 signOut();
               }}
             >
-              Sign Out
+              {t("nav.signOut")}
             </Button>
           ) : (
             <Link
@@ -116,7 +118,7 @@ export function MobileNav() {
               onClick={close}
               className="flex min-h-11 items-center border border-border bg-card px-2 text-sm font-semibold tracking-wide uppercase shadow-brutal-xs hover:bg-accent"
             >
-              Sign In
+              {t("nav.signIn")}
             </Link>
           )}
         </SheetFooter>

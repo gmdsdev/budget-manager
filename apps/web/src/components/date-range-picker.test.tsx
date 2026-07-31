@@ -2,6 +2,7 @@ import { DateRangePicker } from "@budget-manager/ui/components/date-picker";
 import {
   currentMonthRange,
   DATE_RANGE_PRESETS,
+  type DateRangePresetKey,
   type DateRangeValue,
 } from "@budget-manager/ui/lib/date-range";
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -110,33 +111,33 @@ describe("DateRangePicker", () => {
 describe("DATE_RANGE_PRESETS", () => {
   const LEAP_FEBRUARY = new Date(2028, 1, 14);
 
-  function rangeFor(label: string) {
+  function rangeFor(labelKey: DateRangePresetKey) {
     return DATE_RANGE_PRESETS.find(
-      (preset) => preset.label === label,
+      (preset) => preset.labelKey === labelKey,
     )?.getRange(LEAP_FEBRUARY);
   }
 
   test("covers whole months, including a leap February", () => {
-    expect(rangeFor("This month")).toEqual({
+    expect(rangeFor("dateRange.thisMonth")).toEqual({
       from: "2028-02-01",
       to: "2028-02-29",
     });
-    expect(rangeFor("Last month")).toEqual({
+    expect(rangeFor("dateRange.lastMonth")).toEqual({
       from: "2028-01-01",
       to: "2028-01-31",
     });
-    expect(rangeFor("Last 3 months")).toEqual({
+    expect(rangeFor("dateRange.last3Months")).toEqual({
       from: "2027-12-01",
       to: "2028-02-29",
     });
   });
 
   test("reaches the rows a recurring series lands on later", () => {
-    expect(rangeFor("This year")).toEqual({
+    expect(rangeFor("dateRange.thisYear")).toEqual({
       from: "2028-01-01",
       to: "2028-12-31",
     });
-    expect(rangeFor("Next 12 months")).toEqual({
+    expect(rangeFor("dateRange.next12Months")).toEqual({
       from: "2028-02-01",
       to: "2029-01-31",
     });

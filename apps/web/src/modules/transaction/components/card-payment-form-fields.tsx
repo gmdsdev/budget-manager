@@ -1,10 +1,9 @@
 import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
 import { useBillOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-bills-query";
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import {
-  TransactionStatus,
-  TransactionStatusLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { TransactionStatus } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
 import { DatePicker } from "@budget-manager/ui/components/date-picker";
 import {
@@ -27,11 +26,6 @@ import { useSelector } from "@tanstack/react-form";
 import { FieldRow } from "./field-row";
 import type { UseCardPaymentFormReturnType } from "../hooks/use-card-payment-form";
 
-const STATUS_ITEMS = Object.values(TransactionStatus).map((status) => ({
-  label: TransactionStatusLabelMap[status],
-  value: status,
-}));
-
 const NO_BILL = "none";
 
 function formatPeriod(periodStart: string, periodEnd: string) {
@@ -43,6 +37,7 @@ function formatPeriod(periodStart: string, periodEnd: string) {
  * show as paid. Leaving it unset still reduces the card's overall balance.
  */
 function BillField({ form }: { form: UseCardPaymentFormReturnType }) {
+  const t = useTranslate();
   const creditCardId = useSelector(
     form.store,
     (state) => state.values.creditCardId,
@@ -50,7 +45,7 @@ function BillField({ form }: { form: UseCardPaymentFormReturnType }) {
   const { data, isPending } = useBillOptionsQuery(creditCardId || null);
 
   const items = [
-    { label: "Not allocated", value: NO_BILL },
+    { label: t("transaction.field.notAllocated"), value: NO_BILL },
     ...(data?.rows ?? [])
       .filter((bill) => bill.remainingCents > 0)
       .map((bill) => ({
@@ -68,7 +63,9 @@ function BillField({ form }: { form: UseCardPaymentFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Statement</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+              {t("transaction.field.statement")}
+            </FieldLabel>
             <Select<string>
               items={items}
               id={field.name}
@@ -94,8 +91,7 @@ function BillField({ form }: { form: UseCardPaymentFormReturnType }) {
               </SelectContent>
             </Select>
             <FieldDescription>
-              Allocate this payment to an unpaid statement, or leave it against
-              the card as a whole.
+              {t("transaction.field.statementHint")}
             </FieldDescription>
             <FieldError
               id={errorId}
@@ -109,6 +105,7 @@ function BillField({ form }: { form: UseCardPaymentFormReturnType }) {
 }
 
 function CardAmountField({ form }: { form: UseCardPaymentFormReturnType }) {
+  const t = useTranslate();
   const creditCardId = useSelector(
     form.store,
     (state) => state.values.creditCardId,
@@ -127,7 +124,7 @@ function CardAmountField({ form }: { form: UseCardPaymentFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Amount</FieldLabel>
+            <FieldLabel htmlFor={field.name}>{t("common.amount")}</FieldLabel>
             <CurrencyInput
               id={field.name}
               name={field.name}
@@ -139,7 +136,7 @@ function CardAmountField({ form }: { form: UseCardPaymentFormReturnType }) {
               aria-describedby={showErrors ? errorId : undefined}
             />
             <FieldDescription>
-              Leaves the wallet and reduces what the card owes.
+              {t("transaction.field.cardPaymentAmountHint")}
             </FieldDescription>
             <FieldError
               id={errorId}
@@ -157,6 +154,14 @@ export function CardPaymentFormFields({
 }: {
   form: UseCardPaymentFormReturnType;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const statusItems = Object.values(TransactionStatus).map((status) => ({
+    label: labels.transactionStatus(status),
+    value: status,
+  }));
+
   const creditCardId = useSelector(
     form.store,
     (state) => state.values.creditCardId,
@@ -188,7 +193,9 @@ export function CardPaymentFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("common.description")}
+              </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -218,7 +225,7 @@ export function CardPaymentFormFields({
 
             return (
               <Field data-invalid={showErrors}>
-                <FieldLabel htmlFor={field.name}>Date</FieldLabel>
+                <FieldLabel htmlFor={field.name}>{t("common.date")}</FieldLabel>
                 <DatePicker
                   id={field.name}
                   name={field.name}
@@ -247,7 +254,7 @@ export function CardPaymentFormFields({
 
             return (
               <Field data-invalid={showErrors}>
-                <FieldLabel htmlFor={field.name}>Card</FieldLabel>
+                <FieldLabel htmlFor={field.name}>{t("common.card")}</FieldLabel>
                 <Select<string>
                   items={cardItems}
                   id={field.name}
@@ -260,7 +267,7 @@ export function CardPaymentFormFields({
                     aria-invalid={showErrors || undefined}
                     aria-describedby={showErrors ? errorId : undefined}
                   >
-                    <SelectValue placeholder="Select a card" />
+                    <SelectValue placeholder={t("transaction.field.selectACard")} />
                   </SelectTrigger>
                   <SelectContent>
                     {cardItems.map((item) => (
@@ -286,7 +293,9 @@ export function CardPaymentFormFields({
 
             return (
               <Field data-invalid={showErrors}>
-                <FieldLabel htmlFor={field.name}>Pay from wallet</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t("transaction.field.payFromWallet")}
+                </FieldLabel>
                 <Select<string>
                   items={walletItems}
                   id={field.name}
@@ -299,7 +308,7 @@ export function CardPaymentFormFields({
                     aria-invalid={showErrors || undefined}
                     aria-describedby={showErrors ? errorId : undefined}
                   >
-                    <SelectValue placeholder="Select a wallet" />
+                    <SelectValue placeholder={t("transaction.field.selectAWallet")} />
                   </SelectTrigger>
                   <SelectContent>
                     {walletItems.map((item) => (
@@ -329,9 +338,9 @@ export function CardPaymentFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Status</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.status")}</FieldLabel>
               <Select
-                items={STATUS_ITEMS}
+                items={statusItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -346,7 +355,7 @@ export function CardPaymentFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_ITEMS.map((item) => (
+                  {statusItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -370,7 +379,7 @@ export function CardPaymentFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.notes")}</FieldLabel>
               <Textarea
                 id={field.name}
                 name={field.name}

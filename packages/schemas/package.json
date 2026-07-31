@@ -11,6 +11,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@budget-manager/i18n": "workspace:*",
     "@budget-manager/money": "workspace:*",
     "zod": "^4.1.13"
   },

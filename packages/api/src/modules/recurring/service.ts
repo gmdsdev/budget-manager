@@ -1,3 +1,4 @@
+import { ref } from "@budget-manager/i18n";
 import {
   CategoryType,
   RecurrenceType,
@@ -72,7 +73,7 @@ export class RecurringService {
     const existing = await this.repository.findById({ id, userId });
 
     if (!existing) {
-      throw new NotFoundError("Recurring transaction");
+      throw new NotFoundError("error.notFound.recurring");
     }
 
     await this.assertReferences({ userId, recurring });
@@ -86,7 +87,7 @@ export class RecurringService {
     });
 
     if (!updated) {
-      throw new NotFoundError("Recurring transaction");
+      throw new NotFoundError("error.notFound.recurring");
     }
 
     // Re-lay the schedule from today forward; settled and past rows stay put.
@@ -118,7 +119,7 @@ export class RecurringService {
     const existing = await this.repository.findById({ id, userId });
 
     if (!existing) {
-      throw new NotFoundError("Recurring transaction");
+      throw new NotFoundError("error.notFound.recurring");
     }
 
     await this.repository.setActive({ id, userId, isActive });
@@ -170,7 +171,7 @@ export class RecurringService {
     const existing = await this.repository.findById({ id, userId });
 
     if (!existing) {
-      throw new NotFoundError("Recurring transaction");
+      throw new NotFoundError("error.notFound.recurring");
     }
 
     // Drop what has not happened yet, keep the history. The occurrence FK is
@@ -276,12 +277,12 @@ export class RecurringService {
       recurring.recurrenceType === RecurrenceType.FIXED &&
       !recurring.installments
     ) {
-      throw new ConflictError("Fixed installments need a count.");
+      throw new ConflictError("error.conflict.fixedInstallmentsNeedCount");
     }
 
     if (recurring.kind === TransactionKind.CREDIT_CARD_PURCHASE) {
       if (!recurring.creditCardId) {
-        throw new ConflictError("A card purchase series needs a card.");
+        throw new ConflictError("error.conflict.cardPurchaseSeriesNeedsCard");
       }
 
       // Validates ownership; the bill itself is resolved per occurrence.
@@ -291,7 +292,7 @@ export class RecurringService {
       });
     } else {
       if (!recurring.walletId) {
-        throw new ConflictError("An income or expense series needs a wallet.");
+        throw new ConflictError("error.conflict.seriesNeedsWallet");
       }
 
       const wallet = await this.repository.findWalletById({
@@ -300,7 +301,7 @@ export class RecurringService {
       });
 
       if (!wallet) {
-        throw new NotFoundError("Wallet");
+        throw new NotFoundError("error.notFound.wallet");
       }
     }
 
@@ -314,7 +315,7 @@ export class RecurringService {
     });
 
     if (!category) {
-      throw new NotFoundError("Category");
+      throw new NotFoundError("error.notFound.category");
     }
 
     // The form gives an enum, the DB a plain string; compare as strings.
@@ -324,9 +325,10 @@ export class RecurringService {
         : CategoryType.EXPENSE;
 
     if (category.type !== expected) {
-      throw new ConflictError(
-        `A ${category.type} category cannot be used on a ${recurring.kind} series.`,
-      );
+      throw new ConflictError("error.conflict.categoryOnSeries", {
+        categoryType: ref(`enum.categoryType.${category.type}.inline`),
+        kind: ref(`enum.transactionKind.${recurring.kind}.inline`),
+      });
     }
   }
 }

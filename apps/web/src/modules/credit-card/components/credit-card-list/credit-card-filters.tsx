@@ -2,25 +2,15 @@ import { FilterBar } from "@/components/filter-bar";
 import { FilterSearch } from "@/components/filter-search";
 import { FilterSelect, type FilterItem } from "@/components/filter-select";
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import {
-  FILTER_NONE,
-  WalletCurrency,
-  WalletCurrencyLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { FILTER_NONE, WalletCurrency } from "@budget-manager/schemas";
 import {
   CREDIT_CARD_FILTER_ALL,
   EMPTY_CREDIT_CARD_FILTERS,
   isCreditCardFiltered,
   type CreditCardFiltersState,
 } from "../../types";
-
-const CURRENCY_ITEMS: FilterItem[] = [
-  { label: "All currencies", value: CREDIT_CARD_FILTER_ALL },
-  ...Object.values(WalletCurrency).map((currency) => ({
-    label: WalletCurrencyLabelMap[currency],
-    value: currency,
-  })),
-];
 
 export function CreditCardFilters({
   filters,
@@ -29,11 +19,24 @@ export function CreditCardFilters({
   filters: CreditCardFiltersState;
   onFiltersChange: (filters: CreditCardFiltersState) => void;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
   const { data: wallets } = useWalletOptionsQuery();
 
+  const currencyItems: FilterItem[] = [
+    {
+      label: t("creditCard.filter.allCurrencies"),
+      value: CREDIT_CARD_FILTER_ALL,
+    },
+    ...Object.values(WalletCurrency).map((currency) => ({
+      label: labels.currency(currency),
+      value: currency,
+    })),
+  ];
+
   const walletItems: FilterItem[] = [
-    { label: "All wallets", value: CREDIT_CARD_FILTER_ALL },
-    { label: "No billing wallet", value: FILTER_NONE },
+    { label: t("creditCard.filter.allWallets"), value: CREDIT_CARD_FILTER_ALL },
+    { label: t("creditCard.filter.noBillingWallet"), value: FILTER_NONE },
     ...(wallets ?? []).map((wallet) => ({
       label: wallet.name,
       value: wallet.id,
@@ -51,15 +54,15 @@ export function CreditCardFilters({
     >
       <FilterSearch
         id="credit-card-name-filter"
-        label="Name"
+        label={t("common.name")}
         value={filters.search}
         onValueChange={(search) => patch({ search })}
       />
 
       <FilterSelect
         id="credit-card-currency-filter"
-        label="Currency"
-        items={CURRENCY_ITEMS}
+        label={t("common.currency")}
+        items={currencyItems}
         value={filters.currencyCode}
         onValueChange={(value) =>
           patch({
@@ -70,7 +73,7 @@ export function CreditCardFilters({
 
       <FilterSelect
         id="credit-card-billing-wallet-filter"
-        label="Billing wallet"
+        label={t("creditCard.column.billingWallet")}
         items={walletItems}
         value={filters.defaultBillingWalletId}
         onValueChange={(value) => patch({ defaultBillingWalletId: value })}

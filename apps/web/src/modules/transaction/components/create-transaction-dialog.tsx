@@ -3,6 +3,7 @@ import {
   TransactionKind,
   TransactionStatus,
 } from "@budget-manager/schemas";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -28,6 +29,7 @@ import {
 import { TransactionFormFields } from "./transaction-form-fields";
 
 export function CreateTransactionDialog() {
+  const t = useTranslate();
   const [open, setOpen] = useState(false);
   const formId = useId();
 
@@ -100,12 +102,14 @@ export function CreateTransactionDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button>Create Transaction</Button>} />
+      <DialogTrigger
+        render={<Button>{t("transaction.create.trigger")}</Button>}
+      />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Create Transaction</DialogTitle>
+          <DialogTitle>{t("transaction.create.title")}</DialogTitle>
           <DialogDescription>
-            Record an income or expense against one of your wallets.
+            {t("transaction.create.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -116,15 +120,17 @@ export function CreateTransactionDialog() {
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline">Cancel</Button>} />
+          <DialogClose
+            render={<Button variant="outline">{t("common.cancel")}</Button>}
+          />
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" form={formId} disabled={isSubmitting}>
                 {isSubmitting
-                  ? "Creating…"
+                  ? t("common.creating")
                   : repeat.enabled
-                    ? "Create series"
-                    : "Create transaction"}
+                    ? t("transaction.create.submitSeries")
+                    : t("transaction.create.submit")}
               </Button>
             )}
           </form.Subscribe>

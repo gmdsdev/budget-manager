@@ -17,15 +17,10 @@ import {
   formatCompactMinorUnits,
   formatMinorUnits,
 } from "@budget-manager/ui/lib/currency";
+import { useI18n } from "@budget-manager/i18n/react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import type { MonthPoint } from "../types";
-import { formatMonthLabel, formatMonthShortLabel } from "../utils/month";
 import { ChartDataTable } from "./chart-data-table";
-
-const chartConfig = {
-  income: { label: "Income", color: "var(--chart-income)" },
-  expense: { label: "Expenses", color: "var(--chart-expense)" },
-} satisfies ChartConfig;
 
 export function CashFlowChart({
   trend,
@@ -34,9 +29,21 @@ export function CashFlowChart({
   trend: MonthPoint[];
   currencyCode: string;
 }) {
+  const { t, formatMonthString } = useI18n();
+
+  // Rebuilt per render rather than a module constant: the series names are what
+  // the legend and the tooltip print.
+  const chartConfig = {
+    income: { label: t("dashboard.stat.income"), color: "var(--chart-income)" },
+    expense: {
+      label: t("dashboard.stat.expenses"),
+      color: "var(--chart-expense)",
+    },
+  } satisfies ChartConfig;
+
   const data = trend.map((point) => ({
     month: point.month,
-    label: formatMonthShortLabel(point.month),
+    label: formatMonthString(point.month, "monthShort"),
     income: point.incomeCents,
     expense: point.expenseCents,
     net: point.netCents,
@@ -49,11 +56,8 @@ export function CashFlowChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cash flow</CardTitle>
-        <CardDescription>
-          Income against spending, month by month. Transfers are left out — they
-          move money without earning or spending it.
-        </CardDescription>
+        <CardTitle>{t("dashboard.cashFlow.title")}</CardTitle>
+        <CardDescription>{t("dashboard.cashFlow.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         {hasMovement ? (
@@ -81,11 +85,13 @@ export function CashFlowChart({
                   axisLine={false}
                   tickMargin={8}
                 />
-                {/* The gutter has to hold a compacted tick ("R$ 13,5 mil"), so
-                    it stays 64px even on a phone: a narrower one clips the
-                    label rather than saving space. */}
+                {/* The gutter has to hold a compacted tick, so it keeps a
+                    fixed width even on a phone: a narrower one clips the label
+                    rather than saving space. 76px is sized to the longest form
+                    across the shipped locales ("R$ 1,8 mil"), not to the
+                    English one. */}
                 <YAxis
-                  width={64}
+                  width={76}
                   tickCount={4}
                   tickLine={false}
                   axisLine={false}
@@ -106,9 +112,16 @@ export function CashFlowChart({
 
                         return (
                           <div className="space-y-0.5">
-                            <p>{formatMonthLabel(point.month)}</p>
+                            <p>
+                              {formatMonthString(point.month, "monthYear")}
+                            </p>
                             <p className="font-normal text-muted-foreground">
-                              Net {formatMinorUnits(point.net, currencyCode)}
+                              {t("dashboard.cashFlow.net", {
+                                amount: formatMinorUnits(
+                                  point.net,
+                                  currencyCode,
+                                ),
+                              })}
                             </p>
                           </div>
                         );
@@ -156,10 +169,17 @@ export function CashFlowChart({
             </ChartContainer>
 
             <ChartDataTable
-              caption={`Income, spending and net per month, in ${currencyCode}`}
-              columns={["Month", "Income", "Expenses", "Net"]}
+              caption={t("dashboard.cashFlow.tableCaption", {
+                currency: currencyCode,
+              })}
+              columns={[
+                t("dashboard.cashFlow.month"),
+                t("dashboard.stat.income"),
+                t("dashboard.stat.expenses"),
+                t("dashboard.stat.net"),
+              ]}
               rows={data.map((point) => [
-                formatMonthLabel(point.month),
+                formatMonthString(point.month, "monthYear"),
                 formatMinorUnits(point.income, currencyCode),
                 formatMinorUnits(point.expense, currencyCode),
                 formatMinorUnits(point.net, currencyCode),
@@ -168,7 +188,7 @@ export function CashFlowChart({
           </>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Nothing recorded in these six months yet.
+            {t("dashboard.cashFlow.empty")}
           </p>
         )}
       </CardContent>

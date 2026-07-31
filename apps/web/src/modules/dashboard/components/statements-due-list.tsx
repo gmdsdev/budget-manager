@@ -6,16 +6,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@budget-manager/ui/components/card";
+import { useI18n } from "@budget-manager/i18n/react";
 import { buttonVariants } from "@budget-manager/ui/components/button";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { StatementDue } from "../types";
-import { formatDayLabel } from "../utils/month";
 
-const STATUS_LABELS: Record<string, string> = {
-  open: "Still open",
-  awaiting_payment: "Awaiting payment",
-  paid: "Paid",
-};
+// `as const` keeps each value a literal key, so `t` can see that none of them
+// takes a placeholder.
+const STATUS_KEYS = {
+  open: "dashboard.statements.status.open",
+  awaiting_payment: "dashboard.statements.status.awaiting_payment",
+  paid: "dashboard.statements.status.paid",
+} as const;
+
+function isKnownStatus(status: string): status is keyof typeof STATUS_KEYS {
+  return status in STATUS_KEYS;
+}
 
 export function StatementsDueList({
   statements,
@@ -24,24 +30,25 @@ export function StatementsDueList({
   statements: StatementDue[];
   today: string;
 }) {
+  const { t, formatDateString } = useI18n();
   const overdueCount = statements.filter((bill) => bill.dueAt < today).length;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Card statements</CardTitle>
+        <CardTitle>{t("dashboard.statements.title")}</CardTitle>
         <CardDescription>
           {overdueCount === 0
-            ? "What your cards still owe, soonest due first."
+            ? t("dashboard.statements.none")
             : overdueCount === 1
-              ? "1 past its due date."
-              : `${overdueCount} past their due date.`}
+              ? t("dashboard.statements.oneOverdue")
+              : t("dashboard.statements.overdue", { count: overdueCount })}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {statements.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            Nothing outstanding on your cards.
+            {t("dashboard.statements.empty")}
           </p>
         ) : (
           <ul className="divide-y divide-border/25">
@@ -68,15 +75,19 @@ export function StatementsDueList({
                       <span className="truncate">{bill.creditCardName}</span>
                       {overdue && (
                         <span className="shrink-0 text-xs font-medium text-destructive">
-                          Overdue
+                          {t("dashboard.pending.overdueFlag")}
                         </span>
                       )}
                     </p>
                     <p className="pl-3.5 text-xs text-muted-foreground">
-                      Due {formatDayLabel(bill.dueAt)} ·{" "}
-                      {formatDayLabel(bill.periodStart)}–
-                      {formatDayLabel(bill.periodEnd)} ·{" "}
-                      {STATUS_LABELS[bill.status] ?? bill.status}
+                      {t("dashboard.statements.due", {
+                        date: formatDateString(bill.dueAt, "monthDay"),
+                      })}{" "}
+                      · {formatDateString(bill.periodStart, "monthDay")}–
+                      {formatDateString(bill.periodEnd, "monthDay")} ·{" "}
+                      {isKnownStatus(bill.status)
+                        ? t(STATUS_KEYS[bill.status])
+                        : bill.status}
                     </p>
                   </div>
                   <div className="text-right">
@@ -89,12 +100,16 @@ export function StatementsDueList({
                     </p>
                     {partiallyPaid && (
                       <p className="text-xs text-muted-foreground">
-                        {formatMinorUnits(bill.paidCents, bill.currencyCode)} of{" "}
-                        {formatMinorUnits(
-                          bill.statementTotalCents,
-                          bill.currencyCode,
-                        )}{" "}
-                        paid
+                        {t("dashboard.statements.partiallyPaid", {
+                          paid: formatMinorUnits(
+                            bill.paidCents,
+                            bill.currencyCode,
+                          ),
+                          total: formatMinorUnits(
+                            bill.statementTotalCents,
+                            bill.currencyCode,
+                          ),
+                        })}
                       </p>
                     )}
                   </div>
@@ -111,7 +126,7 @@ export function StatementsDueList({
             to="/transaction"
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
-            Record a payment
+            {t("dashboard.statements.action")}
           </Link>
         </CardContent>
       )}

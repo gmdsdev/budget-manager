@@ -1,7 +1,6 @@
-import {
-  type WalletCurrency,
-  WalletCurrencyLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { WalletCurrency } from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Field,
@@ -22,16 +21,19 @@ import { usePreferencesForm } from "../hooks/use-preferences-form";
 import { useUpdatePreferencesMutation } from "../mutations/use-user-mutation";
 import { SettingsSection } from "./settings-section";
 
-const CURRENCY_ITEMS = Object.entries(WalletCurrencyLabelMap).map(
-  ([value, label]) => ({ label, value }),
-);
-
 export function PreferencesForm({
   preferredCurrency,
 }: {
   preferredCurrency: WalletCurrency;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
   const formId = useId();
+
+  const currencyItems = Object.values(WalletCurrency).map((currency) => ({
+    label: labels.currency(currency),
+    value: currency,
+  }));
   const updateMutation = useUpdatePreferencesMutation();
 
   const form = usePreferencesForm({
@@ -47,13 +49,13 @@ export function PreferencesForm({
 
   return (
     <SettingsSection
-      title="Defaults"
-      description="What a new account starts as, and which currency the dashboard opens on."
+      title={t("settings.defaults.title")}
+      description={t("settings.defaults.description")}
       footer={
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" form={formId} disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : "Save defaults"}
+              {isSubmitting ? t("common.saving") : t("settings.defaults.submit")}
             </Button>
           )}
         </form.Subscribe>
@@ -69,9 +71,11 @@ export function PreferencesForm({
 
               return (
                 <Field data-invalid={showErrors}>
-                  <FieldLabel htmlFor={field.name}>Default currency</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>
+                    {t("settings.defaults.currency")}
+                  </FieldLabel>
                   <Select
-                    items={CURRENCY_ITEMS}
+                    items={currencyItems}
                     id={field.name}
                     name={field.name}
                     value={field.state.value}
@@ -86,7 +90,7 @@ export function PreferencesForm({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {CURRENCY_ITEMS.map((item) => (
+                      {currencyItems.map((item) => (
                         <SelectItem key={item.value} value={item.value}>
                           {item.label}
                         </SelectItem>
@@ -94,9 +98,7 @@ export function PreferencesForm({
                     </SelectContent>
                   </Select>
                   <FieldDescription>
-                    Preselected when you create a wallet or a credit card, and
-                    the currency the dashboard scopes to when you have more than
-                    one.
+                    {t("settings.defaults.currencyHint")}
                   </FieldDescription>
                   <FieldError
                     id={errorId}

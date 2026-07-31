@@ -1,4 +1,5 @@
 import { usePreferredCurrency } from "@/hooks/use-preferred-currency";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { WalletType } from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
 import {
@@ -17,6 +18,7 @@ import { useCreateWalletMutation } from "../mutations/use-wallet-mutation";
 import { WalletFormFields } from "./wallet-form-fields";
 
 export function CreateWalletDialog() {
+  const t = useTranslate();
   const [open, setOpen] = useState(false);
   const formId = useId();
 
@@ -49,12 +51,12 @@ export function CreateWalletDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button>Create Wallet</Button>} />
+      <DialogTrigger render={<Button>{t("wallet.create.trigger")}</Button>} />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Create Wallet</DialogTitle>
+          <DialogTitle>{t("wallet.create.title")}</DialogTitle>
           <DialogDescription>
-            Create a new wallet to start tracking your finances.
+            {t("wallet.create.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -63,11 +65,15 @@ export function CreateWalletDialog() {
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline">Cancel</Button>} />
+          <DialogClose
+            render={<Button variant="outline">{t("common.cancel")}</Button>}
+          />
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" form={formId} disabled={isSubmitting}>
-                {isSubmitting ? "Creating…" : "Create wallet"}
+                {isSubmitting
+                  ? t("common.creating")
+                  : t("wallet.create.submit")}
               </Button>
             )}
           </form.Subscribe>

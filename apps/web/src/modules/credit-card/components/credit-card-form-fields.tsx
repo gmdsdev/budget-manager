@@ -1,8 +1,7 @@
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import {
-  WalletCurrency,
-  WalletCurrencyLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { WalletCurrency } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
 import {
   Field,
@@ -22,14 +21,10 @@ import {
 import { useSelector } from "@tanstack/react-form";
 import type { UseCreditCardFormReturnType } from "../hooks/use-credit-card-form";
 
-const CURRENCY_ITEMS = Object.values(WalletCurrency).map((currency) => ({
-  label: WalletCurrencyLabelMap[currency],
-  value: currency,
-}));
-
 const NO_WALLET = "none";
 
 function LimitField({ form }: { form: UseCreditCardFormReturnType }) {
+  const t = useTranslate();
   const currencyCode = useSelector(
     form.store,
     (state) => state.values.currencyCode,
@@ -44,7 +39,9 @@ function LimitField({ form }: { form: UseCreditCardFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Limit</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+              {t("creditCard.column.limit")}
+            </FieldLabel>
             <CurrencyInput
               id={field.name}
               name={field.name}
@@ -67,6 +64,7 @@ function LimitField({ form }: { form: UseCreditCardFormReturnType }) {
 }
 
 function BillingWalletField({ form }: { form: UseCreditCardFormReturnType }) {
+  const t = useTranslate();
   const currencyCode: string = useSelector(
     form.store,
     (state) => state.values.currencyCode,
@@ -76,7 +74,7 @@ function BillingWalletField({ form }: { form: UseCreditCardFormReturnType }) {
   // The server rejects a mismatch; only offering same-currency wallets keeps
   // the user from hitting that error in the first place.
   const items = [
-    { label: "None", value: NO_WALLET },
+    { label: t("creditCard.field.noBillingWallet"), value: NO_WALLET },
     ...(wallets ?? [])
       .filter((wallet) => wallet.currencyCode === currencyCode)
       .map((wallet) => ({ label: wallet.name, value: wallet.id })),
@@ -91,7 +89,9 @@ function BillingWalletField({ form }: { form: UseCreditCardFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Billing wallet</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+              {t("creditCard.column.billingWallet")}
+            </FieldLabel>
             <Select<string>
               items={items}
               id={field.name}
@@ -117,7 +117,7 @@ function BillingWalletField({ form }: { form: UseCreditCardFormReturnType }) {
               </SelectContent>
             </Select>
             <FieldDescription>
-              Suggested when you record a payment. Must match the card currency.
+              {t("creditCard.field.billingWalletHint")}
             </FieldDescription>
             <FieldError
               id={errorId}
@@ -182,6 +182,14 @@ export function CreditCardFormFields({
 }: {
   form: UseCreditCardFormReturnType;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const currencyItems = Object.values(WalletCurrency).map((currency) => ({
+    label: labels.currency(currency),
+    value: currency,
+  }));
+
   return (
     <FieldGroup>
       <form.Field name="name">
@@ -192,7 +200,7 @@ export function CreditCardFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.name")}</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -220,9 +228,9 @@ export function CreditCardFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Currency</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.currency")}</FieldLabel>
               <Select
-                items={CURRENCY_ITEMS}
+                items={currencyItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -239,7 +247,7 @@ export function CreditCardFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CURRENCY_ITEMS.map((item) => (
+                  {currencyItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -260,15 +268,15 @@ export function CreditCardFormFields({
       <DayField
         form={form}
         name="closeDay"
-        label="Closing day"
-        description="Day of the month the statement closes (1–28)."
+        label={t("creditCard.field.closingDay")}
+        description={t("creditCard.field.closingDayHint")}
       />
 
       <DayField
         form={form}
         name="dueDay"
-        label="Due day"
-        description="Day of the month the bill is due (1–28)."
+        label={t("creditCard.field.dueDay")}
+        description={t("creditCard.field.dueDayHint")}
       />
 
       <BillingWalletField form={form} />

@@ -5,14 +5,13 @@ import { categoryColorVar } from "@/modules/category/colors";
 import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
 import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
 import {
   FILTER_NONE,
   TransactionKind,
-  TransactionKindLabelMap,
   TransactionRepeats,
-  TransactionRepeatsLabelMap,
   TransactionStatus,
-  TransactionStatusLabelMap,
 } from "@budget-manager/schemas";
 import { DateRangePicker } from "@budget-manager/ui/components/date-picker";
 import {
@@ -24,30 +23,6 @@ import {
   type TransactionFiltersState,
 } from "../../types";
 
-const KIND_ITEMS: FilterItem[] = [
-  { label: "All kinds", value: TRANSACTION_FILTER_ALL },
-  ...Object.values(TransactionKind).map((kind) => ({
-    label: TransactionKindLabelMap[kind],
-    value: kind,
-  })),
-];
-
-const REPEATS_ITEMS: FilterItem[] = [
-  { label: "All rows", value: TRANSACTION_FILTER_ALL },
-  ...Object.values(TransactionRepeats).map((repeats) => ({
-    label: TransactionRepeatsLabelMap[repeats],
-    value: repeats,
-  })),
-];
-
-const STATUS_ITEMS: FilterItem[] = [
-  { label: "All statuses", value: TRANSACTION_FILTER_ALL },
-  ...Object.values(TransactionStatus).map((status) => ({
-    label: TransactionStatusLabelMap[status],
-    value: status,
-  })),
-];
-
 export function TransactionFilters({
   filters,
   onFiltersChange,
@@ -55,12 +30,42 @@ export function TransactionFilters({
   filters: TransactionFiltersState;
   onFiltersChange: (filters: TransactionFiltersState) => void;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const kindItems: FilterItem[] = [
+    { label: t("transaction.filter.allKinds"), value: TRANSACTION_FILTER_ALL },
+    ...Object.values(TransactionKind).map((kind) => ({
+      label: labels.transactionKind(kind),
+      value: kind,
+    })),
+  ];
+
+  const repeatsItems: FilterItem[] = [
+    { label: t("transaction.filter.allRows"), value: TRANSACTION_FILTER_ALL },
+    ...Object.values(TransactionRepeats).map((repeats) => ({
+      label: labels.transactionRepeats(repeats),
+      value: repeats,
+    })),
+  ];
+
+  const statusItems: FilterItem[] = [
+    {
+      label: t("transaction.filter.allStatuses"),
+      value: TRANSACTION_FILTER_ALL,
+    },
+    ...Object.values(TransactionStatus).map((status) => ({
+      label: labels.transactionStatus(status),
+      value: status,
+    })),
+  ];
+
   const { data: wallets } = useWalletOptionsQuery();
   const { data: cards } = useCreditCardOptionsQuery();
   const { data: categories } = useCategoryOptionsQuery();
 
   const accountItems: FilterItem[] = [
-    { label: "All accounts", value: TRANSACTION_FILTER_ALL },
+    { label: t("transaction.filter.allAccounts"), value: TRANSACTION_FILTER_ALL },
     ...(wallets ?? []).map((wallet) => ({
       label: wallet.name,
       value: walletAccountValue(wallet.id),
@@ -72,8 +77,11 @@ export function TransactionFilters({
   ];
 
   const categoryItems: FilterItem[] = [
-    { label: "All categories", value: TRANSACTION_FILTER_ALL },
-    { label: "Uncategorized", value: FILTER_NONE, color: null },
+    {
+      label: t("transaction.filter.allCategories"),
+      value: TRANSACTION_FILTER_ALL,
+    },
+    { label: t("category.uncategorized"), value: FILTER_NONE, color: null },
     ...(categories ?? []).map((category) => ({
       label: category.name,
       value: category.id,
@@ -92,8 +100,11 @@ export function TransactionFilters({
     >
       <DateRangePicker
         id="transaction-date-range-filter"
-        aria-label="Date range"
-        className="col-span-2 w-full sm:col-span-1 sm:w-56"
+        aria-label={t("transaction.filter.dateRange")}
+        // Sized to its content above sm, not pinned: a formatted range is far
+        // longer in some languages than in English ("1 de jul. – 31 de jul. de
+        // 2026"), and a fixed width clipped it.
+        className="col-span-2 w-full sm:col-span-1 sm:w-auto sm:min-w-56"
         value={{ from: filters.dateFrom, to: filters.dateTo }}
         onValueChange={({ from, to }) =>
           patch({ dateFrom: from, dateTo: to })
@@ -102,14 +113,14 @@ export function TransactionFilters({
 
       <FilterSearch
         id="transaction-description-filter"
-        label="Description"
+        label={t("common.description")}
         value={filters.search}
         onValueChange={(search) => patch({ search })}
       />
 
       <FilterSelect
         id="transaction-account-filter"
-        label="Account"
+        label={t("common.account")}
         items={accountItems}
         value={filters.accountId}
         onValueChange={(accountId) => patch({ accountId })}
@@ -117,7 +128,7 @@ export function TransactionFilters({
 
       <FilterSelect
         id="transaction-category-filter"
-        label="Category"
+        label={t("common.category")}
         items={categoryItems}
         value={filters.categoryId}
         onValueChange={(categoryId) => patch({ categoryId })}
@@ -125,8 +136,8 @@ export function TransactionFilters({
 
       <FilterSelect
         id="transaction-kind-filter"
-        label="Kind"
-        items={KIND_ITEMS}
+        label={t("transaction.filter.kind")}
+        items={kindItems}
         value={filters.kind}
         onValueChange={(value) =>
           patch({ kind: value as TransactionFiltersState["kind"] })
@@ -135,8 +146,8 @@ export function TransactionFilters({
 
       <FilterSelect
         id="transaction-repeats-filter"
-        label="Repeats"
-        items={REPEATS_ITEMS}
+        label={t("transaction.column.repeats")}
+        items={repeatsItems}
         value={filters.repeats}
         onValueChange={(value) =>
           patch({ repeats: value as TransactionFiltersState["repeats"] })
@@ -145,8 +156,8 @@ export function TransactionFilters({
 
       <FilterSelect
         id="transaction-status-filter"
-        label="Status"
-        items={STATUS_ITEMS}
+        label={t("common.status")}
+        items={statusItems}
         value={filters.status}
         onValueChange={(value) =>
           patch({ status: value as TransactionFiltersState["status"] })

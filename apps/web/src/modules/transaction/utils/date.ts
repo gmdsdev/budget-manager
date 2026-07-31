@@ -5,21 +5,3 @@ export function todayAsDateString() {
 
   return `${now.getFullYear()}-${month}-${day}`;
 }
-
-export function formatDateString(value: string) {
-  const [year, month, day] = value.split("-");
-
-  if (!year || !month || !day) {
-    return value;
-  }
-
-  return new Date(
-    Number(year),
-    Number(month) - 1,
-    Number(day),
-  ).toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}

@@ -6,6 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@budget-manager/ui/components/dropdown-menu";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { ArchiveWalletDialog } from "../archive-wallet-dialog";
@@ -15,6 +16,7 @@ import type { WalletRow } from "../../types";
 type RowDialog = "edit" | "archive" | null;
 
 export function WalletRowActions({ wallet }: { wallet: WalletRow }) {
+  const t = useTranslate();
   const [dialog, setDialog] = useState<RowDialog>(null);
 
   return (
@@ -24,20 +26,22 @@ export function WalletRowActions({ wallet }: { wallet: WalletRow }) {
           render={
             <Button variant="ghost" size="icon">
               <DotsThreeIcon />
-              <span className="sr-only">Actions for {wallet.name}</span>
+              <span className="sr-only">
+                {t("common.actionsFor", { name: wallet.name })}
+              </span>
             </Button>
           }
         />
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setDialog("edit")}>
-            Edit
+            {t("common.edit")}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
             onClick={() => setDialog("archive")}
           >
-            Archive
+            {t("common.archive")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

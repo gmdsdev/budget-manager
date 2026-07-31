@@ -1,15 +1,21 @@
 import { AuthActionError } from "@/lib/auth-error";
+import { t } from "@budget-manager/i18n";
 import { TRPCClientError } from "@trpc/client";
 
-const GENERIC = "Something went wrong. Please try again.";
-
-const BY_CODE: Record<string, string> = {
-  UNAUTHORIZED: "Your session expired. Please sign in again.",
-  FORBIDDEN: "You don't have permission to do that.",
-  NOT_FOUND: "That item no longer exists.",
-  TIMEOUT: "The request took too long. Please try again.",
-  TOO_MANY_REQUESTS: "Too many requests. Please wait a moment.",
-};
+/**
+ * Outside React, so it reads the module-scoped active locale rather than the
+ * context — these run from a `QueryCache`/`MutationCache` handler, which has no
+ * component to hook into. `AppI18nProvider` keeps that locale current.
+ */
+// `as const` keeps each value a literal key, so `t` can see that none of them
+// takes a placeholder and no params argument is owed.
+const BY_CODE = {
+  UNAUTHORIZED: "error.client.unauthorized",
+  FORBIDDEN: "error.client.forbidden",
+  NOT_FOUND: "error.client.notFound",
+  TIMEOUT: "error.client.timeout",
+  TOO_MANY_REQUESTS: "error.client.tooManyRequests",
+} as const;
 
 type ErrorData = {
   code?: string;
@@ -20,12 +26,14 @@ type ErrorData = {
 };
 
 export function getErrorMessage(error: unknown): string {
+  const generic = t("error.client.generic");
+
   if (error instanceof AuthActionError) {
-    return error.message || GENERIC;
+    return error.message || generic;
   }
 
   if (!(error instanceof TRPCClientError)) {
-    return GENERIC;
+    return generic;
   }
 
   const data = error.data as ErrorData | undefined;
@@ -40,15 +48,16 @@ export function getErrorMessage(error: unknown): string {
     }
   }
 
+  // The server already translated this one, using the locale on the request.
   if (data?.code === "CONFLICT" && error.message) {
     return error.message;
   }
 
-  if (data?.code && data.code in BY_CODE) {
-    return BY_CODE[data.code]!;
-  }
+  const code = data?.code;
 
-  return GENERIC;
+  return code && code in BY_CODE
+    ? t(BY_CODE[code as keyof typeof BY_CODE])
+    : generic;
 }
 
 export function isUnauthorizedError(error: unknown): boolean {

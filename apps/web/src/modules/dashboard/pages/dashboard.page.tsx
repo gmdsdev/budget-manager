@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@budget-manager/ui/components/select";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
+import { useI18n } from "@budget-manager/i18n/react";
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -26,16 +27,17 @@ import { CurrencySection } from "../components/currency-section";
 import { PendingList } from "../components/pending-list";
 import { StatementsDueList } from "../components/statements-due-list";
 import { useDashboardQuery } from "../queries/use-dashboard-query";
-import { currentMonth, formatMonthLabel, shiftMonth } from "../utils/month";
+import { currentMonth, shiftMonth } from "../utils/month";
 
 export default function DashboardPage() {
+  const { t, formatMonthString } = useI18n();
   const [month, setMonth] = useState(currentMonth());
   const [currencyCode, setCurrencyCode] = useState<string | null>(null);
   const preferredCurrency: string = usePreferredCurrency();
   const { data, isPending, isError, error, refetch, isRefetching, isFetching } =
     useDashboardQuery(month);
 
-  const monthLabel = formatMonthLabel(month);
+  const monthLabel = formatMonthString(month, "monthYear");
   const isCurrentMonth = month === currentMonth();
 
   // One currency is in view at a time, and it is the whole page's scope: the
@@ -52,7 +54,9 @@ export default function DashboardPage() {
   return (
     <div className="pb-8">
       <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">Dashboard</h1>
+        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
+          {t("dashboard.title")}
+        </h1>
 
         {/* One control row above everything it scopes: every figure, chart and
             list below reads the same month and the same currency. The month
@@ -71,7 +75,7 @@ export default function DashboardPage() {
               value={activeCurrency}
               onValueChange={setCurrencyCode}
             >
-              <SelectTrigger aria-label="Currency" className="min-w-20">
+              <SelectTrigger aria-label={t("common.currency")} className="min-w-20">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -91,7 +95,7 @@ export default function DashboardPage() {
             <Button
               variant="outline"
               size="icon"
-              aria-label="Previous"
+              aria-label={t("dashboard.previousMonth")}
               onClick={() => setMonth(shiftMonth(month, -1))}
             >
               <CaretLeftIcon aria-hidden />
@@ -102,7 +106,7 @@ export default function DashboardPage() {
             <Button
               variant="outline"
               size="icon"
-              aria-label="Next"
+              aria-label={t("dashboard.nextMonth")}
               disabled={isCurrentMonth}
               onClick={() => setMonth(shiftMonth(month, 1))}
             >
@@ -113,7 +117,7 @@ export default function DashboardPage() {
       </header>
 
       {isPending ? (
-        <div className="space-y-4" role="status" aria-label="Loading dashboard">
+        <div className="space-y-4" role="status" aria-label={t("dashboard.loading")}>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Skeleton className="h-28 w-full" />
             <Skeleton className="h-28 w-full" />
@@ -128,29 +132,28 @@ export default function DashboardPage() {
       ) : isError ? (
         <Empty className="border">
           <EmptyHeader>
-            <EmptyTitle>Couldn't load your dashboard</EmptyTitle>
+            <EmptyTitle>{t("dashboard.loadFailed")}</EmptyTitle>
             <EmptyDescription>{getErrorMessage(error)}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={() => void refetch()} disabled={isRefetching}>
-              {isRefetching ? "Retrying…" : "Retry"}
+              {isRefetching ? t("common.retrying") : t("common.retry")}
             </Button>
           </EmptyContent>
         </Empty>
       ) : data.currencies.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
-            <EmptyTitle>Nothing to summarize yet</EmptyTitle>
+            <EmptyTitle>{t("dashboard.empty.title")}</EmptyTitle>
             <EmptyDescription>
-              Create a wallet and record a transaction, and your balances and
-              spending will show up here.
+              {t("dashboard.empty.description")}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             {/* A navigation target stays an <a>: Base UI's Button would
                 force role="button" onto it. Borrow the styling instead. */}
             <Link to="/wallet" className={buttonVariants()}>
-              Go to wallets
+              {t("dashboard.empty.action")}
             </Link>
           </EmptyContent>
         </Empty>

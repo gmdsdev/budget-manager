@@ -1,3 +1,4 @@
+import { useTranslate } from "@budget-manager/i18n/react";
 import { WarningIcon } from "@phosphor-icons/react";
 import {
   Card,
@@ -23,6 +24,7 @@ export function CardUtilisationCard({
   cards: CardSlice[];
   currencyCode: string;
 }) {
+  const t = useTranslate();
   const ranked = [...cards].sort(
     (a, b) => b.outstandingCents - a.outstandingCents,
   );
@@ -30,8 +32,8 @@ export function CardUtilisationCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Credit cards</CardTitle>
-        <CardDescription>How much of each limit is in use.</CardDescription>
+        <CardTitle>{t("dashboard.cards.title")}</CardTitle>
+        <CardDescription>{t("dashboard.cards.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <ul className="space-y-4">
@@ -59,11 +61,15 @@ export function CardUtilisationCard({
                 <div
                   className="h-2.5 w-full border border-border bg-chart-track/40"
                   role="progressbar"
-                  aria-label={`${item.name} limit used`}
+                  aria-label={t("dashboard.cards.limitUsed", {
+                    name: item.name,
+                  })}
                   aria-valuemin={0}
                   aria-valuemax={100}
                   aria-valuenow={Math.min(used, 100)}
-                  aria-valuetext={`${used}% of the limit`}
+                  aria-valuetext={t("dashboard.cards.percentOfLimit", {
+                    percent: used,
+                  })}
                 >
                   <div
                     className={`h-full ${
@@ -87,14 +93,19 @@ export function CardUtilisationCard({
                     />
                   )}
                   {overLimit
-                    ? `Over limit by ${formatMinorUnits(
-                        -item.availableCents,
-                        currencyCode,
-                      )}`
-                    : `${used}% used · ${formatMinorUnits(
-                        item.availableCents,
-                        currencyCode,
-                      )} available`}
+                    ? t("dashboard.cards.overLimit", {
+                        amount: formatMinorUnits(
+                          -item.availableCents,
+                          currencyCode,
+                        ),
+                      })
+                    : t("dashboard.cards.used", {
+                        percent: used,
+                        amount: formatMinorUnits(
+                          item.availableCents,
+                          currencyCode,
+                        ),
+                      })}
                 </p>
               </li>
             );

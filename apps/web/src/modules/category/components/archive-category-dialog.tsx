@@ -1,4 +1,5 @@
-import { CategoryTypeLabelMap } from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +22,8 @@ export function ArchiveCategoryDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
   const archiveMutation = useArchiveCategoryMutation();
 
   function handleArchive() {
@@ -38,21 +41,25 @@ export function ArchiveCategoryDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Archive “{category.name}”?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("category.archive.title", { name: category.name })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            This {CategoryTypeLabelMap[category.type].toLowerCase()} category
-            will be hidden from your list. Transactions already using it keep
-            their category, and you can restore it later.
+            {t("category.archive.description", {
+              type: labels.categoryType(category.type).toLowerCase(),
+            })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={archiveMutation.isPending}
             onClick={handleArchive}
           >
-            {archiveMutation.isPending ? "Archiving…" : "Archive category"}
+            {archiveMutation.isPending
+              ? t("category.archive.submitting")
+              : t("category.archive.submit")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

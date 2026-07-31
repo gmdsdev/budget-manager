@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
+    "@budget-manager/i18n": "workspace:*",
     "@budget-manager/money": "workspace:*",
     "@fontsource-variable/jetbrains-mono": "^5.2.0",
     "@remixicon/react": "^4.9.0",

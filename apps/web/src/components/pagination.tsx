@@ -1,22 +1,37 @@
 import { PAGE_SIZE, pageCount, pageRange } from "@/lib/pagination";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
+
+/**
+ * The row count is named per resource rather than by interpolating a noun into
+ * one sentence: "No {label}" needs an article in Portuguese, and the article
+ * follows the noun's gender ("Nenhuma carteira" but "Nenhum cartão"), so a
+ * single parameterised message cannot be written correctly for both languages.
+ */
+export type PaginatedResource =
+  | "wallets"
+  | "categories"
+  | "cards"
+  | "transactions"
+  | "statements";
 
 export function Pagination({
   page,
   total,
   pageSize = PAGE_SIZE,
   onPageChange,
-  label,
+  resource,
   isFetching,
 }: {
   page: number;
   total: number;
   pageSize?: number;
   onPageChange: (page: number) => void;
-  /** Plural noun for the row count, e.g. "transactions". */
-  label: string;
+  /** Which rows are being counted, for the summary message. */
+  resource: PaginatedResource;
   isFetching?: boolean;
 }) {
+  const t = useTranslate();
   const pages = pageCount(total, pageSize);
   const { from, to } = pageRange({ page, total, pageSize });
 
@@ -31,8 +46,8 @@ export function Pagination({
         data-testid="pagination-summary"
       >
         {total === 0
-          ? `No ${label}`
-          : `Showing ${from}–${to} of ${total} ${label}`}
+          ? t(`pagination.${resource}.empty`)
+          : t(`pagination.${resource}.summary`, { from, to, total })}
       </p>
 
       {showControls && (
@@ -43,10 +58,10 @@ export function Pagination({
             disabled={page <= 1 || isFetching}
             onClick={() => onPageChange(page - 1)}
           >
-            Previous
+            {t("pagination.previous")}
           </Button>
           <span className="text-xs tabular-nums text-muted-foreground">
-            Page {page} of {pages}
+            {t("pagination.pageOf", { page, pages })}
           </span>
           <Button
             variant="outline"
@@ -54,7 +69,7 @@ export function Pagination({
             disabled={page >= pages || isFetching}
             onClick={() => onPageChange(page + 1)}
           >
-            Next
+            {t("pagination.next")}
           </Button>
         </div>
       )}

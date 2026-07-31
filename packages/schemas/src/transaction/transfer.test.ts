@@ -1,10 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  SAME_WALLET_TRANSFER_MESSAGE,
-  TransactionStatus,
-  TransferFormSchema,
-} from "./transaction.schema";
+import { Locale, setActiveLocale, translate } from "@budget-manager/i18n";
+
+import { TransactionStatus, TransferFormSchema } from "./transaction.schema";
 
 const WALLET_A = "6d1f6b26-6a4a-4f6f-9a1a-2a0d0f8a1111";
 const WALLET_B = "0f7a5b6b-2c3d-4e5f-8a9b-1c2d3e4f2222";
@@ -36,8 +34,29 @@ describe("TransferFormSchema", () => {
 
     const issue = result.error?.issues[0];
 
-    expect(issue?.message).toBe(SAME_WALLET_TRANSFER_MESSAGE);
+    expect(issue?.message).toBe(
+      translate(Locale.EN, "validation.sameWalletTransfer"),
+    );
     expect(issue?.path).toEqual(["toWalletId"]);
+  });
+
+  // The message is resolved when the form validates, not when the schema is
+  // defined, which is the whole reason a language switch does not need the
+  // schemas rebuilt.
+  test("reports the refusal in the active locale", () => {
+    setActiveLocale(Locale.PT_BR);
+
+    try {
+      const result = TransferFormSchema.safeParse(
+        transfer({ toWalletId: WALLET_A }),
+      );
+
+      expect(result.error?.issues[0]?.message).toBe(
+        translate(Locale.PT_BR, "validation.sameWalletTransfer"),
+      );
+    } finally {
+      setActiveLocale(Locale.EN);
+    }
   });
 
   test("rejects a zero or negative amount", () => {

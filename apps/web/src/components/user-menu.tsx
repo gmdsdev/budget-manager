@@ -6,6 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@budget-manager/ui/components/dropdown-menu";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { CaretUpIcon, GearIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 
@@ -13,6 +14,7 @@ import { useSignOut } from "@/hooks/use-sign-out";
 import { authClient } from "@/lib/auth-client";
 
 export default function UserMenu() {
+  const t = useTranslate();
   const signOut = useSignOut();
   const { data: session, isPending } = authClient.useSession();
 
@@ -26,7 +28,7 @@ export default function UserMenu() {
         to="/login"
         className="flex h-10 items-center justify-center border border-border bg-card px-3 text-xs font-semibold tracking-wide uppercase shadow-brutal-xs transition-colors hover:bg-accent"
       >
-        Sign In
+        {t("nav.signIn")}
       </Link>
     );
   }
@@ -49,13 +51,13 @@ export default function UserMenu() {
           render={
             <Link to="/settings/user">
               <GearIcon aria-hidden />
-              Settings
+              {t("nav.settings")}
             </Link>
           }
         />
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={signOut}>
-          Sign Out
+          {t("nav.signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

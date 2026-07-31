@@ -11,8 +11,9 @@ import {
   EmptyTitle,
 } from "@budget-manager/ui/components/empty";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { CreateWalletDialog } from "../components/create-wallet-dialog";
-import { walletColumns } from "../components/wallet-list/columns";
+import { useWalletColumns } from "../components/wallet-list/columns";
 import { WalletFilters } from "../components/wallet-list/wallet-filters";
 import { useWalletsQuery } from "../queries/use-wallets-query";
 import {
@@ -22,6 +23,8 @@ import {
 } from "../types";
 
 export default function ListWalletsPage() {
+  const t = useTranslate();
+  const columns = useWalletColumns();
   const { filters, page, setFilters, setPage } =
     usePagedFilters<WalletFiltersState>(EMPTY_WALLET_FILTERS);
 
@@ -33,14 +36,16 @@ export default function ListWalletsPage() {
   return (
     <div>
       <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">Wallets</h1>
+        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
+          {t("wallet.title")}
+        </h1>
         <CreateWalletDialog />
       </header>
 
       <WalletFilters filters={filters} onFiltersChange={setFilters} />
 
       {isPending ? (
-        <div className="space-y-2" role="status" aria-label="Loading wallets">
+        <div className="space-y-2" role="status" aria-label={t("wallet.loading")}>
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
@@ -48,34 +53,34 @@ export default function ListWalletsPage() {
       ) : isError ? (
         <Empty className="border">
           <EmptyHeader>
-            <EmptyTitle>Couldn't load your wallets</EmptyTitle>
+            <EmptyTitle>{t("wallet.loadFailed")}</EmptyTitle>
             <EmptyDescription>{getErrorMessage(error)}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={() => void refetch()} disabled={isRefetching}>
-              {isRefetching ? "Retrying…" : "Retry"}
+              {isRefetching ? t("common.retrying") : t("common.retry")}
             </Button>
           </EmptyContent>
         </Empty>
       ) : (
         <>
           <DataTable
-            columns={walletColumns}
+            columns={columns}
             data={data.rows}
             getRowId={(wallet) => wallet.id}
-            caption="Your wallets"
+            caption={t("wallet.caption")}
             emptyState={
               <Empty>
                 <EmptyHeader>
                   <EmptyTitle>
                     {isFiltered
-                      ? "No wallets match these filters"
-                      : "No wallets yet"}
+                      ? t("wallet.emptyFiltered.title")
+                      : t("wallet.empty.title")}
                   </EmptyTitle>
                   <EmptyDescription>
                     {isFiltered
-                      ? "Try a different type or currency, or clear a filter."
-                      : "Create your first wallet to start tracking your finances."}
+                      ? t("wallet.emptyFiltered.description")
+                      : t("wallet.empty.description")}
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>
@@ -86,7 +91,7 @@ export default function ListWalletsPage() {
             total={data.total}
             onPageChange={setPage}
             isFetching={isFetching}
-            label="wallets"
+            resource="wallets"
           />
         </>
       )}

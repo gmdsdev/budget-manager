@@ -6,6 +6,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@budget-manager/ui/components/field";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Input } from "@budget-manager/ui/components/input";
 import { useId } from "react";
 import { useProfileForm } from "../hooks/use-profile-form";
@@ -19,6 +20,7 @@ export function ProfileForm({
   name: string;
   email: string;
 }) {
+  const t = useTranslate();
   const formId = useId();
   const emailId = useId();
   const updateMutation = useUpdateProfileMutation();
@@ -36,13 +38,13 @@ export function ProfileForm({
 
   return (
     <SettingsSection
-      title="Profile"
-      description="How your account is identified across the app."
+      title={t("settings.profile.title")}
+      description={t("settings.profile.description")}
       footer={
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" form={formId} disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : "Save profile"}
+              {isSubmitting ? t("common.saving") : t("settings.profile.submit")}
             </Button>
           )}
         </form.Subscribe>
@@ -58,7 +60,7 @@ export function ProfileForm({
 
               return (
                 <Field data-invalid={showErrors}>
-                  <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+                  <FieldLabel htmlFor={field.name}>{t("common.name")}</FieldLabel>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -80,7 +82,7 @@ export function ProfileForm({
           </form.Field>
 
           <Field>
-            <FieldLabel htmlFor={emailId}>Email</FieldLabel>
+            <FieldLabel htmlFor={emailId}>{t("auth.email")}</FieldLabel>
             <Input
               id={emailId}
               type="email"
@@ -89,7 +91,7 @@ export function ProfileForm({
               className="text-muted-foreground"
             />
             <FieldDescription>
-              Your sign-in email cannot be changed here.
+              {t("settings.profile.emailHint")}
             </FieldDescription>
           </Field>
         </FieldGroup>

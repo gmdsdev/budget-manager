@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table";
+import { useI18n } from "@budget-manager/i18n/react";
 import { Pagination } from "@/components/pagination";
 import { usePagedFilters } from "@/hooks/use-paged-filters";
 import { getErrorMessage } from "@/utils/error-message";
@@ -15,12 +16,11 @@ import { CreateCardPaymentDialog } from "../components/create-card-payment-dialo
 import { CreateCardPurchaseDialog } from "../components/create-card-purchase-dialog";
 import { CreateTransactionDialog } from "../components/create-transaction-dialog";
 import { CreateTransferDialog } from "../components/create-transfer-dialog";
-import { transactionColumns } from "../components/transaction-list/columns";
+import { useTransactionColumns } from "../components/transaction-list/columns";
 import { TransactionFilters } from "../components/transaction-list/transaction-filters";
 import { TransactionSummary } from "../components/transaction-list/transaction-summary";
 import { useTransactionSummaryQuery } from "../queries/use-transaction-summary-query";
 import { useTransactionsQuery } from "../queries/use-transactions-query";
-import { formatDateString } from "../utils/date";
 import {
   defaultTransactionFilters,
   isTransactionFiltered,
@@ -28,6 +28,8 @@ import {
 } from "../types";
 
 export default function ListTransactionsPage() {
+  const { t, formatDateString } = useI18n();
+  const columns = useTransactionColumns();
   const { filters, page, setFilters, setPage } =
     usePagedFilters<TransactionFiltersState>(defaultTransactionFilters());
 
@@ -43,7 +45,9 @@ export default function ListTransactionsPage() {
   return (
     <div>
       <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">Transactions</h1>
+        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
+          {t("transaction.title")}
+        </h1>
         {/* Four ways to record something: two per row on a phone, one row at
             sm and up. */}
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-center">
@@ -60,7 +64,7 @@ export default function ListTransactionsPage() {
         <div
           className="space-y-2"
           role="status"
-          aria-label="Loading transactions"
+          aria-label={t("transaction.loading")}
         >
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
@@ -69,36 +73,36 @@ export default function ListTransactionsPage() {
       ) : isError ? (
         <Empty className="border">
           <EmptyHeader>
-            <EmptyTitle>Couldn't load your transactions</EmptyTitle>
+            <EmptyTitle>{t("transaction.loadFailed")}</EmptyTitle>
             <EmptyDescription>{getErrorMessage(error)}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={() => void refetch()} disabled={isRefetching}>
-              {isRefetching ? "Retrying…" : "Retry"}
+              {isRefetching ? t("common.retrying") : t("common.retry")}
             </Button>
           </EmptyContent>
         </Empty>
       ) : (
         <>
           <DataTable
-            columns={transactionColumns}
+            columns={columns}
             data={data.rows}
             getRowId={(transaction) => transaction.id}
             groupBy={(transaction) => transaction.occurrenceDate}
-            groupHeader={formatDateString}
-            caption="Your transactions"
+            groupHeader={(date) => formatDateString(date, "numeric")}
+            caption={t("transaction.caption")}
             emptyState={
               <Empty>
                 <EmptyHeader>
                   <EmptyTitle>
                     {isFiltered
-                      ? "No transactions match these filters"
-                      : "No transactions yet"}
+                      ? t("transaction.emptyFiltered.title")
+                      : t("transaction.empty.title")}
                   </EmptyTitle>
                   <EmptyDescription>
                     {isFiltered
-                      ? "Try widening the date range or clearing a filter."
-                      : "Record your first income or expense to start tracking."}
+                      ? t("transaction.emptyFiltered.description")
+                      : t("transaction.empty.description")}
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>
@@ -116,7 +120,7 @@ export default function ListTransactionsPage() {
             total={data.total}
             onPageChange={setPage}
             isFetching={isFetching}
-            label="transactions"
+            resource="transactions"
           />
         </>
       )}

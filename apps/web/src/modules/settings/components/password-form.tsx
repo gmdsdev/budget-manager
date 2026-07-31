@@ -5,6 +5,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@budget-manager/ui/components/field";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Input } from "@budget-manager/ui/components/input";
 import { useId } from "react";
 import { usePasswordForm } from "../hooks/use-password-form";
@@ -14,22 +15,23 @@ import { SettingsSection } from "./settings-section";
 const PASSWORD_FIELDS = [
   {
     name: "currentPassword",
-    label: "Current password",
+    label: "settings.password.current",
     autoComplete: "current-password",
   },
   {
     name: "newPassword",
-    label: "New password",
+    label: "settings.password.new",
     autoComplete: "new-password",
   },
   {
     name: "confirmPassword",
-    label: "Confirm new password",
+    label: "settings.password.confirm",
     autoComplete: "new-password",
   },
 ] as const;
 
 export function PasswordForm() {
+  const t = useTranslate();
   const formId = useId();
   const changeMutation = useChangePasswordMutation();
 
@@ -48,13 +50,15 @@ export function PasswordForm() {
 
   return (
     <SettingsSection
-      title="Password"
-      description="Changing your password signs you out everywhere else."
+      title={t("settings.password.title")}
+      description={t("settings.password.description")}
       footer={
         <form.Subscribe selector={(state) => state.isSubmitting}>
           {(isSubmitting) => (
             <Button type="submit" form={formId} disabled={isSubmitting}>
-              {isSubmitting ? "Changing…" : "Change password"}
+              {isSubmitting
+                ? t("settings.password.submitting")
+                : t("settings.password.submit")}
             </Button>
           )}
         </form.Subscribe>
@@ -71,7 +75,7 @@ export function PasswordForm() {
 
                 return (
                   <Field data-invalid={showErrors}>
-                    <FieldLabel htmlFor={field.name}>{entry.label}</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>{t(entry.label)}</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}

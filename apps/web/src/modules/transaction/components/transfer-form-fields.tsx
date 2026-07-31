@@ -1,8 +1,7 @@
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import {
-  TransactionStatus,
-  TransactionStatusLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { TransactionStatus } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
 import { DatePicker } from "@budget-manager/ui/components/date-picker";
 import {
@@ -25,11 +24,6 @@ import { useSelector } from "@tanstack/react-form";
 import { FieldRow } from "./field-row";
 import type { UseTransferFormReturnType } from "../hooks/use-transfer-form";
 
-const STATUS_ITEMS = Object.values(TransactionStatus).map((status) => ({
-  label: TransactionStatusLabelMap[status],
-  value: status,
-}));
-
 function WalletSelectField({
   form,
   name,
@@ -39,6 +33,7 @@ function WalletSelectField({
   name: "fromWalletId" | "toWalletId";
   label: string;
 }) {
+  const t = useTranslate();
   const { data: wallets, isPending } = useWalletOptionsQuery();
 
   const items = (wallets ?? []).map((wallet) => ({
@@ -68,7 +63,7 @@ function WalletSelectField({
                 aria-invalid={showErrors || undefined}
                 aria-describedby={showErrors ? errorId : undefined}
               >
-                <SelectValue placeholder="Select a wallet" />
+                <SelectValue placeholder={t("transaction.field.selectAWallet")} />
               </SelectTrigger>
               <SelectContent>
                 {items.map((item) => (
@@ -90,6 +85,7 @@ function WalletSelectField({
 }
 
 function TransferAmountField({ form }: { form: UseTransferFormReturnType }) {
+  const t = useTranslate();
   const fromWalletId = useSelector(
     form.store,
     (state) => state.values.fromWalletId,
@@ -109,7 +105,7 @@ function TransferAmountField({ form }: { form: UseTransferFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Amount</FieldLabel>
+            <FieldLabel htmlFor={field.name}>{t("common.amount")}</FieldLabel>
             <CurrencyInput
               id={field.name}
               name={field.name}
@@ -121,7 +117,7 @@ function TransferAmountField({ form }: { form: UseTransferFormReturnType }) {
               aria-describedby={showErrors ? errorId : undefined}
             />
             <FieldDescription>
-              Both wallets must use the same currency.
+              {t("transaction.field.transferCurrencyHint")}
             </FieldDescription>
             <FieldError
               id={errorId}
@@ -139,6 +135,14 @@ export function TransferFormFields({
 }: {
   form: UseTransferFormReturnType;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const statusItems = Object.values(TransactionStatus).map((status) => ({
+    label: labels.transactionStatus(status),
+    value: status,
+  }));
+
   return (
     <FieldGroup>
       <form.Field name="name">
@@ -149,7 +153,9 @@ export function TransferFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("common.description")}
+              </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -179,7 +185,7 @@ export function TransferFormFields({
 
             return (
               <Field data-invalid={showErrors}>
-                <FieldLabel htmlFor={field.name}>Date</FieldLabel>
+                <FieldLabel htmlFor={field.name}>{t("common.date")}</FieldLabel>
                 <DatePicker
                   id={field.name}
                   name={field.name}
@@ -203,9 +209,13 @@ export function TransferFormFields({
         <WalletSelectField
           form={form}
           name="fromWalletId"
-          label="From wallet"
+          label={t("transaction.field.fromWallet")}
         />
-        <WalletSelectField form={form} name="toWalletId" label="To wallet" />
+        <WalletSelectField
+          form={form}
+          name="toWalletId"
+          label={t("transaction.field.toWallet")}
+        />
       </FieldRow>
 
       <form.Field name="status">
@@ -216,9 +226,9 @@ export function TransferFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Status</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.status")}</FieldLabel>
               <Select
-                items={STATUS_ITEMS}
+                items={statusItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -233,7 +243,7 @@ export function TransferFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_ITEMS.map((item) => (
+                  {statusItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -257,7 +267,7 @@ export function TransferFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.notes")}</FieldLabel>
               <Textarea
                 id={field.name}
                 name={field.name}

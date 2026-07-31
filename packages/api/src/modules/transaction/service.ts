@@ -1,3 +1,4 @@
+import { ref } from "@budget-manager/i18n";
 import {
   CARD_AFFECTING_KINDS,
   CategoryType,
@@ -19,12 +20,6 @@ const KIND_TO_CATEGORY_TYPE: Record<TransactionFormKind, CategoryType> = {
   [TransactionKind.INCOME]: CategoryType.INCOME,
   [TransactionKind.EXPENSE]: CategoryType.EXPENSE,
 };
-
-const TRANSFER_EDIT_MESSAGE =
-  "This is one leg of a transfer. Edit the transfer instead.";
-
-const CARD_EDIT_MESSAGE =
-  "This is a card transaction. Edit it as a card purchase or card payment instead.";
 
 export class TransactionService {
   constructor(
@@ -90,7 +85,7 @@ export class TransactionService {
     });
 
     if (legs.length === 0) {
-      throw new NotFoundError("Transfer");
+      throw new NotFoundError("error.notFound.transfer");
     }
 
     return legs;
@@ -130,17 +125,17 @@ export class TransactionService {
     const existing = await this.repository.findById({ id, userId });
 
     if (!existing) {
-      throw new NotFoundError("Transaction");
+      throw new NotFoundError("error.notFound.transaction");
     }
 
     if (existing.transferGroupId) {
-      throw new ConflictError(TRANSFER_EDIT_MESSAGE);
+      throw new ConflictError("error.conflict.transferLegEdit");
     }
 
     // The plain form only carries income/expense fields; letting it rewrite a
     // card row would strand the card reference or silently change the kind.
     if (CARD_AFFECTING_KINDS.includes(existing.kind)) {
-      throw new ConflictError(CARD_EDIT_MESSAGE);
+      throw new ConflictError("error.conflict.cardRowEdit");
     }
 
     await this.assertReferences({ userId, transaction });
@@ -159,7 +154,7 @@ export class TransactionService {
     });
 
     if (!updated) {
-      throw new NotFoundError("Transaction");
+      throw new NotFoundError("error.notFound.transaction");
     }
 
     return updated;
@@ -203,7 +198,7 @@ export class TransactionService {
     });
 
     if (existing.length !== 2) {
-      throw new NotFoundError("Transfer");
+      throw new NotFoundError("error.notFound.transfer");
     }
 
     await this.assertTransferWallets({ userId, transfer });
@@ -303,7 +298,7 @@ export class TransactionService {
     });
 
     if (!updated) {
-      throw new NotFoundError("Card purchase");
+      throw new NotFoundError("error.notFound.cardPurchase");
     }
 
     return updated;
@@ -360,7 +355,7 @@ export class TransactionService {
     });
 
     if (!updated) {
-      throw new NotFoundError("Card payment");
+      throw new NotFoundError("error.notFound.cardPayment");
     }
 
     return updated;
@@ -380,8 +375,8 @@ export class TransactionService {
     if (!existing || existing.kind !== kind) {
       throw new NotFoundError(
         kind === TransactionKind.CREDIT_CARD_PURCHASE
-          ? "Card purchase"
-          : "Card payment",
+          ? "error.notFound.cardPurchase"
+          : "error.notFound.cardPayment",
       );
     }
 
@@ -401,7 +396,7 @@ export class TransactionService {
     });
 
     if (!card) {
-      throw new NotFoundError("Credit card");
+      throw new NotFoundError("error.notFound.creditCard");
     }
 
     return card;
@@ -424,14 +419,14 @@ export class TransactionService {
     });
 
     if (!category) {
-      throw new NotFoundError("Category");
+      throw new NotFoundError("error.notFound.category");
     }
 
     // A card purchase is spending, so an income category makes no sense on it.
     if (category.type !== CategoryType.EXPENSE) {
-      throw new ConflictError(
-        `A ${category.type} category cannot be used on a card purchase.`,
-      );
+      throw new ConflictError("error.conflict.categoryOnCardPurchase", {
+        categoryType: ref(`enum.categoryType.${category.type}.inline`),
+      });
     }
   }
 
@@ -448,13 +443,14 @@ export class TransactionService {
     ]);
 
     if (!wallet) {
-      throw new NotFoundError("Wallet");
+      throw new NotFoundError("error.notFound.wallet");
     }
 
     if (card.currencyCode !== wallet.currencyCode) {
-      throw new ConflictError(
-        `The wallet must use the card's currency. This card is ${card.currencyCode} and the wallet is ${wallet.currencyCode}.`,
-      );
+      throw new ConflictError("error.conflict.paymentWalletCurrency", {
+        cardCurrency: card.currencyCode,
+        walletCurrency: wallet.currencyCode,
+      });
     }
 
     if (payment.creditCardBillId) {
@@ -470,13 +466,11 @@ export class TransactionService {
     const existing = await this.repository.findById({ id, userId });
 
     if (!existing) {
-      throw new NotFoundError("Transaction");
+      throw new NotFoundError("error.notFound.transaction");
     }
 
     if (existing.status === TransactionStatus.CANCELLED) {
-      throw new ConflictError(
-        "This transaction is cancelled. Reopen it before marking it as paid.",
-      );
+      throw new ConflictError("error.conflict.cancelledCannotBePaid");
     }
 
     if (existing.transferGroupId) {
@@ -490,7 +484,7 @@ export class TransactionService {
       const leg = legs.find((row) => row.id === id);
 
       if (!leg) {
-        throw new NotFoundError("Transaction");
+        throw new NotFoundError("error.notFound.transaction");
       }
 
       return leg;
@@ -503,7 +497,7 @@ export class TransactionService {
     });
 
     if (!updated) {
-      throw new NotFoundError("Transaction");
+      throw new NotFoundError("error.notFound.transaction");
     }
 
     return updated;
@@ -513,7 +507,7 @@ export class TransactionService {
     const existing = await this.repository.findById({ id, userId });
 
     if (!existing) {
-      throw new NotFoundError("Transaction");
+      throw new NotFoundError("error.notFound.transaction");
     }
 
     if (existing.transferGroupId) {
@@ -543,7 +537,7 @@ export class TransactionService {
     });
 
     if (legs.length === 0) {
-      throw new NotFoundError("Transfer");
+      throw new NotFoundError("error.notFound.transfer");
     }
 
     await this.repository.deleteTransfer({ transferGroupId, userId });
@@ -582,13 +576,14 @@ export class TransactionService {
     ]);
 
     if (!from || !to) {
-      throw new NotFoundError("Wallet");
+      throw new NotFoundError("error.notFound.wallet");
     }
 
     if (from.currencyCode !== to.currencyCode) {
-      throw new ConflictError(
-        `Both wallets must use the same currency. This transfer mixes ${from.currencyCode} and ${to.currencyCode}.`,
-      );
+      throw new ConflictError("error.conflict.transferCurrencyMismatch", {
+        fromCurrency: from.currencyCode,
+        toCurrency: to.currencyCode,
+      });
     }
   }
 
@@ -605,7 +600,7 @@ export class TransactionService {
     });
 
     if (!wallet) {
-      throw new NotFoundError("Wallet");
+      throw new NotFoundError("error.notFound.wallet");
     }
 
     if (!transaction.categoryId) {
@@ -618,13 +613,14 @@ export class TransactionService {
     });
 
     if (!category) {
-      throw new NotFoundError("Category");
+      throw new NotFoundError("error.notFound.category");
     }
 
     if (category.type !== KIND_TO_CATEGORY_TYPE[transaction.kind]) {
-      throw new ConflictError(
-        `A ${category.type} category cannot be used on an ${transaction.kind} transaction.`,
-      );
+      throw new ConflictError("error.conflict.categoryOnTransaction", {
+        categoryType: ref(`enum.categoryType.${category.type}.inline`),
+        kind: ref(`enum.transactionKind.${transaction.kind}.inline`),
+      });
     }
   }
 }

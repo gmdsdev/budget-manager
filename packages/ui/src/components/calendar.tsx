@@ -8,9 +8,23 @@ import {
   type Locale,
 } from "react-day-picker"
 
+import { Locale as AppLocale } from "@budget-manager/i18n"
+import { useLocale } from "@budget-manager/i18n/react"
+import { enUS, ptBR } from "date-fns/locale"
+
 import { cn } from "@budget-manager/ui/lib/utils"
 import { Button, buttonVariants } from "@budget-manager/ui/components/button"
 import { RiArrowLeftSLine, RiArrowRightSLine, RiArrowDownSLine } from "@remixicon/react"
+
+/**
+ * react-day-picker names its months and weekdays through a date-fns locale, so
+ * the app's locale has to be mapped to one — `Intl` is not involved in that
+ * part of the grid. A caller can still pass `locale` to override.
+ */
+const DAY_PICKER_LOCALES: Record<AppLocale, Locale> = {
+  [AppLocale.EN]: enUS,
+  [AppLocale.PT_BR]: ptBR,
+}
 
 function Calendar({
   className,
@@ -25,7 +39,9 @@ function Calendar({
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
 }) {
+  const appLocale = useLocale()
   const defaultClassNames = getDefaultClassNames()
+  const dayPickerLocale = locale ?? DAY_PICKER_LOCALES[appLocale]
 
   return (
     <DayPicker
@@ -39,10 +55,10 @@ function Calendar({
         className
       )}
       captionLayout={captionLayout}
-      locale={locale}
+      locale={dayPickerLocale}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString(locale?.code, { month: "short" }),
+          date.toLocaleString(dayPickerLocale.code, { month: "short" }),
         ...formatters,
       }}
       classNames={{

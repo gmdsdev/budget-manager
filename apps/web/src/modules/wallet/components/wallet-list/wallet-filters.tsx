@@ -1,34 +1,15 @@
 import { FilterBar } from "@/components/filter-bar";
 import { FilterSearch } from "@/components/filter-search";
 import { FilterSelect, type FilterItem } from "@/components/filter-select";
-import {
-  WalletCurrency,
-  WalletCurrencyLabelMap,
-  WalletType,
-  WalletTypeLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { WalletCurrency, WalletType } from "@budget-manager/schemas";
 import {
   EMPTY_WALLET_FILTERS,
   isWalletFiltered,
   WALLET_FILTER_ALL,
   type WalletFiltersState,
 } from "../../types";
-
-const TYPE_ITEMS: FilterItem[] = [
-  { label: "All types", value: WALLET_FILTER_ALL },
-  ...Object.values(WalletType).map((type) => ({
-    label: WalletTypeLabelMap[type],
-    value: type,
-  })),
-];
-
-const CURRENCY_ITEMS: FilterItem[] = [
-  { label: "All currencies", value: WALLET_FILTER_ALL },
-  ...Object.values(WalletCurrency).map((currency) => ({
-    label: WalletCurrencyLabelMap[currency],
-    value: currency,
-  })),
-];
 
 export function WalletFilters({
   filters,
@@ -37,6 +18,25 @@ export function WalletFilters({
   filters: WalletFiltersState;
   onFiltersChange: (filters: WalletFiltersState) => void;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const typeItems: FilterItem[] = [
+    { label: t("wallet.filter.allTypes"), value: WALLET_FILTER_ALL },
+    ...Object.values(WalletType).map((type) => ({
+      label: labels.walletType(type),
+      value: type,
+    })),
+  ];
+
+  const currencyItems: FilterItem[] = [
+    { label: t("wallet.filter.allCurrencies"), value: WALLET_FILTER_ALL },
+    ...Object.values(WalletCurrency).map((currency) => ({
+      label: labels.currency(currency),
+      value: currency,
+    })),
+  ];
+
   function patch(next: Partial<WalletFiltersState>) {
     onFiltersChange({ ...filters, ...next });
   }
@@ -48,15 +48,15 @@ export function WalletFilters({
     >
       <FilterSearch
         id="wallet-name-filter"
-        label="Name"
+        label={t("common.name")}
         value={filters.search}
         onValueChange={(search) => patch({ search })}
       />
 
       <FilterSelect
         id="wallet-type-filter"
-        label="Type"
-        items={TYPE_ITEMS}
+        label={t("common.type")}
+        items={typeItems}
         value={filters.type}
         onValueChange={(value) =>
           patch({ type: value as WalletFiltersState["type"] })
@@ -65,8 +65,8 @@ export function WalletFilters({
 
       <FilterSelect
         id="wallet-currency-filter"
-        label="Currency"
-        items={CURRENCY_ITEMS}
+        label={t("common.currency")}
+        items={currencyItems}
         value={filters.currencyCode}
         onValueChange={(value) =>
           patch({ currencyCode: value as WalletFiltersState["currencyCode"] })

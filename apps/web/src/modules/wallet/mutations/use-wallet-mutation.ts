@@ -1,5 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { trpc } from "@/utils/trpc";
+import { t } from "@budget-manager/i18n";
 import type { DeleteWalletDto, WalletFormDto } from "@budget-manager/schemas";
 
 const WALLET_INVALIDATIONS = [
@@ -14,7 +15,7 @@ const WALLET_INVALIDATIONS = [
 export function useCreateWalletMutation() {
   return useApiMutation<unknown, WalletFormDto>({
     mutationFn: trpc.wallet.create.mutationOptions().mutationFn,
-    successMessage: "Wallet created successfully",
+    successMessage: t("wallet.toast.created"),
     invalidateQueries: WALLET_INVALIDATIONS,
   });
 }
@@ -22,7 +23,7 @@ export function useCreateWalletMutation() {
 export function useUpdateWalletMutation() {
   return useApiMutation<unknown, WalletFormDto & { id: string }>({
     mutationFn: trpc.wallet.update.mutationOptions().mutationFn,
-    successMessage: "Wallet updated successfully",
+    successMessage: t("wallet.toast.updated"),
     invalidateQueries: WALLET_INVALIDATIONS,
   });
 }
@@ -30,7 +31,7 @@ export function useUpdateWalletMutation() {
 export function useArchiveWalletMutation() {
   return useApiMutation<unknown, DeleteWalletDto>({
     mutationFn: trpc.wallet.archive.mutationOptions().mutationFn,
-    successMessage: "Wallet archived",
+    successMessage: t("wallet.toast.archived"),
     invalidateQueries: WALLET_INVALIDATIONS,
   });
 }
@@ -38,7 +39,7 @@ export function useArchiveWalletMutation() {
 export function useUnarchiveWalletMutation() {
   return useApiMutation<unknown, DeleteWalletDto>({
     mutationFn: trpc.wallet.unarchive.mutationOptions().mutationFn,
-    successMessage: "Wallet restored",
+    successMessage: t("wallet.toast.restored"),
     invalidateQueries: WALLET_INVALIDATIONS,
   });
 }
@@ -46,7 +47,7 @@ export function useUnarchiveWalletMutation() {
 export function useDeleteWalletMutation() {
   return useApiMutation<unknown, DeleteWalletDto>({
     mutationFn: trpc.wallet.delete.mutationOptions().mutationFn,
-    successMessage: "Wallet deleted successfully",
+    successMessage: t("wallet.toast.deleted"),
     invalidateQueries: WALLET_INVALIDATIONS,
   });
 }

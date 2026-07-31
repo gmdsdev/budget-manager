@@ -1,4 +1,5 @@
 import { TransactionStatus } from "@budget-manager/schemas";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -17,6 +18,7 @@ import { todayAsDateString } from "../utils/date";
 import { TransferFormFields } from "./transfer-form-fields";
 
 export function CreateTransferDialog() {
+  const t = useTranslate();
   const [open, setOpen] = useState(false);
   const formId = useId();
 
@@ -54,12 +56,16 @@ export function CreateTransferDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button variant="outline">Transfer</Button>} />
+      <DialogTrigger
+        render={
+          <Button variant="outline">{t("transfer.create.trigger")}</Button>
+        }
+      />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>New Transfer</DialogTitle>
+          <DialogTitle>{t("transfer.create.title")}</DialogTitle>
           <DialogDescription>
-            Move money between two of your wallets.
+            {t("transfer.create.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -68,11 +74,15 @@ export function CreateTransferDialog() {
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline">Cancel</Button>} />
+          <DialogClose
+            render={<Button variant="outline">{t("common.cancel")}</Button>}
+          />
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" form={formId} disabled={isSubmitting}>
-                {isSubmitting ? "Creating…" : "Create transfer"}
+                {isSubmitting
+                  ? t("common.creating")
+                  : t("transfer.create.submit")}
               </Button>
             )}
           </form.Subscribe>

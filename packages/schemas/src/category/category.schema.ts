@@ -1,3 +1,4 @@
+import { t } from "@budget-manager/i18n";
 import { z } from "zod";
 import { CategoryColor } from "./category-color";
 
@@ -6,11 +7,6 @@ export enum CategoryType {
   EXPENSE = "expense",
 }
 
-export const CategoryTypeLabelMap: Record<CategoryType, string> = {
-  [CategoryType.INCOME]: "Income",
-  [CategoryType.EXPENSE]: "Expense",
-};
-
 export const CATEGORY_NAME_MAX_LENGTH = 120;
 
 export const CategorySchema = z.object({
@@ -18,11 +14,11 @@ export const CategorySchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Name is required")
-    .max(
-      CATEGORY_NAME_MAX_LENGTH,
-      `Name must be ${CATEGORY_NAME_MAX_LENGTH} characters or fewer`,
-    ),
+    .min(1, { error: () => t("validation.nameRequired") })
+    .max(CATEGORY_NAME_MAX_LENGTH, {
+      error: () =>
+        t("validation.nameTooLong", { max: CATEGORY_NAME_MAX_LENGTH }),
+    }),
   type: z.enum(Object.values(CategoryType)),
   color: z.enum(Object.values(CategoryColor)),
   isArchived: z.boolean(),

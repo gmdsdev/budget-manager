@@ -1,3 +1,4 @@
+import { t } from "@budget-manager/i18n";
 import { z } from "zod";
 import { MoneyMinorUnitsSchema } from "../wallet/wallet.schema";
 
@@ -10,15 +11,6 @@ export enum TransactionKind {
   CREDIT_CARD_PURCHASE = "credit_card_purchase",
   CREDIT_CARD_PAYMENT = "credit_card_payment",
 }
-
-export const TransactionKindLabelMap: Record<TransactionKind, string> = {
-  [TransactionKind.INCOME]: "Income",
-  [TransactionKind.EXPENSE]: "Expense",
-  [TransactionKind.TRANSFER_IN]: "Transfer in",
-  [TransactionKind.TRANSFER_OUT]: "Transfer out",
-  [TransactionKind.CREDIT_CARD_PURCHASE]: "Card purchase",
-  [TransactionKind.CREDIT_CARD_PAYMENT]: "Card payment",
-};
 
 export const TRANSACTION_FORM_KINDS = [
   TransactionKind.INCOME,
@@ -35,11 +27,6 @@ export enum TransactionRepeats {
   ONE_OFF = "one_off",
   RECURRING = "recurring",
 }
-
-export const TransactionRepeatsLabelMap: Record<TransactionRepeats, string> = {
-  [TransactionRepeats.ONE_OFF]: "One-off",
-  [TransactionRepeats.RECURRING]: "Recurring",
-};
 
 export const TRANSFER_KINDS = [
   TransactionKind.TRANSFER_OUT,
@@ -118,36 +105,29 @@ export function isTransactionStatus(value: string): value is TransactionStatus {
   return (Object.values(TransactionStatus) as string[]).includes(value);
 }
 
-export const TransactionStatusLabelMap: Record<TransactionStatus, string> = {
-  [TransactionStatus.WAITING_PAYMENT]: "Waiting payment",
-  [TransactionStatus.PAID]: "Paid",
-  [TransactionStatus.CANCELLED]: "Cancelled",
-};
-
 export const TRANSACTION_NAME_MAX_LENGTH = 200;
 export const TRANSACTION_NOTES_MAX_LENGTH = 500;
 
-export const TransactionAmountSchema = MoneyMinorUnitsSchema.min(
-  1,
-  "Amount must be greater than zero",
-);
+export const TransactionAmountSchema = MoneyMinorUnitsSchema.min(1, {
+  error: () => t("validation.amountGreaterThanZero"),
+});
 
 const TransactionNameSchema = z
   .string()
   .trim()
-  .min(1, "Name is required")
-  .max(
-    TRANSACTION_NAME_MAX_LENGTH,
-    `Name must be ${TRANSACTION_NAME_MAX_LENGTH} characters or fewer`,
-  );
+  .min(1, { error: () => t("validation.nameRequired") })
+  .max(TRANSACTION_NAME_MAX_LENGTH, {
+    error: () =>
+      t("validation.nameTooLong", { max: TRANSACTION_NAME_MAX_LENGTH }),
+  });
 
 const TransactionNotesSchema = z
   .string()
   .trim()
-  .max(
-    TRANSACTION_NOTES_MAX_LENGTH,
-    `Notes must be ${TRANSACTION_NOTES_MAX_LENGTH} characters or fewer`,
-  )
+  .max(TRANSACTION_NOTES_MAX_LENGTH, {
+    error: () =>
+      t("validation.notesTooLong", { max: TRANSACTION_NOTES_MAX_LENGTH }),
+  })
   .nullable();
 
 export const TransactionSchema = z.object({
@@ -156,8 +136,8 @@ export const TransactionSchema = z.object({
   status: z.enum(Object.values(TransactionStatus)),
   name: TransactionNameSchema,
   amountCents: TransactionAmountSchema,
-  occurrenceDate: z.iso.date("Date is required"),
-  walletId: z.uuid("Wallet is required"),
+  occurrenceDate: z.iso.date({ error: () => t("validation.dateRequired") }),
+  walletId: z.uuid({ error: () => t("validation.walletRequired") }),
   categoryId: z.uuid().nullable(),
   transferGroupId: z.uuid().nullable(),
   notes: TransactionNotesSchema,
@@ -186,16 +166,13 @@ export const DeleteTransactionSchema = TransactionSchema.pick({ id: true });
 
 export type DeleteTransactionDto = z.infer<typeof DeleteTransactionSchema>;
 
-export const SAME_WALLET_TRANSFER_MESSAGE =
-  "Source and destination wallets must be different";
-
 export const TransferFormFieldsSchema = z.object({
   status: z.enum(Object.values(TransactionStatus)),
   name: TransactionNameSchema,
   amountCents: TransactionAmountSchema,
-  occurrenceDate: z.iso.date("Date is required"),
-  fromWalletId: z.uuid("Source wallet is required"),
-  toWalletId: z.uuid("Destination wallet is required"),
+  occurrenceDate: z.iso.date({ error: () => t("validation.dateRequired") }),
+  fromWalletId: z.uuid({ error: () => t("validation.sourceWalletRequired") }),
+  toWalletId: z.uuid({ error: () => t("validation.destinationWalletRequired") }),
   notes: TransactionNotesSchema,
 });
 
@@ -205,7 +182,7 @@ export const hasDistinctWallets = (value: {
 }) => value.fromWalletId !== value.toWalletId;
 
 export const DISTINCT_WALLETS_ERROR = {
-  message: SAME_WALLET_TRANSFER_MESSAGE,
+  error: () => t("validation.sameWalletTransfer"),
   path: ["toWalletId"],
 };
 
@@ -227,8 +204,8 @@ export const CardPurchaseFormSchema = z.object({
   status: z.enum(Object.values(TransactionStatus)),
   name: TransactionNameSchema,
   amountCents: TransactionAmountSchema,
-  occurrenceDate: z.iso.date("Date is required"),
-  creditCardId: z.uuid("Card is required"),
+  occurrenceDate: z.iso.date({ error: () => t("validation.dateRequired") }),
+  creditCardId: z.uuid({ error: () => t("validation.cardRequired") }),
   categoryId: z.uuid().nullable(),
   notes: TransactionNotesSchema,
 });
@@ -240,9 +217,9 @@ export const CardPaymentFormSchema = z.object({
   status: z.enum(Object.values(TransactionStatus)),
   name: TransactionNameSchema,
   amountCents: TransactionAmountSchema,
-  occurrenceDate: z.iso.date("Date is required"),
-  creditCardId: z.uuid("Card is required"),
-  walletId: z.uuid("Wallet is required"),
+  occurrenceDate: z.iso.date({ error: () => t("validation.dateRequired") }),
+  creditCardId: z.uuid({ error: () => t("validation.cardRequired") }),
+  walletId: z.uuid({ error: () => t("validation.walletRequired") }),
   /** Optional: allocate the payment to a specific statement. */
   creditCardBillId: z.uuid().nullable(),
   notes: TransactionNotesSchema,

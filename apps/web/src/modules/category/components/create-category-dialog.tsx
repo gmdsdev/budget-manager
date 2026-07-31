@@ -1,3 +1,4 @@
+import { useTranslate } from "@budget-manager/i18n/react";
 import {
   CategoryType,
   DEFAULT_CATEGORY_COLOR,
@@ -19,6 +20,7 @@ import { useCreateCategoryMutation } from "../mutations/use-category-mutation";
 import { CategoryFormFields } from "./category-form-fields";
 
 export function CreateCategoryDialog() {
+  const t = useTranslate();
   const [open, setOpen] = useState(false);
   const formId = useId();
 
@@ -52,12 +54,12 @@ export function CreateCategoryDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button>Create Category</Button>} />
+      <DialogTrigger render={<Button>{t("category.create.trigger")}</Button>} />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Create Category</DialogTitle>
+          <DialogTitle>{t("category.create.title")}</DialogTitle>
           <DialogDescription>
-            Create a new category to classify your income and expenses.
+            {t("category.create.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -66,11 +68,15 @@ export function CreateCategoryDialog() {
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline">Cancel</Button>} />
+          <DialogClose
+            render={<Button variant="outline">{t("common.cancel")}</Button>}
+          />
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" form={formId} disabled={isSubmitting}>
-                {isSubmitting ? "Creating…" : "Create category"}
+                {isSubmitting
+                  ? t("common.creating")
+                  : t("category.create.submit")}
               </Button>
             )}
           </form.Subscribe>

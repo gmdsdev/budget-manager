@@ -1,11 +1,11 @@
-import { RecurringFieldsSchema, RecurringFormSchema } from "@budget-manager/schemas";
-import { z } from "zod";
+import { t } from "@budget-manager/i18n";
 import {
   hasInstallmentsWhenFixed,
   hasMatchingAccount,
-  RECURRING_ACCOUNT_MESSAGE,
-  RECURRING_INSTALLMENTS_MESSAGE,
+  RecurringFieldsSchema,
+  RecurringFormSchema,
 } from "@budget-manager/schemas";
+import { z } from "zod";
 
 export const CreateRecurringInput = RecurringFormSchema;
 
@@ -13,11 +13,11 @@ export const UpdateRecurringInput = RecurringFieldsSchema.extend({
   id: z.uuid(),
 })
   .refine(hasMatchingAccount, {
-    message: RECURRING_ACCOUNT_MESSAGE,
+    error: () => t("validation.recurringAccount"),
     path: ["walletId"],
   })
   .refine(hasInstallmentsWhenFixed, {
-    message: RECURRING_INSTALLMENTS_MESSAGE,
+    error: () => t("validation.recurringInstallments"),
     path: ["installments"],
   });
 

@@ -1,4 +1,5 @@
 import { TransactionStatus } from "@budget-manager/schemas";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -17,6 +18,7 @@ import { todayAsDateString } from "../utils/date";
 import { CardPaymentFormFields } from "./card-payment-form-fields";
 
 export function CreateCardPaymentDialog() {
+  const t = useTranslate();
   const [open, setOpen] = useState(false);
   const formId = useId();
 
@@ -55,12 +57,16 @@ export function CreateCardPaymentDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button variant="outline">Pay card</Button>} />
+      <DialogTrigger
+        render={
+          <Button variant="outline">{t("cardPayment.create.trigger")}</Button>
+        }
+      />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Pay Card</DialogTitle>
+          <DialogTitle>{t("cardPayment.create.title")}</DialogTitle>
           <DialogDescription>
-            Money leaving a wallet to pay down a card.
+            {t("cardPayment.create.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -69,11 +75,15 @@ export function CreateCardPaymentDialog() {
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline">Cancel</Button>} />
+          <DialogClose
+            render={<Button variant="outline">{t("common.cancel")}</Button>}
+          />
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" form={formId} disabled={isSubmitting}>
-                {isSubmitting ? "Recording…" : "Record payment"}
+                {isSubmitting
+                  ? t("cardPayment.create.submitting")
+                  : t("cardPayment.create.submit")}
               </Button>
             )}
           </form.Subscribe>

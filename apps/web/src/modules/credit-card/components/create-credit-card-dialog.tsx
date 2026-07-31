@@ -1,4 +1,5 @@
 import { usePreferredCurrency } from "@/hooks/use-preferred-currency";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -16,6 +17,7 @@ import { useCreateCreditCardMutation } from "../mutations/use-credit-card-mutati
 import { CreditCardFormFields } from "./credit-card-form-fields";
 
 export function CreateCreditCardDialog() {
+  const t = useTranslate();
   const [open, setOpen] = useState(false);
   const formId = useId();
 
@@ -50,12 +52,12 @@ export function CreateCreditCardDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button>Create Card</Button>} />
+      <DialogTrigger render={<Button>{t("creditCard.create.trigger")}</Button>} />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Create Credit Card</DialogTitle>
+          <DialogTitle>{t("creditCard.create.title")}</DialogTitle>
           <DialogDescription>
-            Track a card's limit and what you currently owe on it.
+            {t("creditCard.create.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -64,11 +66,15 @@ export function CreateCreditCardDialog() {
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline">Cancel</Button>} />
+          <DialogClose
+            render={<Button variant="outline">{t("common.cancel")}</Button>}
+          />
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" form={formId} disabled={isSubmitting}>
-                {isSubmitting ? "Creating…" : "Create card"}
+                {isSubmitting
+                  ? t("common.creating")
+                  : t("creditCard.create.submit")}
               </Button>
             )}
           </form.Subscribe>

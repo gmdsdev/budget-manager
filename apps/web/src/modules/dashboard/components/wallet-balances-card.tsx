@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@budget-manager/ui/components/card";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { WalletSlice } from "../types";
 
@@ -15,6 +16,7 @@ export function WalletBalancesCard({
   wallets: WalletSlice[];
   currencyCode: string;
 }) {
+  const t = useTranslate();
   const ranked = [...wallets].sort((a, b) => b.balanceCents - a.balanceCents);
   // Scaled on the largest magnitude so an overdrawn wallet still gets a bar.
   const widest = ranked.reduce(
@@ -25,8 +27,8 @@ export function WalletBalancesCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Wallets</CardTitle>
-        <CardDescription>Where this money sits.</CardDescription>
+        <CardTitle>{t("dashboard.wallets.title")}</CardTitle>
+        <CardDescription>{t("dashboard.wallets.description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <ul className="space-y-3">
@@ -61,11 +63,12 @@ export function WalletBalancesCard({
                 </div>
                 {pending && (
                   <p className="text-xs text-muted-foreground">
-                    {formatMinorUnits(
-                      item.projectedBalanceCents,
-                      currencyCode,
-                    )}{" "}
-                    once pending rows settle
+                    {t("dashboard.wallets.pending", {
+                      amount: formatMinorUnits(
+                        item.projectedBalanceCents,
+                        currencyCode,
+                      ),
+                    })}
                   </p>
                 )}
               </li>

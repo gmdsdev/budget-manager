@@ -1,4 +1,5 @@
-import { TransactionKindLabelMap } from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useI18n } from "@budget-manager/i18n/react";
 import {
   Card,
   CardContent,
@@ -11,7 +12,6 @@ import { Link } from "@tanstack/react-router";
 import { buttonVariants } from "@budget-manager/ui/components/button";
 import { CategoryDot } from "@/modules/category/components/category-dot";
 import type { PendingItem } from "../types";
-import { formatDayLabel } from "../utils/month";
 
 export function PendingList({
   items,
@@ -20,23 +20,25 @@ export function PendingList({
   items: PendingItem[];
   today: string;
 }) {
+  const { t, formatDateString } = useI18n();
+  const labels = useEnumLabels();
   const overdueCount = items.filter((item) => item.occurrenceDate < today)
     .length;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Awaiting payment</CardTitle>
+        <CardTitle>{t("dashboard.pending.title")}</CardTitle>
         <CardDescription>
           {overdueCount > 0
-            ? `${overdueCount} overdue, oldest first.`
-            : "Nothing overdue — soonest first."}
+            ? t("dashboard.pending.overdue", { count: overdueCount })
+            : t("dashboard.pending.none")}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            Nothing outstanding — you're all caught up.
+            {t("dashboard.pending.empty")}
           </p>
         ) : (
           <ul className="divide-y divide-border/25">
@@ -62,13 +64,15 @@ export function PendingList({
                       <span className="truncate">{item.name}</span>
                       {overdue && (
                         <span className="shrink-0 text-xs font-medium text-destructive">
-                          Overdue
+                          {t("dashboard.pending.overdueFlag")}
                         </span>
                       )}
                     </p>
                     <p className="pl-3.5 text-xs text-muted-foreground">
-                      {formatDayLabel(item.occurrenceDate)} ·{" "}
-                      {item.walletName ?? item.creditCardName ?? "—"}
+                      {formatDateString(item.occurrenceDate, "monthDay")} ·{" "}
+                      {item.walletName ??
+                        item.creditCardName ??
+                        t("common.none")}
                       {item.categoryName ? (
                         <>
                           {" · "}
@@ -95,9 +99,7 @@ export function PendingList({
                       )}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {TransactionKindLabelMap[
-                        item.kind as keyof typeof TransactionKindLabelMap
-                      ] ?? item.kind}
+                      {labels.transactionKind(item.kind)}
                     </p>
                   </div>
                 </li>
@@ -113,7 +115,7 @@ export function PendingList({
             to="/transaction"
             className={buttonVariants({ variant: "outline", size: "sm" })}
           >
-            Open transactions
+            {t("dashboard.pending.action")}
           </Link>
         </CardContent>
       )}

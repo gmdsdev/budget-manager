@@ -1,6 +1,8 @@
 import { Button } from "@budget-manager/ui/components/button";
 import { Input } from "@budget-manager/ui/components/input";
 import { Label } from "@budget-manager/ui/components/label";
+import { t } from "@budget-manager/i18n";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -17,6 +19,7 @@ export default function SignInForm({
 }: {
   onSwitchToSignUp: () => void;
 }) {
+  const translate = useTranslate();
   const navigate = useNavigate({
     from: "/",
   });
@@ -39,7 +42,7 @@ export default function SignInForm({
             void navigate({
               to: "/dashboard",
             });
-            toast.success("Sign in successful");
+            toast.success(translate("auth.signInSuccessful"));
           },
           onError: (error) => {
             toast.error(error.error.message || error.error.statusText);
@@ -48,9 +51,13 @@ export default function SignInForm({
       );
     },
     validators: {
+      // Resolved when the form validates, so the message follows the language
+      // the reader picked rather than the one the module was loaded in.
       onSubmit: z.object({
-        email: z.email("Invalid email address"),
-        password: z.string().min(8, "Password must be at least 8 characters"),
+        email: z.email({ error: () => t("validation.invalidEmail") }),
+        password: z
+          .string()
+          .min(8, { error: () => t("validation.passwordTooShort", { min: 8 }) }),
       }),
     },
   });
@@ -63,7 +70,9 @@ export default function SignInForm({
     <div className="w-full max-w-md border-2 border-border bg-card p-6 shadow-brutal">
       <div className="mb-6 flex flex-col items-center gap-6">
         <KivoLockup className="h-12" />
-        <h1 className="text-center text-2xl font-bold tracking-wide uppercase">Welcome Back</h1>
+        <h1 className="text-center text-2xl font-bold tracking-wide uppercase">
+          {translate("auth.welcomeBack")}
+        </h1>
       </div>
 
       <form
@@ -78,7 +87,7 @@ export default function SignInForm({
           <form.Field name="email">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor={field.name}>Email</Label>
+                <Label htmlFor={field.name}>{translate("auth.email")}</Label>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -101,7 +110,7 @@ export default function SignInForm({
           <form.Field name="password">
             {(field) => (
               <div className="space-y-2">
-                <Label htmlFor={field.name}>Password</Label>
+                <Label htmlFor={field.name}>{translate("auth.password")}</Label>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -132,7 +141,7 @@ export default function SignInForm({
               className="w-full"
               disabled={!canSubmit || isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Sign In"}
+              {isSubmitting ? translate("auth.submitting") : translate("auth.signIn")}
             </Button>
           )}
         </form.Subscribe>
@@ -144,7 +153,7 @@ export default function SignInForm({
           onClick={onSwitchToSignUp}
           className="text-primary hover:text-primary/75"
         >
-          Need an account? Sign Up
+          {translate("auth.needAnAccount")}
         </Button>
       </div>
     </div>

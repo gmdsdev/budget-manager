@@ -1,8 +1,7 @@
-import {
-  RECURRENCE_YEARS,
-  RecurrenceType,
-  RecurrenceTypeLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import type { MessageKey } from "@budget-manager/i18n";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { RECURRENCE_YEARS, RecurrenceType } from "@budget-manager/schemas";
 import { Checkbox } from "@budget-manager/ui/components/checkbox";
 import {
   Field,
@@ -33,17 +32,12 @@ export const NO_REPEAT_STATE: RepeatState = {
   installments: 12,
 };
 
-const RECURRENCE_ITEMS = Object.values(RecurrenceType).map((type) => ({
-  label: RecurrenceTypeLabelMap[type],
-  value: type,
-}));
-
-const UNIT: Record<RecurrenceType, string> = {
-  [RecurrenceType.FIXED]: "months",
-  [RecurrenceType.WEEKLY]: "weeks",
-  [RecurrenceType.MONTHLY]: "months",
-  [RecurrenceType.YEARLY]: "years",
-};
+const UNIT = {
+  [RecurrenceType.FIXED]: "recurring.unit.months",
+  [RecurrenceType.WEEKLY]: "recurring.unit.weeks",
+  [RecurrenceType.MONTHLY]: "recurring.unit.months",
+  [RecurrenceType.YEARLY]: "recurring.unit.years",
+} as const satisfies Record<RecurrenceType, MessageKey>;
 
 /**
  * Recurrence lives on the transaction form itself: a repeating transaction is a
@@ -57,6 +51,14 @@ export function RepeatsFields({
   value: RepeatState;
   onChange: (next: RepeatState) => void;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const recurrenceItems = Object.values(RecurrenceType).map((type) => ({
+    label: labels.recurrenceType(type),
+    value: type,
+  }));
+
   const isFixed = value.recurrenceType === RecurrenceType.FIXED;
 
   return (
@@ -70,7 +72,7 @@ export function RepeatsFields({
           }
         />
         <FieldLabel htmlFor="transaction-recurrence">
-          Enable recurrence
+          {t("transaction.field.enableRecurrence")}
         </FieldLabel>
       </Field>
 
@@ -78,10 +80,10 @@ export function RepeatsFields({
         <>
           <Field>
             <FieldLabel htmlFor="transaction-repeats">
-              Recurrence type
+              {t("transaction.field.recurrenceType")}
             </FieldLabel>
             <Select<string>
-              items={RECURRENCE_ITEMS}
+              items={recurrenceItems}
               id="transaction-repeats"
               value={value.recurrenceType}
               onValueChange={(next) =>
@@ -96,7 +98,7 @@ export function RepeatsFields({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {RECURRENCE_ITEMS.map((item) => (
+                {recurrenceItems.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
                   </SelectItem>
@@ -105,14 +107,17 @@ export function RepeatsFields({
             </Select>
             {!isFixed && (
               <FieldDescription>
-                Repeats for the next {RECURRENCE_YEARS} years; a year is
-                scheduled at a time.
+                {t("transaction.field.recurrenceHint", {
+                  years: RECURRENCE_YEARS,
+                })}
               </FieldDescription>
             )}
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="transaction-repeat-interval">Every</FieldLabel>
+            <FieldLabel htmlFor="transaction-repeat-interval">
+              {t("recurring.field.every")}
+            </FieldLabel>
             <Input
               id="transaction-repeat-interval"
               type="number"
@@ -123,14 +128,16 @@ export function RepeatsFields({
               }
             />
             <FieldDescription>
-              {UNIT[value.recurrenceType]} between occurrences.
+              {t("recurring.field.intervalHint", {
+                unit: t(UNIT[value.recurrenceType]),
+              })}
             </FieldDescription>
           </Field>
 
           {isFixed && (
             <Field>
               <FieldLabel htmlFor="transaction-repeat-installments">
-                Installments
+                {t("recurring.field.installments")}
               </FieldLabel>
               <Input
                 id="transaction-repeat-installments"

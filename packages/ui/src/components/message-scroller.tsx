@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslate } from "@budget-manager/i18n/react"
 import * as React from "react"
 import {
   MessageScroller as MessageScrollerPrimitive,
@@ -91,6 +92,8 @@ function MessageScrollerButton({
   ...props
 }: React.ComponentProps<typeof MessageScrollerPrimitive.Button> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
+  const t = useTranslate()
+
   return (
     <MessageScrollerPrimitive.Button
       data-slot="message-scroller-button"
@@ -110,7 +113,7 @@ function MessageScrollerButton({
           <RiArrowDownLine
           />
           <span className="sr-only">
-            {direction === "end" ? "Scroll to end" : "Scroll to start"}
+            {direction === "end" ? t("common.scrollToEnd") : t("common.scrollToStart")}
           </span>
         </>
       )}

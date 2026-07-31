@@ -1,8 +1,5 @@
-import {
-  CATEGORY_COLORS,
-  type CategoryColor,
-  CategoryColorLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { CATEGORY_COLORS, type CategoryColor } from "@budget-manager/schemas";
 import { cn } from "@budget-manager/ui/lib/utils";
 import { categoryColorVar } from "../colors";
 
@@ -20,10 +17,13 @@ export function CategoryColorPicker({
   value: CategoryColor;
   onValueChange: (color: CategoryColor) => void;
 }) {
+  const labels = useEnumLabels();
+
   return (
     <div id={id} role="radiogroup" className="flex flex-row flex-wrap gap-1.5">
       {CATEGORY_COLORS.map((color) => {
         const selected = color === value;
+        const label = labels.categoryColor(color);
 
         return (
           <button
@@ -31,8 +31,8 @@ export function CategoryColorPicker({
             type="button"
             role="radio"
             aria-checked={selected}
-            aria-label={CategoryColorLabelMap[color]}
-            title={CategoryColorLabelMap[color]}
+            aria-label={label}
+            title={label}
             onClick={() => onValueChange(color)}
             className={cn(
               "size-7 rounded-none border border-border outline-none transition-[box-shadow]",

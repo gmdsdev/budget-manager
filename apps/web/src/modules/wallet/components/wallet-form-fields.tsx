@@ -1,9 +1,6 @@
-import {
-  WalletCurrency,
-  WalletCurrencyLabelMap,
-  WalletType,
-  WalletTypeLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { WalletCurrency, WalletType } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
 import {
   Field,
@@ -22,17 +19,8 @@ import {
 import { useSelector } from "@tanstack/react-form";
 import type { UseWalletFormReturnType } from "../hooks/use-wallet-form";
 
-const WALLET_TYPE_ITEMS = Object.values(WalletType).map((type) => ({
-  label: WalletTypeLabelMap[type],
-  value: type,
-}));
-
-const WALLET_CURRENCY_ITEMS = Object.values(WalletCurrency).map((currency) => ({
-  label: WalletCurrencyLabelMap[currency],
-  value: currency,
-}));
-
 function OpeningBalanceField({ form }: { form: UseWalletFormReturnType }) {
+  const t = useTranslate();
   const currencyCode = useSelector(
     form.store,
     (state) => state.values.currencyCode,
@@ -47,7 +35,9 @@ function OpeningBalanceField({ form }: { form: UseWalletFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Opening Balance</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+              {t("wallet.column.openingBalance")}
+            </FieldLabel>
             <CurrencyInput
               id={field.name}
               name={field.name}
@@ -70,6 +60,19 @@ function OpeningBalanceField({ form }: { form: UseWalletFormReturnType }) {
 }
 
 export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const typeItems = Object.values(WalletType).map((type) => ({
+    label: labels.walletType(type),
+    value: type,
+  }));
+
+  const currencyItems = Object.values(WalletCurrency).map((currency) => ({
+    label: labels.currency(currency),
+    value: currency,
+  }));
+
   return (
     <FieldGroup>
       <form.Field name="name">
@@ -80,7 +83,7 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.name")}</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -108,9 +111,9 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Type</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.type")}</FieldLabel>
               <Select
-                items={WALLET_TYPE_ITEMS}
+                items={typeItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -125,7 +128,7 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {WALLET_TYPE_ITEMS.map((item) => (
+                  {typeItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -149,9 +152,9 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Currency</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.currency")}</FieldLabel>
               <Select
-                items={WALLET_CURRENCY_ITEMS}
+                items={currencyItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -166,7 +169,7 @@ export function WalletFormFields({ form }: { form: UseWalletFormReturnType }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {WALLET_CURRENCY_ITEMS.map((item) => (
+                  {currencyItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>

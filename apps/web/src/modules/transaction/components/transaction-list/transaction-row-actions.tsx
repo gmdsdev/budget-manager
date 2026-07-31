@@ -7,6 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@budget-manager/ui/components/dropdown-menu";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ export function TransactionRowActions({
 }: {
   transaction: TransactionRow;
 }) {
+  const t = useTranslate();
   const [dialog, setDialog] = useState<RowDialog>(null);
   const markPaidMutation = useMarkTransactionPaidMutation();
   const setActiveMutation = useSetRecurringActiveMutation();
@@ -48,12 +50,12 @@ export function TransactionRowActions({
   // Each shape has its own editor; the plain form cannot carry a card or a
   // transfer pair, and the server rejects it if tried.
   const editLabel = transferGroupId
-    ? "Edit transfer"
+    ? t("transaction.action.editTransfer")
     : isCardPurchase
-      ? "Edit purchase"
+      ? t("transaction.action.editPurchase")
       : isCardPayment
-        ? "Edit payment"
-        : "Edit";
+        ? t("transaction.action.editPayment")
+        : t("transaction.action.edit");
 
   return (
     <div className="flex justify-end">
@@ -62,7 +64,9 @@ export function TransactionRowActions({
           render={
             <Button variant="ghost" size="icon">
               <DotsThreeIcon />
-              <span className="sr-only">Actions for {transaction.name}</span>
+              <span className="sr-only">
+                {t("common.actionsFor", { name: transaction.name })}
+              </span>
             </Button>
           }
         />
@@ -72,7 +76,7 @@ export function TransactionRowActions({
               disabled={markPaidMutation.isPending}
               onClick={() => markPaidMutation.mutate({ id: transaction.id })}
             >
-              Mark as paid
+              {t("transaction.action.markAsPaid")}
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={() => setDialog("edit")}>
@@ -82,7 +86,7 @@ export function TransactionRowActions({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setDialog("series")}>
-                Edit series
+                {t("recurring.edit.action")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={setActiveMutation.isPending || !series}
@@ -94,14 +98,16 @@ export function TransactionRowActions({
                       onSuccess: () =>
                         toast.success(
                           series.isActive
-                            ? "Series paused — upcoming transactions removed"
-                            : "Series resumed — upcoming transactions scheduled",
+                            ? t("transaction.seriesPaused")
+                            : t("transaction.seriesResumed"),
                         ),
                     },
                   )
                 }
               >
-                {series?.isActive === false ? "Resume series" : "Pause series"}
+                {series?.isActive === false
+                  ? t("transaction.action.resumeSeries")
+                  : t("transaction.action.pauseSeries")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
@@ -110,7 +116,7 @@ export function TransactionRowActions({
                   deleteSeriesMutation.mutate({ id: templateId })
                 }
               >
-                Delete series
+                {t("recurring.delete.submit")}
               </DropdownMenuItem>
             </>
           )}
@@ -119,7 +125,9 @@ export function TransactionRowActions({
             variant="destructive"
             onClick={() => setDialog("delete")}
           >
-            {transferGroupId ? "Delete transfer" : "Delete"}
+            {transferGroupId
+              ? t("transaction.action.deleteTransfer")
+              : t("transaction.action.delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -1,7 +1,9 @@
 import { FilterBar } from "@/components/filter-bar";
 import { FilterSearch } from "@/components/filter-search";
 import { FilterSelect, type FilterItem } from "@/components/filter-select";
-import { CategoryType, CategoryTypeLabelMap } from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { CategoryType } from "@budget-manager/schemas";
 import {
   CATEGORY_TYPE_FILTER_ALL,
   EMPTY_CATEGORY_FILTERS,
@@ -10,14 +12,6 @@ import {
   type CategoryTypeFilterValue,
 } from "../../types";
 
-const TYPE_ITEMS: FilterItem[] = [
-  { label: "All types", value: CATEGORY_TYPE_FILTER_ALL },
-  ...Object.values(CategoryType).map((type) => ({
-    label: CategoryTypeLabelMap[type],
-    value: type,
-  })),
-];
-
 export function CategoryFilters({
   filters,
   onFiltersChange,
@@ -25,6 +19,17 @@ export function CategoryFilters({
   filters: CategoryFiltersState;
   onFiltersChange: (filters: CategoryFiltersState) => void;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const typeItems: FilterItem[] = [
+    { label: t("category.filter.allTypes"), value: CATEGORY_TYPE_FILTER_ALL },
+    ...Object.values(CategoryType).map((type) => ({
+      label: labels.categoryType(type),
+      value: type,
+    })),
+  ];
+
   function patch(next: Partial<CategoryFiltersState>) {
     onFiltersChange({ ...filters, ...next });
   }
@@ -36,15 +41,15 @@ export function CategoryFilters({
     >
       <FilterSearch
         id="category-name-filter"
-        label="Name"
+        label={t("common.name")}
         value={filters.search}
         onValueChange={(search) => patch({ search })}
       />
 
       <FilterSelect
         id="category-type-filter"
-        label="Type"
-        items={TYPE_ITEMS}
+        label={t("common.type")}
+        items={typeItems}
         value={filters.type}
         onValueChange={(value) =>
           patch({ type: value as CategoryTypeFilterValue })

@@ -2,6 +2,7 @@ import * as React from "react"
 import { RiCalendar2Line } from "@remixicon/react"
 import type { DateRange } from "react-day-picker"
 
+import { useI18n } from "@budget-manager/i18n/react"
 import { cn } from "@budget-manager/ui/lib/utils"
 import {
   captionMonthRange,
@@ -20,31 +21,12 @@ import {
   PopoverTrigger,
 } from "@budget-manager/ui/components/popover"
 
-const DAY_FORMAT: Intl.DateTimeFormatOptions = {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-}
-
-function formatDay(date: Date) {
-  return date.toLocaleDateString(undefined, DAY_FORMAT)
-}
-
-function formatRange(from: Date, to: Date) {
-  const start =
-    from.getFullYear() === to.getFullYear()
-      ? from.toLocaleDateString(undefined, { day: "numeric", month: "short" })
-      : formatDay(from)
-
-  return `${start} – ${formatDay(to)}`
-}
-
 function DatePicker({
   value,
   onValueChange,
   id,
   name,
-  placeholder = "Pick a date",
+  placeholder,
   disabled,
   clearable = false,
   className,
@@ -64,6 +46,7 @@ function DatePicker({
   "aria-describedby"?: string
   "aria-label"?: string
 }) {
+  const { t, formatDate } = useI18n()
   const [open, setOpen] = React.useState(false)
   const selected = parseIsoDate(value)
 
@@ -85,7 +68,9 @@ function DatePicker({
           />
         }
       >
-        {selected ? formatDay(selected) : placeholder}
+        {selected
+          ? formatDate(selected, "day")
+          : (placeholder ?? t("common.pickADate"))}
         <RiCalendar2Line className="text-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto gap-0 p-0">
@@ -114,7 +99,7 @@ function DatePicker({
               setOpen(false)
             }}
           >
-            Clear
+            {t("common.clear")}
           </Button>
         ) : null}
       </PopoverContent>
@@ -133,7 +118,7 @@ function DateRangePicker({
   value,
   onValueChange,
   id,
-  placeholder = "Pick a date range",
+  placeholder,
   presets = DATE_RANGE_PRESETS,
   numberOfMonths = 2,
   disabled,
@@ -152,6 +137,7 @@ function DateRangePicker({
   "aria-describedby"?: string
   "aria-label"?: string
 }) {
+  const { t, formatDate } = useI18n()
   const [open, setOpen] = React.useState(false)
   const [anchor, setAnchor] = React.useState<Date | undefined>(undefined)
   const from = parseIsoDate(value.from)
@@ -160,6 +146,16 @@ function DateRangePicker({
   // sideways hides half the range being picked.
   const isCompact = useIsCompact()
   const months = isCompact ? 1 : numberOfMonths
+
+  // A range in one year drops the repeated year from its start.
+  function formatRange(start: Date, end: Date) {
+    const head =
+      start.getFullYear() === end.getFullYear()
+        ? formatDate(start, "dayShort")
+        : formatDate(start, "day")
+
+    return `${head} – ${formatDate(end, "day")}`
+  }
 
   const selected: DateRange | undefined = anchor
     ? { from: anchor, to: anchor }
@@ -196,7 +192,7 @@ function DateRangePicker({
           />
         }
       >
-        {from && to ? formatRange(from, to) : placeholder}
+        {from && to ? formatRange(from, to) : (placeholder ?? t("common.pickADateRange"))}
         <RiCalendar2Line className="text-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent
@@ -211,13 +207,13 @@ function DateRangePicker({
 
               return (
                 <Button
-                  key={preset.label}
+                  key={preset.labelKey}
                   variant={active ? "secondary" : "ghost"}
                   size="sm"
                   className="justify-start font-normal tracking-normal normal-case shadow-none active:translate-x-0 active:translate-y-0"
                   onClick={() => commit(range)}
                 >
-                  {preset.label}
+                  {t(preset.labelKey)}
                 </Button>
               )
             })}

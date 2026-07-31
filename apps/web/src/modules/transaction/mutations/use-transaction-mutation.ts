@@ -1,5 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { trpc } from "@/utils/trpc";
+import { t } from "@budget-manager/i18n";
 import type {
   CardPaymentFormDto,
   CardPurchaseFormDto,
@@ -24,7 +25,7 @@ const TRANSACTION_INVALIDATIONS = [
 export function useCreateTransactionMutation() {
   return useApiMutation<unknown, TransactionFormDto>({
     mutationFn: trpc.transaction.create.mutationOptions().mutationFn,
-    successMessage: "Transaction created successfully",
+    successMessage: t("transaction.toast.created"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }
@@ -32,7 +33,7 @@ export function useCreateTransactionMutation() {
 export function useUpdateTransactionMutation() {
   return useApiMutation<unknown, TransactionFormDto & { id: string }>({
     mutationFn: trpc.transaction.update.mutationOptions().mutationFn,
-    successMessage: "Transaction updated successfully",
+    successMessage: t("transaction.toast.updated"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }
@@ -40,7 +41,7 @@ export function useUpdateTransactionMutation() {
 export function useCreateTransferMutation() {
   return useApiMutation<unknown, TransferFormDto>({
     mutationFn: trpc.transaction.createTransfer.mutationOptions().mutationFn,
-    successMessage: "Transfer created successfully",
+    successMessage: t("transfer.toast.created"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }
@@ -48,7 +49,7 @@ export function useCreateTransferMutation() {
 export function useUpdateTransferMutation() {
   return useApiMutation<unknown, TransferFormDto & { transferGroupId: string }>({
     mutationFn: trpc.transaction.updateTransfer.mutationOptions().mutationFn,
-    successMessage: "Transfer updated successfully",
+    successMessage: t("transfer.toast.updated"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }
@@ -56,7 +57,7 @@ export function useUpdateTransferMutation() {
 export function useDeleteTransferMutation() {
   return useApiMutation<unknown, TransferGroupIdDto>({
     mutationFn: trpc.transaction.deleteTransfer.mutationOptions().mutationFn,
-    successMessage: "Transfer deleted successfully",
+    successMessage: t("transfer.toast.deleted"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }
@@ -64,7 +65,7 @@ export function useDeleteTransferMutation() {
 export function useMarkTransactionPaidMutation() {
   return useApiMutation<unknown, DeleteTransactionDto>({
     mutationFn: trpc.transaction.markPaid.mutationOptions().mutationFn,
-    successMessage: "Transaction marked as paid",
+    successMessage: t("transaction.toast.markedPaid"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }
@@ -72,7 +73,7 @@ export function useMarkTransactionPaidMutation() {
 export function useDeleteTransactionMutation() {
   return useApiMutation<unknown, DeleteTransactionDto>({
     mutationFn: trpc.transaction.delete.mutationOptions().mutationFn,
-    successMessage: "Transaction deleted successfully",
+    successMessage: t("transaction.toast.deleted"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }
@@ -80,7 +81,7 @@ export function useDeleteTransactionMutation() {
 export function useCreateCardPurchaseMutation() {
   return useApiMutation<unknown, CardPurchaseFormDto>({
     mutationFn: trpc.transaction.createCardPurchase.mutationOptions().mutationFn,
-    successMessage: "Card purchase recorded",
+    successMessage: t("cardPurchase.toast.created"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }
@@ -88,7 +89,7 @@ export function useCreateCardPurchaseMutation() {
 export function useUpdateCardPurchaseMutation() {
   return useApiMutation<unknown, CardPurchaseFormDto & { id: string }>({
     mutationFn: trpc.transaction.updateCardPurchase.mutationOptions().mutationFn,
-    successMessage: "Card purchase updated",
+    successMessage: t("cardPurchase.toast.updated"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }
@@ -96,7 +97,7 @@ export function useUpdateCardPurchaseMutation() {
 export function useCreateCardPaymentMutation() {
   return useApiMutation<unknown, CardPaymentFormDto>({
     mutationFn: trpc.transaction.createCardPayment.mutationOptions().mutationFn,
-    successMessage: "Card payment recorded",
+    successMessage: t("cardPayment.toast.created"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }
@@ -104,7 +105,7 @@ export function useCreateCardPaymentMutation() {
 export function useUpdateCardPaymentMutation() {
   return useApiMutation<unknown, CardPaymentFormDto & { id: string }>({
     mutationFn: trpc.transaction.updateCardPayment.mutationOptions().mutationFn,
-    successMessage: "Card payment updated",
+    successMessage: t("cardPayment.toast.updated"),
     invalidateQueries: TRANSACTION_INVALIDATIONS,
   });
 }

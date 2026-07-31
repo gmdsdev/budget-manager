@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@budget-manager/ui/components/card";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { CategoryLabel } from "@/modules/category/components/category-dot";
 import { categoryColorVarOrNeutral } from "@/modules/category/colors";
@@ -26,6 +27,7 @@ export function SpendingBreakdown({
   monthLabel: string;
   expenseCents: number;
 }) {
+  const t = useTranslate();
   const largest = categories[0]?.amountCents ?? 0;
   const ranked = categories.reduce((total, category) => total + category.amountCents, 0);
   const rest = expenseCents - ranked;
@@ -33,15 +35,15 @@ export function SpendingBreakdown({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top spending categories</CardTitle>
+        <CardTitle>{t("dashboard.spending.title")}</CardTitle>
         <CardDescription>
-          Where {monthLabel}&apos;s money went, largest first.
+          {t("dashboard.spending.description", { month: monthLabel })}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {categories.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            No spending recorded this month.
+            {t("dashboard.spending.empty")}
           </p>
         ) : (
           <ul className="space-y-3">
@@ -63,7 +65,14 @@ export function SpendingBreakdown({
                   <div className="flex flex-row items-baseline justify-between gap-4">
                     <CategoryLabel
                       color={category.color}
-                      name={category.name}
+                      // The bucket with no category has no name to return, so
+                      // the API's placeholder is a UI word the server cannot
+                      // localize. The client owns that one label.
+                      name={
+                        category.categoryId
+                          ? category.name
+                          : t("category.uncategorized")
+                      }
                     />
                     <span className="shrink-0 tabular-nums">
                       {formatMinorUnits(category.amountCents, currencyCode)}
@@ -95,7 +104,9 @@ export function SpendingBreakdown({
 
       {rest > 0 && (
         <CardContent className="text-xs text-muted-foreground">
-          {formatMinorUnits(rest, currencyCode)} more across other categories.
+          {t("dashboard.spending.rest", {
+            amount: formatMinorUnits(rest, currencyCode),
+          })}
         </CardContent>
       )}
     </Card>

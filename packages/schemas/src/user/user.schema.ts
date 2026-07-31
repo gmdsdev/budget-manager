@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE, Locale, t, toLocale } from "@budget-manager/i18n";
 import { z } from "zod";
 import { WalletCurrency } from "../wallet/wallet.schema";
 
@@ -11,25 +12,24 @@ export const DEFAULT_PREFERRED_CURRENCY = WalletCurrency.BRL;
 
 export const PreferredCurrencySchema = z.enum(Object.values(WalletCurrency));
 
+export const PreferredLocaleSchema = z.enum(Object.values(Locale));
+
 export const UserNameSchema = z
   .string()
   .trim()
-  .min(1, "Name is required")
-  .max(
-    USER_NAME_MAX_LENGTH,
-    `Name must be ${USER_NAME_MAX_LENGTH} characters or fewer`,
-  );
+  .min(1, { error: () => t("validation.nameRequired") })
+  .max(USER_NAME_MAX_LENGTH, {
+    error: () => t("validation.nameTooLong", { max: USER_NAME_MAX_LENGTH }),
+  });
 
 export const NewPasswordSchema = z
   .string()
-  .min(
-    PASSWORD_MIN_LENGTH,
-    `Password must be at least ${PASSWORD_MIN_LENGTH} characters`,
-  )
-  .max(
-    PASSWORD_MAX_LENGTH,
-    `Password must be ${PASSWORD_MAX_LENGTH} characters or fewer`,
-  );
+  .min(PASSWORD_MIN_LENGTH, {
+    error: () => t("validation.passwordTooShort", { min: PASSWORD_MIN_LENGTH }),
+  })
+  .max(PASSWORD_MAX_LENGTH, {
+    error: () => t("validation.passwordTooLong", { max: PASSWORD_MAX_LENGTH }),
+  });
 
 export const ProfileFormSchema = z.object({
   name: UserNameSchema,
@@ -39,16 +39,20 @@ export type ProfileFormDto = z.infer<typeof ProfileFormSchema>;
 
 export const ChangePasswordFormSchema = z
   .object({
-    currentPassword: z.string().min(1, "Current password is required"),
+    currentPassword: z
+      .string()
+      .min(1, { error: () => t("validation.currentPasswordRequired") }),
     newPassword: NewPasswordSchema,
-    confirmPassword: z.string().min(1, "Confirm your new password"),
+    confirmPassword: z
+      .string()
+      .min(1, { error: () => t("validation.confirmYourNewPassword") }),
   })
   .refine((values) => values.newPassword !== values.currentPassword, {
-    error: "New password must be different from the current one",
+    error: () => t("validation.newPasswordMustDiffer"),
     path: ["newPassword"],
   })
   .refine((values) => values.confirmPassword === values.newPassword, {
-    error: "Passwords do not match",
+    error: () => t("validation.passwordsDoNotMatch"),
     path: ["confirmPassword"],
   });
 
@@ -60,12 +64,35 @@ export const PreferencesFormSchema = z.object({
 
 export type PreferencesFormDto = z.infer<typeof PreferencesFormSchema>;
 
+export const LanguageFormSchema = z.object({
+  preferredLocale: PreferredLocaleSchema,
+});
+
+export type LanguageFormDto = z.infer<typeof LanguageFormSchema>;
+
+/**
+ * Declared once and spread into both the better-auth server instance and the
+ * client's `inferAdditionalFields`, so a field's name, optionality and default
+ * cannot drift between the two.
+ *
+ * `preferredLocale` rides here rather than in localStorage alone because a
+ * language is a property of the person, not of the browser: signing in on a
+ * second device must not put the app back into English. The web app still
+ * mirrors it locally, which is what covers the login screen and the first
+ * paint, before any session exists.
+ */
 export const USER_ADDITIONAL_FIELDS = {
   preferredCurrency: {
     type: "string",
     required: false,
     defaultValue: DEFAULT_PREFERRED_CURRENCY,
     validator: { input: PreferredCurrencySchema },
+  },
+  preferredLocale: {
+    type: "string",
+    required: false,
+    defaultValue: DEFAULT_LOCALE,
+    validator: { input: PreferredLocaleSchema },
   },
 } as const;
 
@@ -78,3 +105,10 @@ export function toPreferredCurrency(
     ? (value as WalletCurrency)
     : DEFAULT_PREFERRED_CURRENCY;
 }
+
+/**
+ * Narrows a stored locale the way {@link toPreferredCurrency} narrows a stored
+ * currency: a value that is no longer in {@link Locale} must not reach a
+ * `<Select>` as a value with no matching item.
+ */
+export const toPreferredLocale = toLocale;

@@ -1,3 +1,4 @@
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -23,6 +24,7 @@ export function EditRecurringDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslate();
   const formId = useId();
   const updateMutation = useUpdateRecurringMutation();
 
@@ -64,10 +66,9 @@ export function EditRecurringDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Edit Series</DialogTitle>
+          <DialogTitle>{t("recurring.edit.title")}</DialogTitle>
           <DialogDescription>
-            Scheduled transactions ahead of today are re-created. Anything
-            already settled or in the past is left alone.
+            {t("recurring.edit.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -76,11 +77,13 @@ export function EditRecurringDialog({
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline">Cancel</Button>} />
+          <DialogClose
+            render={<Button variant="outline">{t("common.cancel")}</Button>}
+          />
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" form={formId} disabled={isSubmitting}>
-                {isSubmitting ? "Saving…" : "Save changes"}
+                {isSubmitting ? t("common.saving") : t("common.saveChanges")}
               </Button>
             )}
           </form.Subscribe>

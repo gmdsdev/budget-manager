@@ -1,14 +1,16 @@
 import { Button } from "@budget-manager/ui/components/button";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { type ErrorComponentProps, useRouter } from "@tanstack/react-router";
 
 export function RouteError({ error, reset }: ErrorComponentProps) {
+  const t = useTranslate();
   const router = useRouter();
 
   return (
     <div role="alert" className="mx-auto max-w-md py-16 text-center">
-      <h1 className="text-lg font-semibold">Something went wrong</h1>
+      <h1 className="text-lg font-semibold">{t("common.somethingWentWrong")}</h1>
       <p className="mt-2 text-xs text-muted-foreground">
-        {import.meta.env.DEV ? error.message : "Please try again."}
+        {import.meta.env.DEV ? error.message : t("common.pleaseTryAgain")}
       </p>
       <Button
         className="mt-4"
@@ -17,7 +19,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
           void router.invalidate();
         }}
       >
-        Try again
+        {t("common.tryAgain")}
       </Button>
     </div>
   );

@@ -1,3 +1,4 @@
+import { t } from "@budget-manager/i18n";
 import { z } from "zod";
 import {
   TRANSACTION_NAME_MAX_LENGTH,
@@ -13,13 +14,6 @@ export enum RecurrenceType {
   MONTHLY = "monthly",
   YEARLY = "yearly",
 }
-
-export const RecurrenceTypeLabelMap: Record<RecurrenceType, string> = {
-  [RecurrenceType.FIXED]: "Fixed installments",
-  [RecurrenceType.WEEKLY]: "Weekly",
-  [RecurrenceType.MONTHLY]: "Monthly",
-  [RecurrenceType.YEARLY]: "Yearly",
-};
 
 /** The kinds a recurring series can produce. */
 export const RECURRING_KINDS = [
@@ -39,21 +33,16 @@ export const MAX_INSTALLMENTS = 360;
  */
 export const RECURRENCE_YEARS = 50;
 
-export const RECURRING_ACCOUNT_MESSAGE =
-  "Pick a wallet for income and expenses, or a card for card purchases";
-
-export const RECURRING_INSTALLMENTS_MESSAGE = "Fixed installments need a count";
-
 export const RecurringFieldsSchema = z.object({
   kind: z.enum(RECURRING_KINDS),
   name: z
     .string()
     .trim()
-    .min(1, "Name is required")
-    .max(
-      TRANSACTION_NAME_MAX_LENGTH,
-      `Name must be ${TRANSACTION_NAME_MAX_LENGTH} characters or fewer`,
-    ),
+    .min(1, { error: () => t("validation.nameRequired") })
+    .max(TRANSACTION_NAME_MAX_LENGTH, {
+      error: () =>
+        t("validation.nameTooLong", { max: TRANSACTION_NAME_MAX_LENGTH }),
+    }),
   amountCents: TransactionAmountSchema,
   categoryId: z.uuid().nullable(),
   walletId: z.uuid().nullable(),
@@ -61,24 +50,28 @@ export const RecurringFieldsSchema = z.object({
   notes: z
     .string()
     .trim()
-    .max(
-      TRANSACTION_NOTES_MAX_LENGTH,
-      `Notes must be ${TRANSACTION_NOTES_MAX_LENGTH} characters or fewer`,
-    )
+    .max(TRANSACTION_NOTES_MAX_LENGTH, {
+      error: () =>
+        t("validation.notesTooLong", { max: TRANSACTION_NOTES_MAX_LENGTH }),
+    })
     .nullable(),
   recurrenceType: z.enum(Object.values(RecurrenceType)),
   interval: z
     .number()
-    .int("Must be a whole number")
-    .min(1, "Must be at least 1")
-    .max(MAX_INTERVAL, `Must be ${MAX_INTERVAL} or fewer`),
+    .int({ error: () => t("validation.wholeNumber") })
+    .min(1, { error: () => t("validation.atLeast", { min: 1 }) })
+    .max(MAX_INTERVAL, {
+      error: () => t("validation.atMost", { max: MAX_INTERVAL }),
+    }),
   installments: z
     .number()
-    .int("Must be a whole number")
-    .min(1, "Must be at least 1")
-    .max(MAX_INSTALLMENTS, `Must be ${MAX_INSTALLMENTS} or fewer`)
+    .int({ error: () => t("validation.wholeNumber") })
+    .min(1, { error: () => t("validation.atLeast", { min: 1 }) })
+    .max(MAX_INSTALLMENTS, {
+      error: () => t("validation.atMost", { max: MAX_INSTALLMENTS }),
+    })
     .nullable(),
-  startsOn: z.iso.date("Start date is required"),
+  startsOn: z.iso.date({ error: () => t("validation.startDateRequired") }),
 });
 
 /** A card purchase bills a card; income and expenses move a wallet. */
@@ -99,9 +92,9 @@ export const hasInstallmentsWhenFixed = (value: {
 
 export const RecurringFormSchema = RecurringFieldsSchema.refine(
   hasMatchingAccount,
-  { message: RECURRING_ACCOUNT_MESSAGE, path: ["walletId"] },
+  { error: () => t("validation.recurringAccount"), path: ["walletId"] },
 ).refine(hasInstallmentsWhenFixed, {
-  message: RECURRING_INSTALLMENTS_MESSAGE,
+  error: () => t("validation.recurringInstallments"),
   path: ["installments"],
 });
 

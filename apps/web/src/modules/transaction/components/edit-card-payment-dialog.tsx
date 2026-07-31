@@ -1,3 +1,4 @@
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -23,6 +24,7 @@ export function EditCardPaymentDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslate();
   const formId = useId();
   const updateMutation = useUpdateCardPaymentMutation();
 
@@ -61,9 +63,9 @@ export function EditCardPaymentDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Edit Card Payment</DialogTitle>
+          <DialogTitle>{t("cardPayment.edit.title")}</DialogTitle>
           <DialogDescription>
-            Update the details for “{transaction.name}”.
+            {t("cardPayment.edit.description", { name: transaction.name })}
           </DialogDescription>
         </DialogHeader>
 
@@ -72,11 +74,13 @@ export function EditCardPaymentDialog({
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline">Cancel</Button>} />
+          <DialogClose
+            render={<Button variant="outline">{t("common.cancel")}</Button>}
+          />
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" form={formId} disabled={isSubmitting}>
-                {isSubmitting ? "Saving…" : "Save changes"}
+                {isSubmitting ? t("common.saving") : t("common.saveChanges")}
               </Button>
             )}
           </form.Subscribe>

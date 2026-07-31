@@ -11,7 +11,8 @@ import {
   EmptyTitle,
 } from "@budget-manager/ui/components/empty";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
-import { creditCardColumns } from "../components/credit-card-list/columns";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { useCreditCardColumns } from "../components/credit-card-list/columns";
 import { CreditCardFilters } from "../components/credit-card-list/credit-card-filters";
 import { CreateCreditCardDialog } from "../components/create-credit-card-dialog";
 import { useCreditCardsQuery } from "../queries/use-credit-cards-query";
@@ -22,6 +23,8 @@ import {
 } from "../types";
 
 export default function ListCreditCardsPage() {
+  const t = useTranslate();
+  const columns = useCreditCardColumns();
   const { filters, page, setFilters, setPage } =
     usePagedFilters<CreditCardFiltersState>(EMPTY_CREDIT_CARD_FILTERS);
 
@@ -33,14 +36,16 @@ export default function ListCreditCardsPage() {
   return (
     <div>
       <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">Credit Cards</h1>
+        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
+          {t("creditCard.title")}
+        </h1>
         <CreateCreditCardDialog />
       </header>
 
       <CreditCardFilters filters={filters} onFiltersChange={setFilters} />
 
       {isPending ? (
-        <div className="space-y-2" role="status" aria-label="Loading cards">
+        <div className="space-y-2" role="status" aria-label={t("creditCard.loading")}>
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
@@ -48,34 +53,34 @@ export default function ListCreditCardsPage() {
       ) : isError ? (
         <Empty className="border">
           <EmptyHeader>
-            <EmptyTitle>Couldn't load your cards</EmptyTitle>
+            <EmptyTitle>{t("creditCard.loadFailed")}</EmptyTitle>
             <EmptyDescription>{getErrorMessage(error)}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={() => void refetch()} disabled={isRefetching}>
-              {isRefetching ? "Retrying…" : "Retry"}
+              {isRefetching ? t("common.retrying") : t("common.retry")}
             </Button>
           </EmptyContent>
         </Empty>
       ) : (
         <>
           <DataTable
-            columns={creditCardColumns}
+            columns={columns}
             data={data.rows}
             getRowId={(card) => card.id}
-            caption="Your credit cards"
+            caption={t("creditCard.caption")}
             emptyState={
               <Empty>
                 <EmptyHeader>
                   <EmptyTitle>
                     {isFiltered
-                      ? "No cards match these filters"
-                      : "No cards yet"}
+                      ? t("creditCard.emptyFiltered.title")
+                      : t("creditCard.empty.title")}
                   </EmptyTitle>
                   <EmptyDescription>
                     {isFiltered
-                      ? "Try a different currency or billing wallet, or clear a filter."
-                      : "Add a card to track its limit and what you owe on it."}
+                      ? t("creditCard.emptyFiltered.description")
+                      : t("creditCard.empty.description")}
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>
@@ -86,7 +91,7 @@ export default function ListCreditCardsPage() {
             total={data.total}
             onPageChange={setPage}
             isFetching={isFetching}
-            label="cards"
+            resource="cards"
           />
         </>
       )}

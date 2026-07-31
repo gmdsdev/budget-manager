@@ -1,8 +1,6 @@
-import {
-  type CategoryColor,
-  CategoryType,
-  CategoryTypeLabelMap,
-} from "@budget-manager/schemas";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { type CategoryColor, CategoryType } from "@budget-manager/schemas";
 import {
   Field,
   FieldError,
@@ -20,16 +18,19 @@ import {
 import type { UseCategoryFormReturnType } from "../hooks/use-category-form";
 import { CategoryColorPicker } from "./category-color-picker";
 
-const CATEGORY_TYPE_ITEMS = Object.values(CategoryType).map((type) => ({
-  label: CategoryTypeLabelMap[type],
-  value: type,
-}));
-
 export function CategoryFormFields({
   form,
 }: {
   form: UseCategoryFormReturnType;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const typeItems = Object.values(CategoryType).map((type) => ({
+    label: labels.categoryType(type),
+    value: type,
+  }));
+
   return (
     <FieldGroup>
       <form.Field name="name">
@@ -40,7 +41,7 @@ export function CategoryFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Name</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.name")}</FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -68,9 +69,9 @@ export function CategoryFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Type</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.type")}</FieldLabel>
               <Select
-                items={CATEGORY_TYPE_ITEMS}
+                items={typeItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -85,7 +86,7 @@ export function CategoryFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORY_TYPE_ITEMS.map((item) => (
+                  {typeItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -109,7 +110,9 @@ export function CategoryFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Color</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("category.field.color")}
+              </FieldLabel>
               <CategoryColorPicker
                 id={field.name}
                 value={field.state.value}

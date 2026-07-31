@@ -1,3 +1,4 @@
+import type { MessageKey } from "@budget-manager/i18n"
 import {
   addMonths,
   endOfMonth,
@@ -16,8 +17,16 @@ const CAPTION_YEARS = 10
 
 export type DateRangeValue = { from: string; to: string }
 
+/**
+ * Derived rather than written out: it stays the exact set of preset messages,
+ * and because none of them takes a placeholder the picker can call `t` with the
+ * key alone.
+ */
+export type DateRangePresetKey = Extract<MessageKey, `dateRange.${string}`>
+
 export type DateRangePreset = {
-  label: string
+  /** Resolved by the picker, so a preset name follows the app's language. */
+  labelKey: DateRangePresetKey
   getRange: (today?: Date) => DateRangeValue
 }
 
@@ -45,24 +54,24 @@ export function currentMonthRange(today = new Date()): DateRangeValue {
 
 export const DATE_RANGE_PRESETS: DateRangePreset[] = [
   {
-    label: "This month",
+    labelKey: "dateRange.thisMonth",
     getRange: (today = new Date()) => currentMonthRange(today),
   },
   {
-    label: "Last month",
+    labelKey: "dateRange.lastMonth",
     getRange: (today = new Date()) => currentMonthRange(subMonths(today, 1)),
   },
   {
-    label: "Last 3 months",
+    labelKey: "dateRange.last3Months",
     getRange: (today = new Date()) =>
       range(startOfMonth(subMonths(today, 2)), endOfMonth(today)),
   },
   {
-    label: "This year",
+    labelKey: "dateRange.thisYear",
     getRange: (today = new Date()) => range(startOfYear(today), endOfYear(today)),
   },
   {
-    label: "Next 12 months",
+    labelKey: "dateRange.next12Months",
     getRange: (today = new Date()) =>
       range(startOfMonth(today), endOfMonth(addMonths(today, 11))),
   },

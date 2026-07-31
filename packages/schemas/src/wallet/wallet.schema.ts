@@ -1,3 +1,4 @@
+import { t } from "@budget-manager/i18n";
 import {
   MONEY_MAX_MINOR_UNITS,
   MONEY_MIN_MINOR_UNITS,
@@ -11,13 +12,6 @@ export enum WalletType {
   CASH = "cash",
 }
 
-export const WalletTypeLabelMap: Record<WalletType, string> = {
-  [WalletType.CHECKING]: "Checking",
-  [WalletType.SAVINGS]: "Savings",
-  [WalletType.INVESTMENTS]: "Investments",
-  [WalletType.CASH]: "Cash",
-};
-
 export enum WalletCurrency {
   BRL = "BRL",
   USD = "USD",
@@ -28,21 +22,15 @@ export enum WalletCurrency {
   CNY = "CNY",
 }
 
-export const WalletCurrencyLabelMap: Record<WalletCurrency, string> = {
-  [WalletCurrency.BRL]: "BRL - Brazilian Real",
-  [WalletCurrency.USD]: "USD - United States Dollar",
-  [WalletCurrency.EUR]: "EUR - Euro",
-  [WalletCurrency.GBP]: "GBP - British Pound",
-  [WalletCurrency.JPY]: "JPY - Japanese Yen",
-  [WalletCurrency.KRW]: "KRW - South Korean Won",
-  [WalletCurrency.CNY]: "CNY - Chinese Yuan",
-};
+export function isWalletCurrency(value: string): value is WalletCurrency {
+  return (Object.values(WalletCurrency) as string[]).includes(value);
+}
 
 export const WALLET_NAME_MAX_LENGTH = 120;
 
 export const MoneyMinorUnitsSchema = z
   .number()
-  .int("Must be a whole number")
+  .int({ error: () => t("validation.wholeNumber") })
   .min(MONEY_MIN_MINOR_UNITS)
   .max(MONEY_MAX_MINOR_UNITS);
 
@@ -51,11 +39,10 @@ export const WalletSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Name is required")
-    .max(
-      WALLET_NAME_MAX_LENGTH,
-      `Name must be ${WALLET_NAME_MAX_LENGTH} characters or fewer`,
-    ),
+    .min(1, { error: () => t("validation.nameRequired") })
+    .max(WALLET_NAME_MAX_LENGTH, {
+      error: () => t("validation.nameTooLong", { max: WALLET_NAME_MAX_LENGTH }),
+    }),
   type: z.enum(Object.values(WalletType)),
   openingBalanceCents: MoneyMinorUnitsSchema,
   currencyCode: z.enum(Object.values(WalletCurrency)),

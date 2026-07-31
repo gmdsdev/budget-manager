@@ -1,3 +1,5 @@
+import { t } from "@budget-manager/i18n";
+
 export class AuthActionError extends Error {
   constructor(message: string) {
     super(message);
@@ -17,7 +19,7 @@ export async function runAuthAction<TData>(
 
   if (error) {
     throw new AuthActionError(
-      error.message ?? error.statusText ?? "Something went wrong.",
+      error.message ?? error.statusText ?? t("error.client.generic"),
     );
   }
 

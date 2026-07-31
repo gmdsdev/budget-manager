@@ -11,8 +11,9 @@ import {
   EmptyTitle,
 } from "@budget-manager/ui/components/empty";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { CategoryFilters } from "../components/category-list/category-filters";
-import { categoryColumns } from "../components/category-list/columns";
+import { useCategoryColumns } from "../components/category-list/columns";
 import { CreateCategoryDialog } from "../components/create-category-dialog";
 import { useCategoriesQuery } from "../queries/use-categories-query";
 import {
@@ -22,6 +23,8 @@ import {
 } from "../types";
 
 export default function ListCategoriesPage() {
+  const t = useTranslate();
+  const columns = useCategoryColumns();
   const { filters, page, setFilters, setPage } =
     usePagedFilters<CategoryFiltersState>(EMPTY_CATEGORY_FILTERS);
 
@@ -33,7 +36,9 @@ export default function ListCategoriesPage() {
   return (
     <div>
       <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">Categories</h1>
+        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
+          {t("category.title")}
+        </h1>
         <CreateCategoryDialog />
       </header>
 
@@ -43,7 +48,7 @@ export default function ListCategoriesPage() {
         <div
           className="space-y-2"
           role="status"
-          aria-label="Loading categories"
+          aria-label={t("category.loading")}
         >
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
@@ -52,34 +57,34 @@ export default function ListCategoriesPage() {
       ) : isError ? (
         <Empty className="border">
           <EmptyHeader>
-            <EmptyTitle>Couldn't load your categories</EmptyTitle>
+            <EmptyTitle>{t("category.loadFailed")}</EmptyTitle>
             <EmptyDescription>{getErrorMessage(error)}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={() => void refetch()} disabled={isRefetching}>
-              {isRefetching ? "Retrying…" : "Retry"}
+              {isRefetching ? t("common.retrying") : t("common.retry")}
             </Button>
           </EmptyContent>
         </Empty>
       ) : (
         <>
           <DataTable
-            columns={categoryColumns}
+            columns={columns}
             data={data.rows}
             getRowId={(category) => category.id}
-            caption="Your categories"
+            caption={t("category.caption")}
             emptyState={
               <Empty>
                 <EmptyHeader>
                   <EmptyTitle>
                     {isFiltered
-                      ? "No categories match these filters"
-                      : "No categories yet"}
+                      ? t("category.emptyFiltered.title")
+                      : t("category.empty.title")}
                   </EmptyTitle>
                   <EmptyDescription>
                     {isFiltered
-                      ? "Try a different type or name, or create a category for it."
-                      : "Create your first category to classify your transactions."}
+                      ? t("category.emptyFiltered.description")
+                      : t("category.empty.description")}
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>
@@ -90,7 +95,7 @@ export default function ListCategoriesPage() {
             total={data.total}
             onPageChange={setPage}
             isFetching={isFetching}
-            label="categories"
+            resource="categories"
           />
         </>
       )}

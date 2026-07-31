@@ -1,4 +1,5 @@
 import { TransactionStatus } from "@budget-manager/schemas";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Dialog,
@@ -17,6 +18,7 @@ import { todayAsDateString } from "../utils/date";
 import { CardPurchaseFormFields } from "./card-purchase-form-fields";
 
 export function CreateCardPurchaseDialog() {
+  const t = useTranslate();
   const [open, setOpen] = useState(false);
   const formId = useId();
 
@@ -55,14 +57,15 @@ export function CreateCardPurchaseDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
-        render={<Button variant="outline">Card purchase</Button>}
+        render={
+          <Button variant="outline">{t("cardPurchase.create.trigger")}</Button>
+        }
       />
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Card Purchase</DialogTitle>
+          <DialogTitle>{t("cardPurchase.create.title")}</DialogTitle>
           <DialogDescription>
-            Something bought on a card. It adds to the card's balance, not a
-            wallet's.
+            {t("cardPurchase.create.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -71,11 +74,15 @@ export function CreateCardPurchaseDialog() {
         </form>
 
         <DialogFooter>
-          <DialogClose render={<Button variant="outline">Cancel</Button>} />
+          <DialogClose
+            render={<Button variant="outline">{t("common.cancel")}</Button>}
+          />
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button type="submit" form={formId} disabled={isSubmitting}>
-                {isSubmitting ? "Recording…" : "Record purchase"}
+                {isSubmitting
+                  ? t("cardPurchase.create.submitting")
+                  : t("cardPurchase.create.submit")}
               </Button>
             )}
           </form.Subscribe>

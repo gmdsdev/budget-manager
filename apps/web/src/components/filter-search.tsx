@@ -1,3 +1,4 @@
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Input } from "@budget-manager/ui/components/input";
 import { useEffect, useRef, useState } from "react";
 
@@ -9,13 +10,17 @@ export const FILTER_SEARCH_DELAY_MS = 300;
  * (Clear filters) is mirrored back into the field. The placeholder carries the
  * column name, so the bar needs no visible label; `label` still labels it for
  * assistive tech.
+ *
+ * The default placeholder is built from a message rather than by lowercasing
+ * the label: the column name is already translated, and "Filter by X" is not a
+ * shape every language shares.
  */
 export function FilterSearch({
   id,
   label,
   value,
   onValueChange,
-  placeholder = `Filter by ${label.toLowerCase()}`,
+  placeholder,
   delay = FILTER_SEARCH_DELAY_MS,
 }: {
   id: string;
@@ -25,6 +30,7 @@ export function FilterSearch({
   placeholder?: string;
   delay?: number;
 }) {
+  const t = useTranslate();
   const [text, setText] = useState(value);
   const previousValue = useRef(value);
   const onValueChangeRef = useRef(onValueChange);
@@ -61,7 +67,9 @@ export function FilterSearch({
       // only thing naming the column — gets clipped.
       className="col-span-2 w-full sm:col-span-1 sm:w-48"
       autoComplete="off"
-      placeholder={placeholder}
+      placeholder={
+        placeholder ?? t("common.filterBy", { column: label.toLowerCase() })
+      }
       value={text}
       onChange={(event) => setText(event.currentTarget.value)}
     />

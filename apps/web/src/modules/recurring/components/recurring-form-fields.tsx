@@ -6,14 +6,15 @@ import {
 import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
 import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
+import { useEnumLabels } from "@/lib/enum-labels";
+import type { MessageKey } from "@budget-manager/i18n";
+import { useTranslate } from "@budget-manager/i18n/react";
 import {
   CategoryType,
   RECURRENCE_YEARS,
   RECURRING_KINDS,
   RecurrenceType,
-  RecurrenceTypeLabelMap,
   TransactionKind,
-  TransactionKindLabelMap,
   type RecurringKind,
 } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
@@ -37,24 +38,14 @@ import { Textarea } from "@budget-manager/ui/components/textarea";
 import { useSelector } from "@tanstack/react-form";
 import type { UseRecurringFormReturnType } from "../hooks/use-recurring-form";
 
-const KIND_ITEMS = RECURRING_KINDS.map((kind) => ({
-  label: TransactionKindLabelMap[kind],
-  value: kind,
-}));
-
-const RECURRENCE_ITEMS = Object.values(RecurrenceType).map((type) => ({
-  label: RecurrenceTypeLabelMap[type],
-  value: type,
-}));
-
 const NONE = "none";
 
-const INTERVAL_UNIT: Record<RecurrenceType, string> = {
-  [RecurrenceType.FIXED]: "months",
-  [RecurrenceType.WEEKLY]: "weeks",
-  [RecurrenceType.MONTHLY]: "months",
-  [RecurrenceType.YEARLY]: "years",
-};
+const INTERVAL_UNIT = {
+  [RecurrenceType.FIXED]: "recurring.unit.months",
+  [RecurrenceType.WEEKLY]: "recurring.unit.weeks",
+  [RecurrenceType.MONTHLY]: "recurring.unit.months",
+  [RecurrenceType.YEARLY]: "recurring.unit.years",
+} as const satisfies Record<RecurrenceType, MessageKey>;
 
 function invalid(field: {
   state: { meta: { isTouched: boolean; isValid: boolean } };
@@ -67,6 +58,8 @@ export function RecurringFormFields({
 }: {
   form: UseRecurringFormReturnType;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
   const kind = useSelector(form.store, (state) => state.values.kind);
   const recurrenceType = useSelector(
     form.store,
@@ -77,6 +70,16 @@ export function RecurringFormFields({
     form.store,
     (state) => state.values.creditCardId,
   );
+
+  const kindItems = RECURRING_KINDS.map((value) => ({
+    label: labels.transactionKind(value),
+    value,
+  }));
+
+  const recurrenceItems = Object.values(RecurrenceType).map((type) => ({
+    label: labels.recurrenceType(type),
+    value: type,
+  }));
 
   const isCardPurchase = kind === TransactionKind.CREDIT_CARD_PURCHASE;
   const isFixed = recurrenceType === RecurrenceType.FIXED;
@@ -103,7 +106,7 @@ export function RecurringFormFields({
       }));
 
   const categoryItems: CategoryItem[] = [
-    { label: "Uncategorized", value: NONE, color: null },
+    { label: t("category.uncategorized"), value: NONE, color: null },
     ...(categories ?? []).map((category) => ({
       label: category.name,
       value: category.id,
@@ -119,9 +122,11 @@ export function RecurringFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Kind</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("recurring.field.kind")}
+              </FieldLabel>
               <Select
-                items={KIND_ITEMS}
+                items={kindItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -137,7 +142,7 @@ export function RecurringFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {KIND_ITEMS.map((item) => (
+                  {kindItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -156,7 +161,9 @@ export function RecurringFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("common.description")}
+              </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -179,7 +186,7 @@ export function RecurringFormFields({
           return (
             <Field data-invalid={showErrors}>
               <FieldLabel htmlFor={field.name}>
-                {isCardPurchase ? "Card" : "Wallet"}
+                {isCardPurchase ? t("common.card") : t("common.wallet")}
               </FieldLabel>
               <Select<string>
                 items={accountItems}
@@ -195,7 +202,9 @@ export function RecurringFormFields({
                 <SelectTrigger aria-invalid={showErrors || undefined}>
                   <SelectValue
                     placeholder={
-                      isCardPurchase ? "Select a card" : "Select a wallet"
+                      isCardPurchase
+                        ? t("recurring.selectACard")
+                        : t("recurring.selectAWallet")
                     }
                   />
                 </SelectTrigger>
@@ -219,7 +228,9 @@ export function RecurringFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Amount</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("common.amount")}
+              </FieldLabel>
               <CurrencyInput
                 id={field.name}
                 name={field.name}
@@ -230,7 +241,7 @@ export function RecurringFormFields({
                 aria-invalid={showErrors || undefined}
               />
               <FieldDescription>
-                Charged on every occurrence in the series.
+                {t("recurring.field.amountHint")}
               </FieldDescription>
               <FieldError errors={showErrors ? field.state.meta.errors : []} />
             </Field>
@@ -244,9 +255,11 @@ export function RecurringFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Repeats</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("recurring.field.repeats")}
+              </FieldLabel>
               <Select
-                items={RECURRENCE_ITEMS}
+                items={recurrenceItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -265,7 +278,7 @@ export function RecurringFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {RECURRENCE_ITEMS.map((item) => (
+                  {recurrenceItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -274,8 +287,10 @@ export function RecurringFormFields({
               </Select>
               <FieldDescription>
                 {isFixed
-                  ? "A set number of monthly installments."
-                  : `Repeats for the next ${RECURRENCE_YEARS} years; a year is materialized at a time.`}
+                  ? t("recurring.field.fixedHint")
+                  : t("recurring.field.openEndedHint", {
+                      years: RECURRENCE_YEARS,
+                    })}
               </FieldDescription>
               <FieldError errors={showErrors ? field.state.meta.errors : []} />
             </Field>
@@ -289,7 +304,9 @@ export function RecurringFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Every</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("recurring.field.every")}
+              </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -303,7 +320,9 @@ export function RecurringFormFields({
                 aria-invalid={showErrors || undefined}
               />
               <FieldDescription>
-                {INTERVAL_UNIT[recurrenceType]} between occurrences.
+                {t("recurring.field.intervalHint", {
+                  unit: t(INTERVAL_UNIT[recurrenceType]),
+                })}
               </FieldDescription>
               <FieldError errors={showErrors ? field.state.meta.errors : []} />
             </Field>
@@ -318,7 +337,9 @@ export function RecurringFormFields({
 
             return (
               <Field data-invalid={showErrors}>
-                <FieldLabel htmlFor={field.name}>Installments</FieldLabel>
+                <FieldLabel htmlFor={field.name}>
+                  {t("recurring.field.installments")}
+                </FieldLabel>
                 <Input
                   id={field.name}
                   name={field.name}
@@ -346,7 +367,9 @@ export function RecurringFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Starts on</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("recurring.field.startsOn")}
+              </FieldLabel>
               <DatePicker
                 id={field.name}
                 name={field.name}
@@ -367,7 +390,9 @@ export function RecurringFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Category</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("common.category")}
+              </FieldLabel>
               <Select
                 items={categoryItems}
                 id={field.name}
@@ -408,7 +433,7 @@ export function RecurringFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.notes")}</FieldLabel>
               <Textarea
                 id={field.name}
                 name={field.name}

@@ -1,5 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { trpc } from "@/utils/trpc";
+import { t } from "@budget-manager/i18n";
 import type {
   RecurringFormDto,
   RecurringIdDto,
@@ -19,7 +20,7 @@ const RECURRING_INVALIDATIONS = [
 export function useCreateRecurringMutation() {
   return useApiMutation<unknown, RecurringFormDto>({
     mutationFn: trpc.recurring.create.mutationOptions().mutationFn,
-    successMessage: "Recurring series created",
+    successMessage: t("recurring.toast.created"),
     invalidateQueries: RECURRING_INVALIDATIONS,
   });
 }
@@ -27,7 +28,7 @@ export function useCreateRecurringMutation() {
 export function useUpdateRecurringMutation() {
   return useApiMutation<unknown, RecurringFormDto & { id: string }>({
     mutationFn: trpc.recurring.update.mutationOptions().mutationFn,
-    successMessage: "Recurring series updated",
+    successMessage: t("recurring.toast.updated"),
     invalidateQueries: RECURRING_INVALIDATIONS,
   });
 }
@@ -42,7 +43,7 @@ export function useSetRecurringActiveMutation() {
 export function useDeleteRecurringMutation() {
   return useApiMutation<unknown, RecurringIdDto>({
     mutationFn: trpc.recurring.delete.mutationOptions().mutationFn,
-    successMessage: "Recurring series deleted",
+    successMessage: t("recurring.toast.deleted"),
     invalidateQueries: RECURRING_INVALIDATIONS,
   });
 }

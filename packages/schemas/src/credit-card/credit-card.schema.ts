@@ -1,3 +1,4 @@
+import { t } from "@budget-manager/i18n";
 import { z } from "zod";
 import { MoneyMinorUnitsSchema, WalletCurrency } from "../wallet/wallet.schema";
 
@@ -7,23 +8,28 @@ export const CREDIT_CARD_NAME_MAX_LENGTH = 120;
 export const CYCLE_DAY_MIN = 1;
 export const CYCLE_DAY_MAX = 28;
 
+const cycleDayRange = () =>
+  t("validation.cycleDayRange", { min: CYCLE_DAY_MIN, max: CYCLE_DAY_MAX });
+
 const CycleDaySchema = z
   .number()
-  .int("Must be a whole number")
-  .min(CYCLE_DAY_MIN, `Must be between ${CYCLE_DAY_MIN} and ${CYCLE_DAY_MAX}`)
-  .max(CYCLE_DAY_MAX, `Must be between ${CYCLE_DAY_MIN} and ${CYCLE_DAY_MAX}`);
+  .int({ error: () => t("validation.wholeNumber") })
+  .min(CYCLE_DAY_MIN, { error: cycleDayRange })
+  .max(CYCLE_DAY_MAX, { error: cycleDayRange });
 
 export const CreditCardSchema = z.object({
   id: z.uuid(),
   name: z
     .string()
     .trim()
-    .min(1, "Name is required")
-    .max(
-      CREDIT_CARD_NAME_MAX_LENGTH,
-      `Name must be ${CREDIT_CARD_NAME_MAX_LENGTH} characters or fewer`,
-    ),
-  limitCents: MoneyMinorUnitsSchema.min(1, "Limit must be greater than zero"),
+    .min(1, { error: () => t("validation.nameRequired") })
+    .max(CREDIT_CARD_NAME_MAX_LENGTH, {
+      error: () =>
+        t("validation.nameTooLong", { max: CREDIT_CARD_NAME_MAX_LENGTH }),
+    }),
+  limitCents: MoneyMinorUnitsSchema.min(1, {
+    error: () => t("validation.limitGreaterThanZero"),
+  }),
   closeDay: CycleDaySchema,
   dueDay: CycleDaySchema,
   defaultBillingWalletId: z.uuid().nullable(),

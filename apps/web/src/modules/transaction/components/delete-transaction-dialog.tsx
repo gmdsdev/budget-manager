@@ -8,10 +8,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@budget-manager/ui/components/alert-dialog";
+import { useI18n } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { useDeleteTransactionMutation } from "../mutations/use-transaction-mutation";
 import type { TransactionRow } from "../types";
-import { formatDateString } from "../utils/date";
 
 export function DeleteTransactionDialog({
   transaction,
@@ -22,6 +22,7 @@ export function DeleteTransactionDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t, formatDateString } = useI18n();
   const deleteMutation = useDeleteTransactionMutation();
 
   function handleDelete() {
@@ -39,32 +40,36 @@ export function DeleteTransactionDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete “{transaction.name}”?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("transaction.delete.title", { name: transaction.name })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            This{" "}
-            {formatMinorUnits(
-              transaction.amountCents,
-              transaction.walletCurrencyCode ?? "BRL",
-            )}{" "}
-            {transaction.transferGroupId ? "transfer" : "transaction"} from{" "}
-            {formatDateString(transaction.occurrenceDate)} will be permanently
-            removed
-            {transaction.transferGroupId ? ", including both of its legs" : ""}.
-            This cannot be undone.
+            {t(
+              transaction.transferGroupId
+                ? "transaction.delete.descriptionTransfer"
+                : "transaction.delete.description",
+              {
+                amount: formatMinorUnits(
+                  transaction.amountCents,
+                  transaction.walletCurrencyCode ?? "BRL",
+                ),
+                date: formatDateString(transaction.occurrenceDate, "numeric"),
+              },
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={deleteMutation.isPending}
             onClick={handleDelete}
           >
             {deleteMutation.isPending
-              ? "Deleting…"
+              ? t("common.deleting")
               : transaction.transferGroupId
-                ? "Delete transfer"
-                : "Delete transaction"}
+                ? t("transaction.delete.submitTransfer")
+                : t("transaction.delete.submit")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@budget-manager/ui/components/alert-dialog";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { useArchiveWalletMutation } from "../mutations/use-wallet-mutation";
 import type { WalletRow } from "../types";
@@ -21,6 +22,7 @@ export function ArchiveWalletDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslate();
   const archiveMutation = useArchiveWalletMutation();
 
   function handleArchive() {
@@ -38,22 +40,28 @@ export function ArchiveWalletDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Archive “{wallet.name}”?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("wallet.archive.title", { name: wallet.name })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            This wallet (opening balance{" "}
-            {formatMinorUnits(wallet.openingBalanceCents, wallet.currencyCode)})
-            will be hidden from your list. Its transaction history is kept, and
-            you can restore it later.
+            {t("wallet.archive.description", {
+              balance: formatMinorUnits(
+                wallet.openingBalanceCents,
+                wallet.currencyCode,
+              ),
+            })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={archiveMutation.isPending}
             onClick={handleArchive}
           >
-            {archiveMutation.isPending ? "Archiving…" : "Archive wallet"}
+            {archiveMutation.isPending
+              ? t("wallet.archive.submitting")
+              : t("wallet.archive.submit")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

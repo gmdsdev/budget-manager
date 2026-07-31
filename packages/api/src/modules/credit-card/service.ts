@@ -65,7 +65,7 @@ export class CreditCardService {
     const card = await this.repository.findById({ id: creditCardId, userId });
 
     if (!card) {
-      throw new NotFoundError("Credit card");
+      throw new NotFoundError("error.notFound.creditCard");
     }
 
     const [rows, movements, total] = await Promise.all([
@@ -100,7 +100,7 @@ export class CreditCardService {
     const card = await this.repository.findById({ id: creditCardId, userId });
 
     if (!card) {
-      throw new NotFoundError("Credit card");
+      throw new NotFoundError("error.notFound.creditCard");
     }
 
     const bill = await this.repository.ensureBill({
@@ -132,7 +132,7 @@ export class CreditCardService {
     const card = await this.repository.findById({ id: creditCardId, userId });
 
     if (!card) {
-      throw new NotFoundError("Credit card");
+      throw new NotFoundError("error.notFound.creditCard");
     }
 
     return card;
@@ -154,11 +154,11 @@ export class CreditCardService {
     });
 
     if (!bill) {
-      throw new NotFoundError("Bill");
+      throw new NotFoundError("error.notFound.bill");
     }
 
     if (bill.creditCardId !== creditCardId) {
-      throw new ConflictError("That bill belongs to a different card.");
+      throw new ConflictError("error.conflict.billDifferentCard");
     }
 
     return bill;
@@ -191,7 +191,7 @@ export class CreditCardService {
     const updated = await this.repository.update({ id, userId, patch });
 
     if (!updated) {
-      throw new NotFoundError("Credit card");
+      throw new NotFoundError("error.notFound.creditCard");
     }
 
     return updated;
@@ -201,7 +201,7 @@ export class CreditCardService {
     const card = await this.repository.archive({ id, userId });
 
     if (!card) {
-      throw new NotFoundError("Credit card");
+      throw new NotFoundError("error.notFound.creditCard");
     }
 
     return card;
@@ -211,7 +211,7 @@ export class CreditCardService {
     const card = await this.repository.unarchive({ id, userId });
 
     if (!card) {
-      throw new NotFoundError("Credit card");
+      throw new NotFoundError("error.notFound.creditCard");
     }
 
     return card;
@@ -221,15 +221,13 @@ export class CreditCardService {
     const existing = await this.repository.findById({ id, userId });
 
     if (!existing) {
-      throw new NotFoundError("Credit card");
+      throw new NotFoundError("error.notFound.creditCard");
     }
 
     const references = await this.repository.countReferences({ id });
 
     if (references > 0) {
-      throw new ConflictError(
-        `This card is used by ${references} record(s). Archive it instead of deleting.`,
-      );
+      throw new ConflictError("error.conflict.cardInUse", { references });
     }
 
     await this.repository.delete({ id, userId });
@@ -254,16 +252,17 @@ export class CreditCardService {
     });
 
     if (!wallet) {
-      throw new NotFoundError("Wallet");
+      throw new NotFoundError("error.notFound.wallet");
     }
 
     // The form gives an enum, the DB a plain string; compare as strings.
     const cardCurrency: string = card.currencyCode;
 
     if (wallet.currencyCode !== cardCurrency) {
-      throw new ConflictError(
-        `The billing wallet must use the card's currency. This card is ${card.currencyCode} and the wallet is ${wallet.currencyCode}.`,
-      );
+      throw new ConflictError("error.conflict.billingWalletCurrency", {
+        cardCurrency: card.currencyCode,
+        walletCurrency: wallet.currencyCode,
+      });
     }
   }
 }

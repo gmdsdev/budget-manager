@@ -3,15 +3,15 @@ import {
   CategoryLabel,
   type CategoryItem,
 } from "@/modules/category/components/category-dot";
+import { useEnumLabels } from "@/lib/enum-labels";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
 import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
 import {
   CategoryType,
   TRANSACTION_FORM_KINDS,
   TransactionKind,
-  TransactionKindLabelMap,
   TransactionStatus,
-  TransactionStatusLabelMap,
   type TransactionFormKind,
 } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
@@ -36,22 +36,13 @@ import type { UseTransactionFormReturnType } from "../hooks/use-transaction-form
 import { TRANSACTION_CATEGORY_NONE } from "../types";
 import { FieldRow } from "./field-row";
 
-const KIND_ITEMS = TRANSACTION_FORM_KINDS.map((kind) => ({
-  label: TransactionKindLabelMap[kind],
-  value: kind,
-}));
-
-const STATUS_ITEMS = Object.values(TransactionStatus).map((status) => ({
-  label: TransactionStatusLabelMap[status],
-  value: status,
-}));
-
 const KIND_TO_CATEGORY_TYPE: Record<TransactionFormKind, CategoryType> = {
   [TransactionKind.INCOME]: CategoryType.INCOME,
   [TransactionKind.EXPENSE]: CategoryType.EXPENSE,
 };
 
 function AmountField({ form }: { form: UseTransactionFormReturnType }) {
+  const t = useTranslate();
   const walletId = useSelector(form.store, (state) => state.values.walletId);
   const { data: wallets } = useWalletOptionsQuery();
 
@@ -69,7 +60,7 @@ function AmountField({ form }: { form: UseTransactionFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Amount</FieldLabel>
+            <FieldLabel htmlFor={field.name}>{t("common.amount")}</FieldLabel>
             <CurrencyInput
               id={field.name}
               name={field.name}
@@ -92,6 +83,7 @@ function AmountField({ form }: { form: UseTransactionFormReturnType }) {
 }
 
 function WalletField({ form }: { form: UseTransactionFormReturnType }) {
+  const t = useTranslate();
   const { data: wallets, isPending } = useWalletOptionsQuery();
 
   const items = (wallets ?? []).map((wallet) => ({
@@ -108,7 +100,7 @@ function WalletField({ form }: { form: UseTransactionFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Wallet</FieldLabel>
+            <FieldLabel htmlFor={field.name}>{t("common.wallet")}</FieldLabel>
             <Select
               items={items}
               id={field.name}
@@ -121,7 +113,7 @@ function WalletField({ form }: { form: UseTransactionFormReturnType }) {
                 aria-invalid={showErrors || undefined}
                 aria-describedby={showErrors ? errorId : undefined}
               >
-                <SelectValue placeholder="Select a wallet" />
+                <SelectValue placeholder={t("transaction.field.selectAWallet")} />
               </SelectTrigger>
               <SelectContent>
                 {items.map((item) => (
@@ -143,13 +135,18 @@ function WalletField({ form }: { form: UseTransactionFormReturnType }) {
 }
 
 function CategoryField({ form }: { form: UseTransactionFormReturnType }) {
+  const t = useTranslate();
   const kind = useSelector(form.store, (state) => state.values.kind);
   const { data: categories, isPending } = useCategoryOptionsQuery(
     KIND_TO_CATEGORY_TYPE[kind],
   );
 
   const items: CategoryItem[] = [
-    { label: "Uncategorized", value: TRANSACTION_CATEGORY_NONE, color: null },
+    {
+      label: t("category.uncategorized"),
+      value: TRANSACTION_CATEGORY_NONE,
+      color: null,
+    },
     ...(categories ?? []).map((category) => ({
       label: category.name,
       value: category.id,
@@ -166,7 +163,9 @@ function CategoryField({ form }: { form: UseTransactionFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Category</FieldLabel>
+            <FieldLabel htmlFor={field.name}>
+                  {t("common.category")}
+                </FieldLabel>
             <Select
               items={items}
               id={field.name}
@@ -209,6 +208,7 @@ function CategoryField({ form }: { form: UseTransactionFormReturnType }) {
 }
 
 function DateField({ form }: { form: UseTransactionFormReturnType }) {
+  const t = useTranslate();
   return (
     <form.Field name="occurrenceDate">
       {(field) => {
@@ -218,7 +218,7 @@ function DateField({ form }: { form: UseTransactionFormReturnType }) {
 
         return (
           <Field data-invalid={showErrors}>
-            <FieldLabel htmlFor={field.name}>Date</FieldLabel>
+            <FieldLabel htmlFor={field.name}>{t("common.date")}</FieldLabel>
             <DatePicker
               id={field.name}
               name={field.name}
@@ -247,6 +247,19 @@ export function TransactionFormFields({
   /** Slot for the recurrence fields, which live on this form by design. */
   children?: React.ReactNode;
 }) {
+  const t = useTranslate();
+  const labels = useEnumLabels();
+
+  const kindItems = TRANSACTION_FORM_KINDS.map((kind) => ({
+    label: labels.transactionKind(kind),
+    value: kind,
+  }));
+
+  const statusItems = Object.values(TransactionStatus).map((status) => ({
+    label: labels.transactionStatus(status),
+    value: status,
+  }));
+
   return (
     <FieldGroup>
       <form.Field name="kind">
@@ -257,9 +270,11 @@ export function TransactionFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Kind</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("transaction.filter.kind")}
+              </FieldLabel>
               <Select
-                items={KIND_ITEMS}
+                items={kindItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -275,7 +290,7 @@ export function TransactionFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {KIND_ITEMS.map((item) => (
+                  {kindItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -299,7 +314,9 @@ export function TransactionFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+              <FieldLabel htmlFor={field.name}>
+                {t("common.description")}
+              </FieldLabel>
               <Input
                 id={field.name}
                 name={field.name}
@@ -337,9 +354,9 @@ export function TransactionFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Status</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.status")}</FieldLabel>
               <Select
-                items={STATUS_ITEMS}
+                items={statusItems}
                 id={field.name}
                 name={field.name}
                 value={field.state.value}
@@ -354,7 +371,7 @@ export function TransactionFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_ITEMS.map((item) => (
+                  {statusItems.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -378,7 +395,7 @@ export function TransactionFormFields({
 
           return (
             <Field data-invalid={showErrors}>
-              <FieldLabel htmlFor={field.name}>Notes</FieldLabel>
+              <FieldLabel htmlFor={field.name}>{t("common.notes")}</FieldLabel>
               <Textarea
                 id={field.name}
                 name={field.name}

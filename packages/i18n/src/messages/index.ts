@@ -1,0 +1,38 @@
+import { auth } from "./auth";
+import { category } from "./category";
+import { common } from "./common";
+import { creditCard } from "./credit-card";
+import { dashboard } from "./dashboard";
+import { dates } from "./dates";
+import { enums } from "./enums";
+import { errors } from "./errors";
+import { nav } from "./nav";
+import { pagination } from "./pagination";
+import { recurring } from "./recurring";
+import { settings } from "./settings";
+import { transaction } from "./transaction";
+import { validation } from "./validation";
+import { wallet } from "./wallet";
+
+/**
+ * Flat, dotted keys rather than a nested tree: `keyof typeof messages` is then
+ * the exact set of keys, which is what lets `translate` read a message's
+ * placeholders off its own literal type.
+ */
+export const messages = {
+  ...auth,
+  ...category,
+  ...common,
+  ...creditCard,
+  ...dashboard,
+  ...dates,
+  ...enums,
+  ...errors,
+  ...nav,
+  ...pagination,
+  ...recurring,
+  ...settings,
+  ...transaction,
+  ...validation,
+  ...wallet,
+} as const;
