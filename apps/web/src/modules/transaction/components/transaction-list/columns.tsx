@@ -11,19 +11,9 @@ import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { ColumnDef } from "@tanstack/react-table";
 import { CategoryLabel } from "@/modules/category/components/category-dot";
 import type { TransactionRow } from "../../types";
-import { formatDateString } from "../../utils/date";
 import { TransactionRowActions } from "./transaction-row-actions";
 
 export const transactionColumns: ColumnDef<TransactionRow>[] = [
-  {
-    accessorKey: "occurrenceDate",
-    header: "Date",
-    cell: ({ row }) => (
-      <span className="whitespace-nowrap tabular-nums">
-        {formatDateString(row.original.occurrenceDate)}
-      </span>
-    ),
-  },
   {
     accessorKey: "name",
     header: "Description",

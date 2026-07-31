@@ -84,7 +84,7 @@ describe("transaction pagination", () => {
   }, 60_000);
 
   test("Next shows the remainder and disables at the end", async () => {
-    const firstPageIds = (await rowTexts(page)).map((cells) => cells[1]);
+    const firstPageIds = (await rowTexts(page)).map((cells) => cells[0]);
 
     await page.getByRole("button", { name: "Next" }).click();
     await waitForRowCount(page, EXPENSES + INCOMES - PAGE_SIZE);
@@ -95,7 +95,7 @@ describe("transaction pagination", () => {
       } transactions`,
     );
 
-    const secondPageIds = (await rowTexts(page)).map((cells) => cells[1]);
+    const secondPageIds = (await rowTexts(page)).map((cells) => cells[0]);
 
     // No row may appear on both pages.
     expect(secondPageIds.some((name) => firstPageIds.includes(name))).toBe(

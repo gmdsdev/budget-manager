@@ -17,5 +17,9 @@ export function formatDateString(value: string) {
     Number(year),
     Number(month) - 1,
     Number(day),
-  ).toLocaleDateString();
+  ).toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }

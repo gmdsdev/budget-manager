@@ -18,6 +18,7 @@ import { CreateTransferDialog } from "../components/create-transfer-dialog";
 import { transactionColumns } from "../components/transaction-list/columns";
 import { TransactionFilters } from "../components/transaction-list/transaction-filters";
 import { useTransactionsQuery } from "../queries/use-transactions-query";
+import { formatDateString } from "../utils/date";
 import {
   defaultTransactionFilters,
   isTransactionFiltered,
@@ -77,6 +78,8 @@ export default function ListTransactionsPage() {
             columns={transactionColumns}
             data={data.rows}
             getRowId={(transaction) => transaction.id}
+            groupBy={(transaction) => transaction.occurrenceDate}
+            groupHeader={formatDateString}
             caption="Your transactions"
             emptyState={
               <Empty>

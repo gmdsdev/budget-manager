@@ -162,15 +162,22 @@ export async function bodyText(page: Page) {
   return raw.replace(/[\u00a0\u202f]/g, " ");
 }
 
+/**
+ * Data rows only: the transaction table interleaves `data-group-header` rows
+ * (one per date), which are not rows in any assertion's sense.
+ */
+const DATA_ROW_SELECTOR = "tbody tr:not([data-group-header])";
+
 export function rows(page: Page) {
-  return page.locator("tbody tr");
+  return page.locator(DATA_ROW_SELECTOR);
 }
 
 /** Waits on a row count rather than sleeping, so the suite is not timing-bound. */
 export async function waitForRowCount(page: Page, expected: number) {
   await page.waitForFunction(
-    (count) => document.querySelectorAll("tbody tr").length === count,
-    expected,
+    ({ count, selector }) =>
+      document.querySelectorAll(selector).length === count,
+    { count: expected, selector: DATA_ROW_SELECTOR },
     { timeout: 15_000 },
   );
 }
@@ -180,7 +187,7 @@ export async function waitForRowCount(page: Page, expected: number) {
  * U+00A0/U+202F, which silently defeats assertions written with a plain space.
  */
 export async function rowTexts(page: Page) {
-  return page.$$eval("tbody tr", (trs) =>
+  return page.$$eval(DATA_ROW_SELECTOR, (trs) =>
     trs.map((tr) =>
       Array.from(tr.querySelectorAll("td")).map((td) =>
         (td as HTMLElement).innerText.replace(/[\u00a0\u202f]/g, " ").trim(),
