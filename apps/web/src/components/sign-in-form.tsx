@@ -1,12 +1,11 @@
 import { Button } from "@budget-manager/ui/components/button";
 import { Input } from "@budget-manager/ui/components/input";
 import { Label } from "@budget-manager/ui/components/label";
-import { t } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
+import { SignInFormSchema } from "@budget-manager/schemas";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import z from "zod";
 
 import { authClient } from "@/lib/auth-client";
 import { invalidateSessionCache } from "@/lib/session";
@@ -51,14 +50,10 @@ export default function SignInForm({
       );
     },
     validators: {
-      // Resolved when the form validates, so the message follows the language
-      // the reader picked rather than the one the module was loaded in.
-      onSubmit: z.object({
-        email: z.email({ error: () => t("validation.invalidEmail") }),
-        password: z
-          .string()
-          .min(8, { error: () => t("validation.passwordTooShort", { min: 8 }) }),
-      }),
+      // The shared schema, whose Zod messages resolve at parse time — so they
+      // follow the language the reader picked rather than the one the module
+      // was loaded in.
+      onSubmit: SignInFormSchema,
     },
   });
 

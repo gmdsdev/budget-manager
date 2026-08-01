@@ -20,19 +20,12 @@ import {
   openApp,
   pickSelect,
   signUpThroughUi,
+  todayIsoInPage,
   type Session,
 } from "../support/web";
 
 let session: Session;
 let page: Page;
-
-function todayIso() {
-  const now = new Date();
-  const month = `${now.getMonth() + 1}`.padStart(2, "0");
-  const day = `${now.getDate()}`.padStart(2, "0");
-
-  return `${now.getFullYear()}-${month}-${day}`;
-}
 
 beforeAll(async () => {
   await requireWeb();
@@ -63,7 +56,7 @@ describe("dashboard", () => {
     // rendering, and form filling is already covered by flows.test.ts.
     const api = await apiForPage(page);
     const seed = await seedBasics(api);
-    const today = todayIso();
+    const today = await todayIsoInPage(page);
 
     await api.transaction.create.mutate(
       transaction(seed.checking.id, {
@@ -282,7 +275,7 @@ describe("dashboard", () => {
         kind: TransactionKind.INCOME,
         name: "Consulting",
         amountCents: 150_000,
-        occurrenceDate: todayIso(),
+        occurrenceDate: await todayIsoInPage(page),
       }),
     );
 

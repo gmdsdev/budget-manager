@@ -27,7 +27,7 @@ import { CurrencySection } from "../components/currency-section";
 import { PendingList } from "../components/pending-list";
 import { StatementsDueList } from "../components/statements-due-list";
 import { useDashboardQuery } from "../queries/use-dashboard-query";
-import { currentMonth, shiftMonth } from "../utils/month";
+import { currentMonth, shiftMonth } from "@/lib/month";
 
 export default function DashboardPage() {
   const { t, formatMonthString } = useI18n();

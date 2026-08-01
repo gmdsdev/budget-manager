@@ -11,6 +11,7 @@ import {
   pickSelect,
   rowTexts,
   signUpThroughUi,
+  todayInPage,
   waitForRowCount,
   type Session,
 } from "../support/web";
@@ -34,13 +35,16 @@ beforeAll(async () => {
 
   const api = await apiForPage(page);
   const seed = await seedBasics(api);
+  // The list scopes itself to the *browser's* current month, so the rows have
+  // to be dated by the browser's clock rather than the test process's.
+  const today = await todayInPage(page);
 
   for (let index = 0; index < EXPENSES; index++) {
     await api.transaction.create.mutate(
       transaction(seed.checking.id, {
         name: `Expense ${index}`,
         amountCents: (index + 1) * 100,
-        occurrenceDate: dayThisMonth(index + 1),
+        occurrenceDate: dayThisMonth(index + 1, today),
         categoryId: seed.groceries.id,
         status: TransactionStatus.PAID,
       }),
@@ -53,7 +57,7 @@ beforeAll(async () => {
         kind: TransactionKind.INCOME,
         name: `Income ${index}`,
         amountCents: 500_000,
-        occurrenceDate: dayThisMonth(index + 26),
+        occurrenceDate: dayThisMonth(index + 26, today),
         categoryId: seed.salary.id,
       }),
     );

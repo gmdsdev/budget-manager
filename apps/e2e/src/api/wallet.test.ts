@@ -91,6 +91,37 @@ describe("wallet", () => {
     ).toBe("CONFLICT");
   });
 
+  test("holds the currency once something is recorded against the wallet", async () => {
+    const created = await api.wallet.create.mutate(
+      wallet({ name: "Settled currency" }),
+    );
+    await api.transaction.create.mutate(transaction(created.id));
+
+    expect(
+      await errorCodeOf(
+        api.wallet.update.mutate({
+          id: created.id,
+          name: "Settled currency",
+          type: WalletType.CHECKING,
+          currencyCode: WalletCurrency.USD,
+          openingBalanceCents: 100_000,
+        }),
+      ),
+    ).toBe("CONFLICT");
+
+    // Everything else about the wallet is still editable.
+    const renamed = await api.wallet.update.mutate({
+      id: created.id,
+      name: "Renamed",
+      type: WalletType.SAVINGS,
+      currencyCode: WalletCurrency.BRL,
+      openingBalanceCents: 200_000,
+    });
+
+    expect(renamed.name).toBe("Renamed");
+    expect(renamed.openingBalanceCents).toBe(200_000);
+  });
+
   test("rejects a blank name and an out-of-range balance", async () => {
     expect(
       await errorCodeOf(api.wallet.create.mutate(wallet({ name: "   " }))),

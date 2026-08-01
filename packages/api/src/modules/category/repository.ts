@@ -1,4 +1,5 @@
 import type { Db } from "@budget-manager/db";
+import { budgetPeriods, budgets } from "@budget-manager/db/schema/budget";
 import { categories } from "@budget-manager/db/schema/category";
 import { transactionOccurrences } from "@budget-manager/db/schema/transactionOccurrence";
 import { transactionTemplates } from "@budget-manager/db/schema/transactionTemplate";
@@ -232,8 +233,15 @@ export class CategoryRepository {
     return row ? toDomainRow(row) : null;
   }
 
+  /**
+   * Everything that would go with the category. `budgets.category_id` and
+   * `budget_periods.category_id` are both ON DELETE CASCADE, so leaving them
+   * out let a delete take a budget and every month it had already laid down —
+   * including months already lived through, which the rest of the feature goes
+   * out of its way to preserve.
+   */
   async countReferences({ id }: { id: string }) {
-    const [occurrences, templates] = await Promise.all([
+    const [occurrences, templates, budgetRules, periods] = await Promise.all([
       this.db.$count(
         transactionOccurrences,
         eq(transactionOccurrences.categoryId, id),
@@ -242,9 +250,11 @@ export class CategoryRepository {
         transactionTemplates,
         eq(transactionTemplates.categoryId, id),
       ),
+      this.db.$count(budgets, eq(budgets.categoryId, id)),
+      this.db.$count(budgetPeriods, eq(budgetPeriods.categoryId, id)),
     ]);
 
-    return occurrences + templates;
+    return occurrences + templates + budgetRules + periods;
   }
 
   async delete({ id, userId }: { id: string; userId: string }) {

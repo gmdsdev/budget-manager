@@ -156,6 +156,32 @@ describe("credit card", () => {
     expect((await client.creditCard.getAll.query({})).rows).toEqual([]);
   });
 
+  test("holds the currency once a statement exists", async () => {
+    const { client, card: created } = await freshUser();
+
+    await client.transaction.createCardPurchase.mutate(
+      cardPurchase(created.id),
+    );
+
+    expect(
+      await errorCodeOf(
+        client.creditCard.update.mutate({
+          ...card({ currencyCode: WalletCurrency.USD }),
+          id: created.id,
+        }),
+      ),
+    ).toBe("CONFLICT");
+
+    // The cycle and the limit are still the card's to change.
+    const updated = await client.creditCard.update.mutate({
+      ...card({ name: "Renamed", limitCents: 900_000 }),
+      id: created.id,
+    });
+
+    expect(updated.name).toBe("Renamed");
+    expect(updated.limitCents).toBe(900_000);
+  });
+
   test("a stranger sees and touches nothing", async () => {
     const mine = await freshUser();
     const stranger = (await signUpClient()).client;

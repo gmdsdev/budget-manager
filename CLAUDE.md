@@ -43,7 +43,7 @@ kept in TypeScript — see the balances note below.
 
 ```bash
 bun run db:start && bun run db:migrate && bun run dev   # prerequisites
-bun run test:e2e          # 289 checks: API + browser
+bun run test:e2e          # 294 checks: API + browser
 bun run test:e2e:api      # server only, ~2s
 bun run test:e2e:ui       # Playwright flows
 ```
@@ -54,8 +54,17 @@ own user, so suites are order-independent and safe against a dev database with e
 nothing is truncated. `requireServer()`/`requireWeb()` fail with "start it with…" instead of
 letting every test time out. Chromium needs `bunx playwright install chromium` once.
 
-Three hard-won details in `src/support/web.ts`:
+Four hard-won details in `src/support/web.ts`:
 
+- **A browser assertion about "today" anchors on the browser's clock**, via `todayInPage` /
+  `todayIsoInPage`. `bun test` pins the test process to UTC while Chromium keeps the machine's
+  own zone, so for the hours those two straddle a date boundary a row seeded from the test's
+  clock lands on a different day than the page is showing — and on the last day of a month it
+  lands in the *next* month, which empties the transaction list (always scoped to the browser's
+  current month) and zeroes the dashboard. That is the same disagreement `shiftMonthKey` exists
+  to dodge on the API side; here the consumer is the browser, so pass the result into
+  `dayThisMonth`/`dayLastMonth` rather than letting them read `new Date()`. A suite that seeds
+  "today" without it passes for twenty-one hours a day and fails for three.
 - Assert on row *counts* via `waitForRowCount` rather than sleeping. Its selector is scoped to
   `[data-list-table]` — the marker `DataTable` puts on its own `<table>` — so a second table on
   the page (the transaction totals) can never inflate a count.
@@ -184,6 +193,13 @@ dialogs preselect it and the dashboard opens on it, but both still fall back (th
 the first currency the API returned), so it can never hide data. Because those dialogs read it
 from the session, they `form.reset()` on **open** as well as close.
 
+That is the general rule, not a currency one: **a create dialog whose defaults are read from
+outside the form resets on open as well as close**, because anything read from outside can move
+while the dialog is shut. Every transaction create dialog defaults `occurrenceDate` to
+`todayAsDateString()`, so a tab left open across midnight offered yesterday until they did the
+same — and the plain one preselects the first wallet, which a wallet created in the meantime
+should win.
+
 Every mutation on that screen goes through `runAuthAction` (`apps/web/src/lib/auth-error.ts`),
 which turns better-auth's `{ data, error }` into a thrown `AuthActionError` so the shared
 `MutationCache` toast fires; `getErrorMessage` special-cases it to surface the library's own
@@ -206,6 +222,23 @@ A feature is a directory under `src/modules/<feature>/` with `routes.ts` (thin �
 Every repository method takes `userId` and filters on it (`and(eq(t.id, id), eq(t.userId, userId))`); a missing row returns `null` and the service turns that into `NotFoundError`. Repositories select through an explicit `*_PUBLIC_COLUMNS` map rather than `select()`, keeping internal columns (e.g. `currentBalanceCents`, `archivedAt`) out of API responses. Register new routers in `src/routers/index.ts`; `AppRouter` is what the web app types itself against.
 
 Deletion is guarded, not cascading: `WalletService.delete` counts referencing rows via `countReferences` and throws `ConflictError` telling the user to archive instead. Archive/unarchive are soft-delete flags on the row.
+
+**`countReferences` has to name every table with an FK to the row, including the cascading
+ones.** `budgets.category_id` and `budget_periods.category_id` are `ON DELETE CASCADE`, so
+while the category count left them out, deleting a category nothing else referenced quietly
+took its budget and every month that budget had already laid down — including months already
+lived through, which the `ON DELETE SET NULL` on `budget_id` exists to preserve. A cascade the
+guard cannot see is the one that does the damage.
+
+**Three fields are settled at creation and held from the first row that references them:** a
+category's `type`, a wallet's `currencyCode` and a card's `currencyCode`. Every other rule
+reads the entity through them — a transaction may only carry a category of its own type, only
+an expense category may carry a budget, both legs of a transfer share a currency, and a card
+payment's wallet has to match the card — so flipping one under existing rows leaves them in a
+state the create paths refuse to produce, and silently reprices history besides. Each `update`
+compares against the stored row and throws a `ConflictError` naming the reference count when it
+changed, reusing the same `countReferences` the delete guard does. Everything else on those
+rows (name, type, limit, opening balance, cycle days, colour) stays editable.
 
 The `transaction` module owns `transaction_occurrences`, and only the four wallet-facing
 kinds — reads are pinned to `inArray(kind, LISTED_KINDS)` so credit-card rows can never
@@ -231,6 +264,17 @@ Each takes an exported `XFilters` type that routes and services spread through u
 adding a filter means editing the validator and the builder rather than five signatures.
 Mutations must invalidate `options` alongside `getAll` — otherwise a newly created wallet is
 missing from the transaction form until a reload.
+
+**Invalidation follows the join, not the module.** A list row carries names and colours joined
+from other tables — the ledger names the wallet or card a row sits in and paints its category,
+the card list names its billing wallet, the budget list paints its category — and every one of
+those is a figure some *other* module's mutation moves. So each module's `X_INVALIDATIONS`
+covers what its rows are read through, not just its own queries: category and wallet mutations
+reach the transaction list, wallet mutations reach the card list, card mutations reach the
+transaction list and its totals, and transaction and series mutations reach `budget.getMonth` /
+`budget.periods`, since a budget is a reading of spending and a row is exactly what moves it.
+The dashboard is on all of them. The rule of thumb: if a query's payload would come back
+different, it belongs in the list — a rename that lingers in one screen reads as a lost edit.
 
 **The transaction list has a third shape, `summary`, and it is not a page of anything.** It takes
 the *same* filters as `getAll` minus `limit`/`offset` — both are built from one
@@ -368,6 +412,13 @@ purchase, card payment. `transaction.update` refuses transfer legs and card rows
 `ConflictError`, because the plain form cannot carry a card reference or a transfer pair, and
 the row actions route each kind to the matching dialog.
 
+**Every destructive row action is confirmed through an `AlertDialog`, series included.** The row
+menu is a dropdown, which puts an irreversible action one click from a mis-tap: `Delete series`
+sat directly under `Pause series` and fired the mutation on click, taking the rule and every
+occurrence still ahead of today with it, across months. `DeleteRecurringDialog` was already
+written and translated for exactly that and simply was not wired up. Pause/resume stays
+unconfirmed on purpose — it is reversible from the same menu.
+
 **Wallet balances are derived, never stored.** `wallets.current_balance_cents` is dead —
 nothing writes it and it is absent from `WALLET_PUBLIC_COLUMNS`. `WalletService.getAll`
 instead pairs the wallet rows with `getMovementTotals`, whose query is deliberately a plain
@@ -442,6 +493,15 @@ and a bare prefetch would sit under a different one and leave the card loading o
 Routes are file-based under `src/routes/` (`routeTree.gen.ts` is generated — never edit, it's gitignored and ESLint-ignored). The `_auth` layout route redirects to `/login` in `beforeLoad` using `getCachedSession()` from `src/lib/session.ts`, a 10s TTL + in-flight-dedupe cache around `authClient.getSession()`; call `invalidateSessionCache()` after sign-in/out. Route `loader`s prefetch with `context.queryClient.ensureQueryData(context.trpc.<path>.queryOptions())` — `trpc` and `queryClient` are injected as router context in `main.tsx`.
 
 Feature code lives in `src/modules/<feature>/` split into `pages/`, `components/`, `hooks/`, `queries/`, `mutations/`, `types.ts`. Components never call tRPC directly — they use the module's query/mutation hooks.
+
+**A helper two modules both need lives in `src/lib/`, not copied into each.** `month.ts` is the
+`yyyy-MM` key arithmetic the dashboard and the budget page step through (they had a byte-identical
+copy each, which is one copy too many for something two screens have to agree on), and
+`server-url.ts` resolves `VITE_SERVER_URL` for both the tRPC link and better-auth — two copies of
+that one could drift into pointing the API and the auth cookie at different origins, which is
+exactly the split a session does not survive. Tests for a `packages/ui` primitive live in
+`src/components/` beside the other primitive tests, since `apps/web`'s `bunfig.toml` is what
+preloads happy-dom.
 
 Error handling is centralized: `src/utils/trpc.ts` configures a `QueryCache`/`MutationCache` that toasts `getErrorMessage(error)` (see `src/utils/error-message.ts`, which unwraps `zodError` and code-specific copy). Mutations go through `useApiMutation` (`src/hooks/use-api-mutation.ts`), which takes `successMessage` / `errorMessage` / `suppressErrorToast` / `invalidateQueries` — pass `trpc.<path>.queryFilter()` for invalidation. Don't add per-call `onError` toasts.
 
@@ -557,6 +617,14 @@ under `revalidateLogic({ mode: "change", modeAfterSubmission: "change" })`
 (`use-wallet-form.ts` is the pattern); the same schema is the tRPC input validator, so client
 and server validation cannot diverge.
 
+**That includes the auth forms**, even though they are the two that validate `onSubmit` only
+(nothing to revalidate before the one submit that matters). `SignInFormSchema` and
+`SignUpFormSchema` are composed in `packages/schemas` from the same `UserNameSchema` /
+`NewPasswordSchema` the settings screen writes through — sign-up and `/settings/user` both write
+`user.name` and both write a password, so a rule either screen invents locally is a rule the
+other one disagrees with. They had: sign-up took a name of any length that the profile form then
+refused to save, and a password past better-auth's own ceiling.
+
 **Never split the schema across `onChange`/`onBlur`.** TanStack keys errors by cause and only
 the same cause clears them, so a blur-sourced error survives every later change. Base UI's
 Select never fires blur, so picking a value could not clear the error it had just fixed —
@@ -564,6 +632,16 @@ Select never fires blur, so picking a value could not clear the error it had jus
 `canSubmit` is false, which made the transfer dialog need two clicks to submit. One cause,
 revalidated on change, is what keeps `canSubmit` honest. See
 `use-transfer-form.test.tsx` for the regression test.
+
+**A dependent select empties itself; don't reset it by hand.** Where one field narrows another —
+the card payment's statement list is its card's, and its wallet list is filtered to that card's
+currency — Base UI's Select drops a value that is no longer among its own `items` and reports
+the change, so switching the card clears both. The forms that *do* reset a dependant explicitly
+(kind → category on the transaction form, kind → wallet/card/category on the recurring one) are
+the cases where the old value is still a legal option and only the *meaning* changed, which the
+primitive cannot see. Adding a redundant reset to the first kind reads as though the primitive
+could not be trusted; the trigger renders the placeholder either way, so only a submit tells the
+two apart — `credit-card.test.ts` is what pins it.
 
 Because validation is eager, error *display* is gated on the field being touched:
 `const showErrors = field.state.meta.isTouched && !field.state.meta.isValid`, and
@@ -791,7 +869,17 @@ column stretches an `auto` cross size, and an `<img>` obeys the stretch while th
 `preserveAspectRatio` re-centres the artwork inside it — the logo silently drifts to the middle
 of a `SheetHeader`.
 
-Add shared primitives from the root: `npx shadcn@latest add <name> -c packages/ui`. Run the shadcn CLI from `apps/web` only for app-specific blocks.
+Add shared primitives from the root: `npx shadcn@latest add <name> -c packages/ui`. Run the shadcn CLI from `apps/web` only for app-specific blocks. **`packages/ui` carries what the app
+uses and nothing else** — the `base-lyra` style ships a chat kit (`attachment`, `bubble`,
+`message`, `message-scroller`, `marker`, `input-group`, `navigation-menu`) that a budget app has
+no use for, and ~950 lines of it sat there accruing lint suppressions for interactions nothing
+rendered. A primitive pulled in speculatively is a maintenance surface, not an asset; delete it
+and re-add it from the CLI when a screen actually wants it.
+
+**A primitive that renders words takes them from `packages/i18n` like everything else.** `ui`
+already depends on it (the calendar maps the app's locale to a date-fns one), so a `sr-only`
+"Close" baked into `dialog.tsx`/`sheet.tsx` was simply an English string the language switch
+could not reach — every dialog and sheet in the app announced it.
 
 **Charts are recharts behind the shadcn `chart.tsx` wrapper, and colour is a token, never a
 literal.** `ChartContainer` publishes each config key as a `--color-<key>` variable under both

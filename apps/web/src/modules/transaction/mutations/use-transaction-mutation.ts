@@ -19,6 +19,9 @@ const TRANSACTION_INVALIDATIONS = [
   // Card purchases and payments move a card's outstanding balance.
   trpc.creditCard.getAll.queryFilter(),
   trpc.creditCard.bills.queryFilter(),
+  // A budget measures spending, so a row is exactly what moves its meters.
+  trpc.budget.getMonth.queryFilter(),
+  trpc.budget.periods.queryFilter(),
   trpc.dashboard.getSummary.queryFilter(),
 ];
 

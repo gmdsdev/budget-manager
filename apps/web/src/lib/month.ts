@@ -1,7 +1,9 @@
 /**
- * `yyyy-MM` key arithmetic only. Turning a key into words is
- * `useI18n().formatMonthString`, so a month reads in the app's language rather
- * than the browser's.
+ * `yyyy-MM` key arithmetic only, shared by every screen that steps through
+ * months — the dashboard and the budget page stepped through the same keys with
+ * their own copies of this, which is one copy too many for something two pages
+ * have to agree on. Turning a key into words is `useI18n().formatMonthString`,
+ * so a month heading reads in the app's language rather than the browser's.
  */
 export function currentMonth() {
   const now = new Date();

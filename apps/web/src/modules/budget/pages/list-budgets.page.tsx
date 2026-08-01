@@ -34,7 +34,7 @@ import {
   type BudgetFiltersState,
   type BudgetProgressRow,
 } from "../types";
-import { currentMonth, shiftMonth } from "../utils/month";
+import { currentMonth, shiftMonth } from "@/lib/month";
 
 export default function ListBudgetsPage() {
   const { t, formatMonthString } = useI18n();

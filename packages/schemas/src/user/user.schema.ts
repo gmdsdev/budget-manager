@@ -31,11 +31,36 @@ export const NewPasswordSchema = z
     error: () => t("validation.passwordTooLong", { max: PASSWORD_MAX_LENGTH }),
   });
 
+export const UserEmailSchema = z.email({
+  error: () => t("validation.invalidEmail"),
+});
+
 export const ProfileFormSchema = z.object({
   name: UserNameSchema,
 });
 
 export type ProfileFormDto = z.infer<typeof ProfileFormSchema>;
+
+/**
+ * The auth forms validate with these rather than rules of their own. Sign-up
+ * and the settings profile form both write `user.name`, and sign-up and the
+ * change-password form both write a password, so a rule either screen invents
+ * locally is a rule the other one disagrees with — sign-up used to accept a
+ * name the profile form would then refuse to save, and a password longer than
+ * better-auth accepts.
+ */
+export const SignInFormSchema = z.object({
+  email: UserEmailSchema,
+  password: NewPasswordSchema,
+});
+
+export type SignInFormDto = z.infer<typeof SignInFormSchema>;
+
+export const SignUpFormSchema = SignInFormSchema.extend({
+  name: UserNameSchema,
+});
+
+export type SignUpFormDto = z.infer<typeof SignUpFormSchema>;
 
 export const ChangePasswordFormSchema = z
   .object({

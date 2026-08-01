@@ -93,6 +93,21 @@ export const errors = {
     "pt-BR":
       "Este cartão é usado por {references} registro(s). Arquive-o em vez de excluí-lo.",
   },
+  "error.conflict.categoryTypeInUse": {
+    en: "This category is already used by {references} record(s), so it cannot switch between income and expense. Create a new category instead.",
+    "pt-BR":
+      "Esta categoria já é usada por {references} registro(s), então não pode alternar entre receita e despesa. Crie uma nova categoria.",
+  },
+  "error.conflict.walletCurrencyInUse": {
+    en: "This wallet is already used by {references} record(s), so its currency can no longer change. Create a new wallet instead.",
+    "pt-BR":
+      "Esta carteira já é usada por {references} registro(s), então sua moeda não pode mais mudar. Crie uma nova carteira.",
+  },
+  "error.conflict.cardCurrencyInUse": {
+    en: "This card is already used by {references} record(s), so its currency can no longer change. Create a new card instead.",
+    "pt-BR":
+      "Este cartão já é usado por {references} registro(s), então sua moeda não pode mais mudar. Crie um novo cartão.",
+  },
   "error.conflict.billDifferentCard": {
     en: "That bill belongs to a different card.",
     "pt-BR": "Esta fatura pertence a outro cartão.",

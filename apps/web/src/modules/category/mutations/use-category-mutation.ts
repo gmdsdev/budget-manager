@@ -6,10 +6,19 @@ import type {
   DeleteCategoryDto,
 } from "@budget-manager/schemas";
 
+/**
+ * A category's name and colour are joined into every list that shows a row's
+ * category, so renaming or recolouring one has to reach them too — otherwise
+ * the ledger and the budget page keep painting the old label.
+ */
 const CATEGORY_INVALIDATIONS = [
   trpc.category.getAll.queryFilter(),
   // The select inputs read from `options`, not the paged list.
   trpc.category.options.queryFilter(),
+  trpc.transaction.getAll.queryFilter(),
+  trpc.budget.getAll.queryFilter(),
+  trpc.budget.getMonth.queryFilter(),
+  trpc.budget.periods.queryFilter(),
   trpc.dashboard.getSummary.queryFilter(),
 ];
 

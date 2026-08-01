@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
 
+import { useTranslate } from "@budget-manager/i18n/react"
 import { cn } from "@budget-manager/ui/lib/utils"
 import { Button } from "@budget-manager/ui/components/button"
 import { RiCloseLine } from "@remixicon/react"
@@ -44,6 +45,8 @@ function SheetContent({
   side?: "top" | "right" | "bottom" | "left"
   showCloseButton?: boolean
 }) {
+  const t = useTranslate()
+
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -70,7 +73,7 @@ function SheetContent({
           >
             <RiCloseLine
             />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t("common.close")}</span>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Popup>

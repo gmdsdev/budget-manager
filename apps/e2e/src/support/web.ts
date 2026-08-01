@@ -82,6 +82,41 @@ export async function signUpThroughUi(page: Page) {
 }
 
 /**
+ * "Today" as the *browser* reckons it, for seeding rows a page has to show.
+ *
+ * `bun test` pins the test process to UTC while Chromium keeps the machine's
+ * own zone, so for the hours those two straddle a date boundary a row seeded
+ * from the test's clock lands on a different day than the one the page is
+ * showing — and on the last day of a month it lands in the next month, which
+ * empties the transaction list (always scoped to the browser's current month)
+ * and zeroes the dashboard. It is the same disagreement `shiftMonthKey` exists
+ * to dodge; here the consumer is the browser, so the browser's clock is the one
+ * to anchor on.
+ *
+ * The returned `Date` reads back the same year, month and day through the local
+ * getters the fixtures use, which is what makes it safe to hand to
+ * `dayThisMonth`/`dayLastMonth`.
+ */
+export async function todayInPage(page: Page): Promise<Date> {
+  const [year, monthIndex, day] = await page.evaluate(() => {
+    const now = new Date();
+
+    return [now.getFullYear(), now.getMonth(), now.getDate()];
+  });
+
+  return new Date(year ?? 0, monthIndex ?? 0, day ?? 1);
+}
+
+/** The browser's own `YYYY-MM-DD`, for a row that must be dated exactly today. */
+export async function todayIsoInPage(page: Page): Promise<string> {
+  const today = await todayInPage(page);
+  const month = `${today.getMonth() + 1}`.padStart(2, "0");
+  const day = `${today.getDate()}`.padStart(2, "0");
+
+  return `${today.getFullYear()}-${month}-${day}`;
+}
+
+/**
  * An API client bound to the browser's own session, for seeding data as the
  * signed-in user when a test is about rendering rather than form filling.
  */

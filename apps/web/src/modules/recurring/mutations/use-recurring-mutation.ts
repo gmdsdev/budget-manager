@@ -14,6 +14,9 @@ const RECURRING_INVALIDATIONS = [
   trpc.wallet.getAll.queryFilter(),
   trpc.creditCard.getAll.queryFilter(),
   trpc.creditCard.bills.queryFilter(),
+  // The rows a series lays down are spending like any other.
+  trpc.budget.getMonth.queryFilter(),
+  trpc.budget.periods.queryFilter(),
   trpc.dashboard.getSummary.queryFilter(),
 ];
 

@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@budget-manager/ui/components/select";
-import { currentMonth, monthParts, toMonthKey } from "../utils/month";
+import { currentMonth, monthParts, toMonthKey } from "@/lib/month";
 
 /** How far either side of today a budget may be anchored. */
 const YEARS_BACK = 2;
@@ -42,14 +42,24 @@ export function MonthPicker({
     value: `${index}`,
   }));
 
-  const yearItems = Array.from(
-    { length: YEARS_BACK + YEARS_AHEAD + 1 },
-    (_, index) => {
-      const candidate = thisYear - YEARS_BACK + index;
+  // The window plus whatever year is actually selected. A budget anchored
+  // before the window — an old series being edited — would otherwise hand the
+  // select a value with no matching item, which is the same failure
+  // `toPreferredCurrency` exists to prevent.
+  const years = [
+    ...new Set([
+      ...Array.from(
+        { length: YEARS_BACK + YEARS_AHEAD + 1 },
+        (_, index) => thisYear - YEARS_BACK + index,
+      ),
+      year,
+    ]),
+  ].sort((a, b) => a - b);
 
-      return { label: `${candidate}`, value: `${candidate}` };
-    },
-  );
+  const yearItems = years.map((candidate) => ({
+    label: `${candidate}`,
+    value: `${candidate}`,
+  }));
 
   return (
     <div className="flex flex-row gap-2">

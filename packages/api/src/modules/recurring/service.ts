@@ -229,20 +229,18 @@ export class RecurringService {
       recurring.kind === TransactionKind.CREDIT_CARD_PURCHASE;
 
     // A card purchase has to be filed against the statement for its own date,
-    // so bills are resolved per occurrence rather than once for the series.
-    const billByDate = new Map<string, string>();
-
-    if (isCardPurchase && recurring.creditCardId) {
-      for (const date of missing) {
-        const { bill } = await this.creditCards.ensureBillFor({
-          userId,
-          creditCardId: recurring.creditCardId,
-          date,
-        });
-
-        billByDate.set(date, bill.id);
-      }
-    }
+    // so the whole set of dates is resolved at once — dates sharing a cycle
+    // share a statement, and the card is read once for all of them.
+    const billByDate =
+      isCardPurchase && recurring.creditCardId
+        ? (
+            await this.creditCards.ensureBillsFor({
+              userId,
+              creditCardId: recurring.creditCardId,
+              dates: missing,
+            })
+          ).billIdByDate
+        : new Map<string, string>();
 
     const inserted = await this.repository.insertOccurrences({
       values: missing.map((date) => ({

@@ -284,6 +284,76 @@ describe("card purchases and payments", () => {
     await page.keyboard.press("Escape");
   }, 90_000);
 
+  /**
+   * The payment form scopes two fields to the chosen card — the statement list
+   * is that card's, and the wallet list is filtered to its currency — but it
+   * clears neither by hand when the card changes. It does not have to: Base UI's
+   * Select drops a value that is no longer among its own `items` and reports the
+   * change, so both fields empty themselves. Nothing else states that, and the
+   * form is only correct *because* of it — carrying either value into the submit
+   * would earn a server conflict about a field the trigger renders as blank.
+   */
+  test("changing the card clears the statement and wallet it scoped", async () => {
+    // A second card in another currency, so the wallet list it allows and the
+    // statements it owns are both different from the first card's.
+    await page.goto(`${WEB_URL}/credit-card`, { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: "Create Card" }).click();
+    await dialog(page).waitFor({ state: "visible" });
+    await fillField(dialog(page), "Name", "Dollar Card");
+    await fillField(dialog(page), "Limit", "300000");
+    await pickSelect(
+      page,
+      dialog(page),
+      "Currency",
+      "USD - United States Dollar",
+    );
+    await page.getByRole("button", { name: "Create card" }).click();
+    await dialog(page).waitFor({ state: "hidden", timeout: 10_000 });
+
+    // A fresh purchase, so Visa has an unpaid statement to allocate against —
+    // the one the earlier test opened has already been settled in full, and
+    // the select only offers statements with something still owing.
+    await page.goto(`${WEB_URL}/transaction`, { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: "Card purchase" }).click();
+    await dialog(page).waitFor({ state: "visible" });
+    await fillField(dialog(page), "Description", "Monitor");
+    await pickSelect(page, dialog(page), "Card", "Visa (BRL)");
+    await fillField(dialog(page), "Amount", "50000");
+    await page.getByRole("button", { name: "Record purchase" }).click();
+    await dialog(page).waitFor({ state: "hidden", timeout: 10_000 });
+
+    await page.getByRole("button", { name: "Pay card" }).click();
+    await dialog(page).waitFor({ state: "visible" });
+
+    await pickSelect(page, dialog(page), "Card", "Visa (BRL)");
+    await pickSelect(page, dialog(page), "Pay from wallet", "Checking");
+    await dialog(page).getByLabel("Statement", { exact: true }).click();
+    await page.getByRole("option").first().waitFor({ state: "visible" });
+    await page.getByRole("option").nth(1).click();
+
+    await pickSelect(page, dialog(page), "Card", "Dollar Card (USD)");
+    await fillField(dialog(page), "Amount", "10000");
+    await page.getByRole("button", { name: "Record payment" }).click();
+
+    // Asserted through the submit, not the trigger's label: a select whose
+    // value is not among its own options renders the placeholder whether or not
+    // the value behind it was actually dropped, so the screen looks the same
+    // either way. Where the complaint comes from is what separates them — the
+    // field's own required error means the value is gone, a server conflict
+    // toast would mean it had been sent.
+    await dialog(page)
+      .getByText("Wallet is required")
+      .waitFor({ state: "visible", timeout: 10_000 });
+
+    const body = await bodyText(page);
+
+    expect(body).not.toContain("belongs to a different card");
+    expect(body).not.toContain("must use the card's currency");
+
+    await page.keyboard.press("Escape");
+    await dialog(page).waitFor({ state: "hidden" });
+  }, 90_000);
+
   test("no console or page errors", () => {
     expect(session.consoleErrors).toEqual([]);
   });

@@ -121,8 +121,4 @@ export const validation = {
     en: "Invalid email address",
     "pt-BR": "Endereço de e-mail inválido",
   },
-  "validation.nameMinLength": {
-    en: "Name must be at least {min} characters",
-    "pt-BR": "O nome deve ter pelo menos {min} caracteres",
-  },
 } as const satisfies MessageTable;

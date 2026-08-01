@@ -41,12 +41,12 @@ export function CreateCardPaymentDialog() {
     },
   });
 
+  // Reset on open as well as close: the date defaults to today, which is read
+  // from outside the form, so a tab left open across midnight would otherwise
+  // offer yesterday.
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
-
-    if (!nextOpen) {
-      form.reset();
-    }
+    form.reset();
   }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

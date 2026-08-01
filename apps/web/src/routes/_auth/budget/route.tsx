@@ -2,7 +2,7 @@ import { RouteError } from "@/components/route-error";
 import ListBudgetsPage from "@/modules/budget/pages/list-budgets.page";
 import { budgetMonthQueryInput } from "@/modules/budget/queries/use-budget-month-query";
 import { budgetsQueryInput } from "@/modules/budget/queries/use-budgets-query";
-import { currentMonth } from "@/modules/budget/utils/month";
+import { currentMonth } from "@/lib/month";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_auth/budget")({

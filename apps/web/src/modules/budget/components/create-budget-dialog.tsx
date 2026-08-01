@@ -15,7 +15,7 @@ import {
 import { useId, useState } from "react";
 import { useBudgetForm } from "../hooks/use-budget-form";
 import { useCreateBudgetMutation } from "../mutations/use-budget-mutation";
-import { currentMonth } from "../utils/month";
+import { currentMonth } from "@/lib/month";
 import { BudgetFormFields } from "./budget-form-fields";
 
 export function CreateBudgetDialog({ month }: { month?: string }) {

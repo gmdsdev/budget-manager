@@ -199,12 +199,24 @@ describe("recurrence lives on the transaction form", () => {
     expect(cells.some((cell) => cell.includes("900,00"))).toBe(true);
   }, 60_000);
 
-  test("deleting the series leaves the one-off behind", async () => {
+  test("deleting the series asks first, then leaves the one-off behind", async () => {
     await page.getByRole("button", { name: "Actions for Sofa" }).first().click();
     await page
       .getByRole("menuitem", { name: "Delete series" })
       .waitFor({ state: "visible" });
     await page.getByRole("menuitem", { name: "Delete series" }).click();
+
+    // Dropping a rule and every occurrence still ahead of today is the most
+    // destructive thing in the app, so it is confirmed like the rest of them.
+    const confirm = page.getByRole("alertdialog");
+
+    await confirm.waitFor({ state: "visible" });
+    // Titles and buttons are uppercased in CSS, and innerText reports that.
+    expect((await confirm.innerText()).toLowerCase()).toContain(
+      "delete “sofa”?",
+    );
+
+    await confirm.getByRole("button", { name: "Delete series" }).click();
 
     // Every scheduled row goes, including the one dated today, which was
     // still unpaid.

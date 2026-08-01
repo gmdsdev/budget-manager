@@ -65,6 +65,14 @@ export class WalletService {
     userId: string;
     patch: WalletUpdatePatch;
   }) {
+    const existing = await this.repository.findById({ id, userId });
+
+    if (!existing) {
+      throw new NotFoundError("error.notFound.wallet");
+    }
+
+    await this.assertCurrencyStillFree({ id, existing, patch });
+
     const wallet = await this.repository.update({ id, userId, patch });
 
     if (!wallet) {
@@ -72,6 +80,38 @@ export class WalletService {
     }
 
     return wallet;
+  }
+
+  /**
+   * A wallet's currency is the currency of everything already recorded against
+   * it, and of the invariants around it — both legs of a transfer share one,
+   * and a card payment has to match the card. Changing it under existing rows
+   * would silently reprice history and break pairs the create paths refuse to
+   * form, so it is fixed from the first row that references the wallet.
+   */
+  private async assertCurrencyStillFree({
+    id,
+    existing,
+    patch,
+  }: {
+    id: string;
+    existing: { currencyCode: string };
+    patch: WalletUpdatePatch;
+  }) {
+    if (
+      patch.currencyCode === undefined ||
+      patch.currencyCode === existing.currencyCode
+    ) {
+      return;
+    }
+
+    const references = await this.repository.countReferences({ id });
+
+    if (references > 0) {
+      throw new ConflictError("error.conflict.walletCurrencyInUse", {
+        references,
+      });
+    }
   }
 
   async archive({ id, userId }: { id: string; userId: string }) {

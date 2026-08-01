@@ -9,6 +9,10 @@ import type {
 const CREDIT_CARD_INVALIDATIONS = [
   trpc.creditCard.getAll.queryFilter(),
   trpc.creditCard.options.queryFilter(),
+  // The ledger names the card a purchase sits on, and archiving one takes its
+  // rows out of the totals — both are derived from the card row.
+  trpc.transaction.getAll.queryFilter(),
+  trpc.transaction.summary.queryFilter(),
   trpc.dashboard.getSummary.queryFilter(),
 ];
 

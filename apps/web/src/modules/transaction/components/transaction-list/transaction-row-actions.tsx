@@ -11,10 +11,8 @@ import { useTranslate } from "@budget-manager/i18n/react";
 import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  useDeleteRecurringMutation,
-  useSetRecurringActiveMutation,
-} from "@/modules/recurring/mutations/use-recurring-mutation";
+import { useSetRecurringActiveMutation } from "@/modules/recurring/mutations/use-recurring-mutation";
+import { DeleteRecurringDialog } from "@/modules/recurring/components/delete-recurring-dialog";
 import { EditRecurringDialog } from "@/modules/recurring/components/edit-recurring-dialog";
 import { useRecurringSeriesQuery } from "@/modules/recurring/queries/use-recurring-query";
 import { useMarkTransactionPaidMutation } from "../../mutations/use-transaction-mutation";
@@ -25,7 +23,7 @@ import { EditCardPurchaseDialog } from "../edit-card-purchase-dialog";
 import { EditTransactionDialog } from "../edit-transaction-dialog";
 import { EditTransferDialog } from "../edit-transfer-dialog";
 
-type RowDialog = "edit" | "delete" | "series" | null;
+type RowDialog = "edit" | "delete" | "series" | "deleteSeries" | null;
 
 export function TransactionRowActions({
   transaction,
@@ -36,7 +34,6 @@ export function TransactionRowActions({
   const [dialog, setDialog] = useState<RowDialog>(null);
   const markPaidMutation = useMarkTransactionPaidMutation();
   const setActiveMutation = useSetRecurringActiveMutation();
-  const deleteSeriesMutation = useDeleteRecurringMutation();
   const templateId = transaction.templateId;
   const series = useRecurringSeriesQuery(templateId);
 
@@ -109,12 +106,14 @@ export function TransactionRowActions({
                   ? t("transaction.action.resumeSeries")
                   : t("transaction.action.pauseSeries")}
               </DropdownMenuItem>
+              {/* Confirmed like every other destructive action: deleting a
+                  series drops the rule and every occurrence it laid down that
+                  has not happened yet, across months, and none of that is
+                  recoverable. */}
               <DropdownMenuItem
                 variant="destructive"
-                disabled={deleteSeriesMutation.isPending}
-                onClick={() =>
-                  deleteSeriesMutation.mutate({ id: templateId })
-                }
+                disabled={!series}
+                onClick={() => setDialog("deleteSeries")}
               >
                 {t("recurring.delete.submit")}
               </DropdownMenuItem>
@@ -170,6 +169,15 @@ export function TransactionRowActions({
           series={series}
           open
           onOpenChange={(next) => setDialog(next ? "series" : null)}
+        />
+      )}
+
+      {dialog === "deleteSeries" && series && (
+        <DeleteRecurringDialog
+          key={series.id}
+          series={series}
+          open
+          onOpenChange={(next) => setDialog(next ? "deleteSeries" : null)}
         />
       )}
 

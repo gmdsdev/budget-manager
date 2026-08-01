@@ -9,6 +9,10 @@ const WALLET_INVALIDATIONS = [
   trpc.wallet.options.queryFilter(),
   // An opening balance and an archive flag both move the transaction totals.
   trpc.transaction.summary.queryFilter(),
+  // The ledger names the wallet a row sits in, and a card names the wallet
+  // that pays it — both are joined, so a rename has to reach them.
+  trpc.transaction.getAll.queryFilter(),
+  trpc.creditCard.getAll.queryFilter(),
   trpc.dashboard.getSummary.queryFilter(),
 ];
 

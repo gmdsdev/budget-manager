@@ -67,4 +67,5 @@ export const common = {
     "pt-BR": "Escolha um período",
   },
   "common.clear": { en: "Clear", "pt-BR": "Limpar" },
+  "common.close": { en: "Close", "pt-BR": "Fechar" },
 } as const satisfies MessageTable;

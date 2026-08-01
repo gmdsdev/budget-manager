@@ -12,6 +12,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { errorCodeOf, signUpClient, type ApiClient } from "../support/api";
 import { requireServer } from "../support/env";
 import {
+  budget,
   category,
   listCategories,
   listTransactions,
@@ -182,6 +183,60 @@ describe("category", () => {
     expect(
       options.every((option) => CATEGORY_COLORS.includes(option.color)),
     ).toBe(true);
+  });
+
+  test("counts a budget as a reference, so deleting cannot cascade one away", async () => {
+    const budgeted = await api.category.create.mutate(
+      category({ name: "Budgeted", type: CategoryType.EXPENSE }),
+    );
+
+    await api.budget.create.mutate(budget(budgeted.id));
+
+    expect(
+      await errorCodeOf(api.category.delete.mutate({ id: budgeted.id })),
+    ).toBe("CONFLICT");
+
+    expect(
+      (await api.budget.getAll.query({})).rows.some(
+        (row) => row.categoryId === budgeted.id,
+      ),
+    ).toBe(true);
+  });
+
+  test("holds the type once something references the category", async () => {
+    const holder = await api.wallet.create.mutate(wallet({ name: "Typed" }));
+    const used = await api.category.create.mutate(
+      category({ name: "Settled type", type: CategoryType.EXPENSE }),
+    );
+    const unused = await api.category.create.mutate(
+      category({ name: "Free type", type: CategoryType.EXPENSE }),
+    );
+
+    await api.transaction.create.mutate(
+      transaction(holder.id, { categoryId: used.id }),
+    );
+
+    expect(
+      await errorCodeOf(
+        api.category.update.mutate({
+          ...category({ name: "Settled type", type: CategoryType.INCOME }),
+          id: used.id,
+        }),
+      ),
+    ).toBe("CONFLICT");
+
+    // Renaming and recolouring stay open — only the type is held.
+    const renamed = await api.category.update.mutate({
+      ...category({ name: "Still expense", type: CategoryType.EXPENSE }),
+      id: used.id,
+    });
+    expect(renamed.name).toBe("Still expense");
+
+    const flipped = await api.category.update.mutate({
+      ...category({ name: "Free type", type: CategoryType.INCOME }),
+      id: unused.id,
+    });
+    expect(flipped.type).toBe(CategoryType.INCOME);
   });
 
   test("rejects a blank name", async () => {

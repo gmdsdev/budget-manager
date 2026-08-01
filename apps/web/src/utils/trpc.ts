@@ -1,3 +1,4 @@
+import { getServerUrl } from "@/lib/server-url";
 import { getErrorMessage, isUnauthorizedError } from "@/utils/error-message";
 import type { AppRouter } from "@budget-manager/api/routers/index";
 import { getActiveLocale, t } from "@budget-manager/i18n";
@@ -16,33 +17,6 @@ declare module "@tanstack/react-query" {
   }
 }
 
-function getServerUrl(url: string) {
-  const normalized = url.endsWith("/") ? url.slice(0, -1) : url;
-
-  if (!normalized.startsWith("/")) {
-    return normalized;
-  }
-
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}${normalized}`;
-  }
-
-  const processEnv = (
-    globalThis as {
-      process?: { env?: Record<string, string | undefined> };
-    }
-  ).process?.env;
-  const vercelUrl =
-    processEnv?.VERCEL_ENV === "production"
-      ? (processEnv?.VERCEL_PROJECT_PRODUCTION_URL ?? processEnv?.VERCEL_URL)
-      : (processEnv?.VERCEL_URL ?? processEnv?.VERCEL_PROJECT_PRODUCTION_URL);
-  if (vercelUrl) {
-    const origin = vercelUrl.startsWith("http") ? vercelUrl : `https://${vercelUrl}`;
-    return `${origin}${normalized}`;
-  }
-
-  return `http://localhost:3000${normalized}`;
-}
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

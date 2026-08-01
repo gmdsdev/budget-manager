@@ -20,6 +20,7 @@ import {
   rows,
   rowTexts,
   signUpThroughUi,
+  todayInPage,
   waitForRowCount,
   type Session,
 } from "../support/web";
@@ -34,6 +35,9 @@ beforeAll(async () => {
   await signUpThroughUi(page);
 
   const api = await apiForPage(page);
+  // The list scopes itself to the *browser's* current month, so the rows have
+  // to be dated by the browser's clock rather than the test process's.
+  const today = await todayInPage(page);
 
   const [checking, euro] = await Promise.all([
     api.wallet.create.mutate(wallet({ name: "Checking" })),
@@ -56,19 +60,19 @@ beforeAll(async () => {
     api.transaction.create.mutate(
       transaction(checking.id, {
         name: "Zebra Rent",
-        occurrenceDate: dayThisMonth(5),
+        occurrenceDate: dayThisMonth(5, today),
       }),
     ),
     api.transaction.create.mutate(
       transaction(euro.id, {
         name: "Coffee Beans",
-        occurrenceDate: dayThisMonth(6),
+        occurrenceDate: dayThisMonth(6, today),
       }),
     ),
     api.transaction.create.mutate(
       transaction(checking.id, {
         name: "Old Subscription",
-        occurrenceDate: dayLastMonth(12),
+        occurrenceDate: dayLastMonth(12, today),
       }),
     ),
   ]);

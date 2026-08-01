@@ -1,12 +1,8 @@
+import { MonthKeySchema } from "@budget-manager/schemas";
 import { z } from "zod";
 
 export const DashboardSummaryInput = z
-  .object({
-    month: z
-      .string()
-      .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected a YYYY-MM month")
-      .optional(),
-  })
+  .object({ month: MonthKeySchema.optional() })
   .prefault({});
 
 export type DashboardSummaryDto = z.infer<typeof DashboardSummaryInput>;
