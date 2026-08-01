@@ -1,3 +1,4 @@
+import { budgetRouter } from "../modules/budget";
 import { categoryRouter } from "../modules/category";
 import { creditCardRouter } from "../modules/credit-card";
 import { dashboardRouter } from "../modules/dashboard";
@@ -22,5 +23,6 @@ export const appRouter = router({
   dashboard: dashboardRouter,
   creditCard: creditCardRouter,
   recurring: recurringRouter,
+  budget: budgetRouter,
 });
 export type AppRouter = typeof appRouter;

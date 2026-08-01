@@ -5,6 +5,7 @@ import {
   ReceiptIcon,
   SquaresFourIcon,
   TagIcon,
+  TargetIcon,
   WalletIcon,
 } from "@phosphor-icons/react";
 
@@ -12,6 +13,7 @@ import {
 export const MAIN_LINKS = [
   { to: "/dashboard", label: "nav.dashboard", icon: SquaresFourIcon },
   { to: "/transaction", label: "nav.transactions", icon: ReceiptIcon },
+  { to: "/budget", label: "nav.budgets", icon: TargetIcon },
 ] as const satisfies readonly { to: string; label: MessageKey; icon: unknown }[];
 
 export const SETTINGS_LINKS = [

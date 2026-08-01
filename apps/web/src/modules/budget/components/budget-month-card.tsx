@@ -1,0 +1,181 @@
+import { Button } from "@budget-manager/ui/components/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@budget-manager/ui/components/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@budget-manager/ui/components/dropdown-menu";
+import { useI18n, useTranslate } from "@budget-manager/i18n/react";
+import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
+import { DotsThreeIcon } from "@phosphor-icons/react";
+import { useState } from "react";
+import { useResetBudgetPeriodMutation } from "../mutations/use-budget-mutation";
+import type { BudgetProgressRow, BudgetTotalsRow } from "../types";
+import { BudgetMeter } from "./budget-meter";
+import { EditBudgetPeriodDialog } from "./edit-budget-period-dialog";
+
+function Figure({
+  label,
+  amountCents,
+  currencyCode,
+  negative,
+}: {
+  label: string;
+  amountCents: number;
+  currencyCode: string;
+  negative?: boolean;
+}) {
+  return (
+    <div className="space-y-0.5">
+      <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+        {label}
+      </p>
+      <p
+        className={`font-heading text-lg font-semibold ${
+          negative && amountCents < 0 ? "text-destructive" : ""
+        }`}
+      >
+        {formatMinorUnits(amountCents, currencyCode)}
+      </p>
+    </div>
+  );
+}
+
+function PeriodActions({ period }: { period: BudgetProgressRow }) {
+  const { t, formatMonthString } = useI18n();
+  const [editing, setEditing] = useState(false);
+  const resetMutation = useResetBudgetPeriodMutation();
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon">
+              <DotsThreeIcon />
+              {/* Named by month as well as category: the same category also
+                  owns a row in the list below, whose menu is a different one. */}
+              <span className="sr-only">
+                {t("budget.period.actionsFor", {
+                  name: period.categoryName,
+                  month: formatMonthString(period.periodMonth, "monthYear"),
+                })}
+              </span>
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setEditing(true)}>
+            {t("budget.period.edit.action")}
+          </DropdownMenuItem>
+          {period.isOverride && period.budgetId && (
+            <DropdownMenuItem
+              disabled={resetMutation.isPending}
+              onClick={() => resetMutation.mutate({ id: period.periodId })}
+            >
+              {t("budget.period.reset.action")}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {editing && (
+        <EditBudgetPeriodDialog
+          key={period.periodId}
+          period={period}
+          open
+          onOpenChange={setEditing}
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * The month in view: what each category may spend and what it has spent. This
+ * is the answer to "do I still have money to spend", so it leads the page and
+ * sits above the list of limits that produced it.
+ */
+export function BudgetMonthCard({
+  budgets,
+  totals,
+  currencyCode,
+  monthLabel,
+}: {
+  budgets: BudgetProgressRow[];
+  totals: BudgetTotalsRow | null;
+  currencyCode: string;
+  monthLabel: string;
+}) {
+  const t = useTranslate();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t("budget.month.title")}</CardTitle>
+        <CardDescription>
+          {t("budget.month.description", { month: monthLabel })}
+        </CardDescription>
+      </CardHeader>
+
+      {totals && (
+        <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <Figure
+            label={t("budget.totals.budgeted")}
+            amountCents={totals.limitCents}
+            currencyCode={currencyCode}
+          />
+          <Figure
+            label={t("budget.totals.spent")}
+            amountCents={totals.projectedSpentCents}
+            currencyCode={currencyCode}
+          />
+          <Figure
+            label={t("budget.totals.left")}
+            amountCents={totals.remainingCents}
+            currencyCode={currencyCode}
+            negative
+          />
+        </CardContent>
+      )}
+
+      <CardContent>
+        {budgets.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            {t("budget.month.empty")}
+          </p>
+        ) : (
+          <ul className="space-y-4">
+            {budgets.map((budget) => (
+              <BudgetMeter
+                key={budget.periodId}
+                budget={budget}
+                action={<PeriodActions period={budget} />}
+              />
+            ))}
+          </ul>
+        )}
+      </CardContent>
+
+      {budgets.length > 0 && (
+        <CardContent className="space-y-1 text-xs text-muted-foreground">
+          <p>
+            {totals && totals.exceededCount > 0
+              ? totals.exceededCount === 1
+                ? t("budget.totals.oneExceeded")
+                : t("budget.totals.exceeded", { count: totals.exceededCount })
+              : t("budget.totals.allWithin")}
+          </p>
+          <p>{t("budget.month.note")}</p>
+        </CardContent>
+      )}
+    </Card>
+  );
+}

@@ -603,3 +603,26 @@ export const OVERDUE_ONE_OFFS: readonly {
     wallet: "checking",
   },
 ];
+
+/**
+ * Monthly limits on the categories the account actually spends on, in the
+ * currency those wallets and cards use. The figures are set a little above a
+ * typical month so the meters read as a mix rather than all green or all red —
+ * `Dining Out` is deliberately tight, since a demo with nothing over budget
+ * shows none of what the screen is for.
+ */
+export const BUDGETS: readonly {
+  category: string;
+  limitMajor: number;
+  /** Only `monthly` and `yearly` exist here; a budget period is a month. */
+  everyMonths?: number;
+}[] = [
+  { category: "Groceries", limitMajor: 1_600 },
+  { category: "Dining Out", limitMajor: 700 },
+  { category: "Transportation", limitMajor: 320 },
+  { category: "Shopping", limitMajor: 900 },
+  { category: "Entertainment", limitMajor: 400 },
+  { category: "Personal Care", limitMajor: 300 },
+  // Quarterly, so the seeded account also has a budget that skips months.
+  { category: "Travel", limitMajor: 2_500, everyMonths: 3 },
+];

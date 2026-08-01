@@ -43,7 +43,7 @@ kept in TypeScript — see the balances note below.
 
 ```bash
 bun run db:start && bun run db:migrate && bun run dev   # prerequisites
-bun run test:e2e          # 255 checks: API + browser
+bun run test:e2e          # 289 checks: API + browser
 bun run test:e2e:api      # server only, ~2s
 bun run test:e2e:ui       # Playwright flows
 ```
@@ -92,8 +92,8 @@ bun run seed:demo --past-months 3 --future-months 1
 ```
 
 Like `apps/e2e`, it drives a real `createTRPCClient<AppRouter>` and **never writes SQL**: wallets,
-cards, categories, series, transfers, purchases and bill payments all go through the same routes
-the UI calls, so a renamed procedure breaks its `check-types` instead of quietly seeding garbage.
+cards, categories, series, transfers, purchases, budgets and bill payments all go through the same
+routes the UI calls, so a renamed procedure breaks its `check-types` instead of quietly seeding garbage.
 It declares no `test` script, so `turbo run test` stays hermetic.
 
 Four things the ordering encodes, all of them consequences of rules documented further down:
@@ -106,6 +106,10 @@ Four things the ordering encodes, all of them consequences of rules documented f
   deliberately overdue rows are written *after* that sweep, or it would settle them too.
 - Statuses are never hand-picked: `calendar.statusFor(date)` settles anything already dated and
   leaves the rest waiting, which is what keeps the account readable on any day it is seeded.
+- **Budgets are anchored at the oldest month of history**, so every seeded month already has a
+  limit to read against rather than only the months ahead, and the limits in `BUDGETS` are tuned
+  to leave a mix of green and over-budget meters — a demo where nothing is over budget shows none
+  of what the screen is for. One is quarterly, so the account also has a budget that skips months.
 - The catalog in `src/catalog.ts` is **balanced around `SALARY_MAJOR`**: monthly spending plus the
   transfers out of the checking wallet have to leave a small surplus, and the cash wallet needs its
   own transfer because the weekly market series is the only thing spending from it. Balances are
@@ -134,7 +138,7 @@ apps/server      Hono host — mounts better-auth at /api/auth/* and tRPC at /tr
 apps/web         Vite + React 19 + TanStack Router/Query/Form/Table
 apps/e2e         Live-stack end-to-end tests (API + Playwright), outside `turbo test`
 packages/api     tRPC routers + business logic (routes → service → repository)
-                 modules: wallet, category, transaction, credit-card, dashboard
+                 modules: wallet, category, transaction, credit-card, budget, dashboard
 packages/db      Drizzle schema, migrations, the `db` singleton
 packages/auth    better-auth instance (drizzle adapter)
 packages/schemas Zod schemas + enums shared by client and server
@@ -375,6 +379,64 @@ logic nothing verifies. Because balances are derived, transaction mutations must
 the wallet queries too; `useApiMutation`'s `invalidateQueries` accepts an array for this, and
 `TRANSACTION_INVALIDATIONS` is the shared list.
 
+### Budgets
+
+A budget is a **spending limit on one category, in one currency, for one month**, and it is
+built the way recurring transactions are: `budgets` is the template (the recurring limit) and
+`budget_periods` is the ledger of months it laid down. `budget_id` on a period is provenance
+only and is `ON DELETE SET NULL`, so a month already lived through survives its series being
+deleted — exactly like a settled occurrence does.
+
+**A budget period is a calendar month, so the schedule only speaks in months.**
+`BUDGET_RECURRENCE_TYPES` is the `fixed | monthly | yearly` subset of `RecurrenceType`:
+`weekly` is deliberately excluded, because a weekly limit cannot be laid over months without
+either splitting a week across two of them or inventing a period the spending query cannot
+group by. `budgetMonths` is the `occurrenceDates` twin — a `fixed` budget produces exactly
+`installments` months and ignores the horizon, everything else runs to `endsOn` or the
+12-month `HORIZON_MONTHS`, whichever comes first — and it steps in month keys, so there is no
+day-of-month clamping to get wrong. Nobody is asked when a budget ends: `budgetEndsOn` derives
+it from the start, same `RECURRENCE_YEARS` bargain.
+
+**`is_override` is the whole editing model.** A month is either *inherited* (the series wrote
+it) or *the user's own* (they set that month by hand). Editing, pausing or deleting a series
+re-lays only inherited months dated **this month or later** — the month in progress counts as
+still ahead, since a budget you are living through is the one an edit usually means to change.
+Past months and overridden months always survive. That is what makes the two things the
+feature asks for one mechanism: "a new limit for all future months" is an edit to the series,
+and "a different limit on a specific month" is an override. `insertPeriods` resolves the
+unique `(user, category, currency, month)` index with `onConflictDoUpdate ... setWhere
+is_override = false`, so a new series adopts an orphaned month but can never overwrite a
+deliberate one.
+
+**One budget per category per currency**, enforced in the service with a `ConflictError` that
+tells the user to edit the existing one. Only expense categories may carry a limit, and an
+archived category can only stay on a budget it already had.
+
+**Spending is matched on both the category and the currency**, because two wallets in two
+currencies charging the same category are two different budgets and there are no FX rates to
+reconcile them with. The query is a plain `GROUP BY (currency, category, status)` over
+`MONTH_EXPENSE_KINDS` with the dashboard's own `ownerCurrency`/`ownerNotArchived` joins — so a
+card purchase spends its category's budget and a mis-tagged row cannot — and every rule lives
+in the unit-tested `progress.ts`. Two figures come out of it: `spentCents` (settled) and
+`projectedSpentCents` (settled **plus** still-scheduled). **`remainingCents` is measured
+against the projected figure**, which is what keeps a budget from disagreeing with the
+dashboard's Expenses tile — that tile counts everything not cancelled. It is allowed to go
+negative rather than clamp, so overspending is visible. `deriveBudgetStatus` is derived like a
+statement's status, never stored.
+
+The dashboard composes this rather than re-deriving it: its repository adds one
+`listBudgetPeriods` query and its summary calls the budget module's own `buildBudgetProgress`
+with the `categoryMovements` the spending breakdown already fetched, so the widget and the
+budget page cannot report different spending. `CurrencySummary` carries `budgets` and
+`budgetTotals`, per currency, never summed across them.
+
+On the page, the month card leads and the list of limits follows — the card answers "is there
+money left", the list is what set it. Both the month and the currency controls sit above
+everything they scope, the same grammar the dashboard uses. The route loader prefetches
+`getMonth` with an **explicit** `currentMonth()`, not a bare call: the page asks for that key,
+and a bare prefetch would sit under a different one and leave the card loading on every visit.
+`BudgetMeter` is shared by the page and the dashboard widget, so one bar renders both.
+
 ### Frontend (apps/web)
 
 Routes are file-based under `src/routes/` (`routeTree.gen.ts` is generated — never edit, it's gitignored and ESLint-ignored). The `_auth` layout route redirects to `/login` in `beforeLoad` using `getCachedSession()` from `src/lib/session.ts`, a 10s TTL + in-flight-dedupe cache around `authClient.getSession()`; call `invalidateSessionCache()` after sign-in/out. Route `loader`s prefetch with `context.queryClient.ensureQueryData(context.trpc.<path>.queryOptions())` — `trpc` and `queryClient` are injected as router context in `main.tsx`.
@@ -425,9 +487,10 @@ figure whose row label has scrolled away is unreadable (its `group-hover` is wha
 highlight whole). Mutations on transactions, series and wallets all invalidate
 `trpc.transaction.summary` — every figure is derived.
 
-**A column on a listing table gets a filter for it.** All four list pages follow this: wallets
-(name, type, currency), categories (name, type), cards (name, currency, billing wallet) and
-transactions (date range, description, account, category, kind, repeats, status). The controls
+**A column on a listing table gets a filter for it.** All five list pages follow this: wallets
+(name, type, currency), categories (name, type), cards (name, currency, billing wallet),
+budgets (category, currency, status) and transactions (date range, description, account,
+category, kind, repeats, status). The controls
 are ordered to match the columns, and the bar is **left-aligned** — `FilterBar`
 (`src/components/filter-bar.tsx`) owns that alignment and the `Clear filters` button, so no
 page positions its own. `FilterSelect` and `FilterSearch` are the two control shapes;
@@ -474,7 +537,8 @@ the page is fetched, so filtering them would mean either duplicating the derivat
 (which the balances note forbids) or moving pagination out of the repository; the real columns
 (`openingBalanceCents`, `limitCents`, `amountCents`) are left out too, for symmetry. The card
 **Cycle** column is a display-only composite of two config fields. And the statements dialog
-(`credit-card-bills-dialog.tsx`) and the dashboard lists are outside it — the dialog is scoped
+(`credit-card-bills-dialog.tsx`), the budget month card, the budget months dialog and the
+dashboard lists are outside it — each is already scoped by controls of its own — the dialog is scoped
 to one card and its most useful filter (`Status`) is derived by `deriveBillStatus`, and the
 dashboard exists to show what needs acting on, which filtering would defeat.
 

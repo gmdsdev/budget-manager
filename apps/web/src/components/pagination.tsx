@@ -13,6 +13,7 @@ export type PaginatedResource =
   | "categories"
   | "cards"
   | "transactions"
+  | "budgets"
   | "statements";
 
 export function Pagination({

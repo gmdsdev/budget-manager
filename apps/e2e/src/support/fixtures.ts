@@ -6,6 +6,7 @@ import {
   TransactionStatus,
   WalletCurrency,
   WalletType,
+  type BudgetFormDto,
   type CardPaymentFormDto,
   type CardPurchaseFormDto,
   type CategoryFormDto,
@@ -124,6 +125,46 @@ export const transfer = (
   notes: null,
   ...overrides,
 });
+
+export const budget = (
+  categoryId: string,
+  overrides: Partial<BudgetFormDto> = {},
+): BudgetFormDto => ({
+  categoryId,
+  currencyCode: WalletCurrency.BRL,
+  amountCents: 100_000,
+  recurrenceType: RecurrenceType.MONTHLY,
+  interval: 1,
+  installments: null,
+  startsOn: monthKey(),
+  ...overrides,
+});
+
+/**
+ * `YYYY-MM` `offset` months from a month key. No clock involved on purpose:
+ * `bun test` runs in UTC while the server runs in the machine's own zone, so on
+ * the last evening of a month the two disagree about which month "now" is. Month
+ * assertions therefore anchor on a key the *server* handed back, and step from
+ * it with this.
+ */
+export function shiftMonthKey(month: string, offset: number) {
+  const [year, index] = month.split("-");
+  const target = new Date(Number(year), Number(index) - 1 + offset, 1);
+
+  return `${target.getFullYear()}-${`${target.getMonth() + 1}`.padStart(2, "0")}`;
+}
+
+/** A day inside a given month key, capped at 28 so it exists in every month. */
+export function dayIn(month: string, day: number) {
+  return `${month}-${`${Math.min(day, 28)}`.padStart(2, "0")}`;
+}
+
+/** The `YYYY-MM` the suite happens to run in, or one `offset` months away. */
+export function monthKey(offset = 0, today = new Date()) {
+  const target = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+
+  return `${target.getFullYear()}-${`${target.getMonth() + 1}`.padStart(2, "0")}`;
+}
 
 /**
  * A day in the month the suite happens to run in, capped at 28 so it exists in

@@ -106,6 +106,10 @@ export const enums = {
   "enum.recurrenceType.monthly": { en: "Monthly", "pt-BR": "Mensal" },
   "enum.recurrenceType.yearly": { en: "Yearly", "pt-BR": "Anual" },
 
+  "enum.budgetStatus.on_track": { en: "On track", "pt-BR": "No caminho" },
+  "enum.budgetStatus.warning": { en: "Close to the limit", "pt-BR": "Perto do limite" },
+  "enum.budgetStatus.exceeded": { en: "Over budget", "pt-BR": "Acima do orçamento" },
+
   "enum.locale.en": { en: "English", "pt-BR": "English" },
   "enum.locale.pt-BR": {
     en: "Português (Brasil)",

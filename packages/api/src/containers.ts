@@ -1,4 +1,5 @@
 import { db } from "@budget-manager/db";
+import { BudgetRepository, BudgetService } from "./modules/budget";
 import { CategoryRepository, CategoryService } from "./modules/category";
 import {
   CreditCardRepository,
@@ -15,6 +16,7 @@ const transactionRepository = new TransactionRepository(db);
 const dashboardRepository = new DashboardRepository(db);
 const creditCardRepository = new CreditCardRepository(db);
 const recurringRepository = new RecurringRepository(db);
+const budgetRepository = new BudgetRepository(db);
 
 const walletService = new WalletService(walletRepository);
 const categoryService = new CategoryService(categoryRepository);
@@ -23,6 +25,7 @@ const transactionService = new TransactionService(
   transactionRepository,
   creditCardService,
 );
+const budgetService = new BudgetService(budgetRepository);
 const dashboardService = new DashboardService(dashboardRepository);
 const recurringService = new RecurringService(
   recurringRepository,
@@ -36,4 +39,5 @@ export const services = {
   dashboard: dashboardService,
   creditCard: creditCardService,
   recurring: recurringService,
+  budget: budgetService,
 };

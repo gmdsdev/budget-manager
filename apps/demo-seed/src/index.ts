@@ -83,6 +83,27 @@ for (const card of cards.rows) {
   );
 }
 
+// Budgets are derived from the same rows as everything above, so printing them
+// is also the check that a seeded month is not silently all red.
+for (const currency of dashboard.currencies) {
+  if (currency.budgets.length === 0) continue;
+
+  console.log(`\nBudgets for ${dashboard.month} in ${currency.currencyCode}`);
+
+  for (const entry of currency.budgets) {
+    const money = (cents: number) =>
+      formatMinorUnits(cents, currency.currencyCode);
+
+    console.log(
+      `  ${entry.categoryName.padEnd(20)}${money(entry.projectedSpentCents)} of ${money(
+        entry.limitCents,
+      )} · ${entry.remainingCents < 0 ? "over" : "left"} ${money(
+        Math.abs(entry.remainingCents),
+      )}`,
+    );
+  }
+}
+
 console.log(
   `\n${dashboard.statements.length} statement(s) to pay, ${dashboard.pending.length} row(s) awaiting payment\n`,
 );

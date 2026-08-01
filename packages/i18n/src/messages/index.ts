@@ -1,4 +1,5 @@
 import { auth } from "./auth";
+import { budget } from "./budget";
 import { category } from "./category";
 import { common } from "./common";
 import { creditCard } from "./credit-card";
@@ -21,6 +22,7 @@ import { wallet } from "./wallet";
  */
 export const messages = {
   ...auth,
+  ...budget,
   ...category,
   ...common,
   ...creditCard,

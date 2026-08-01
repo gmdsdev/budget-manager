@@ -3,6 +3,7 @@ import type { MessageTable } from "./table";
 export const nav = {
   "nav.dashboard": { en: "Dashboard", "pt-BR": "Painel" },
   "nav.transactions": { en: "Transactions", "pt-BR": "Transações" },
+  "nav.budgets": { en: "Budgets", "pt-BR": "Orçamentos" },
   "nav.wallets": { en: "Wallets", "pt-BR": "Carteiras" },
   "nav.creditCards": { en: "Credit Cards", "pt-BR": "Cartões de Crédito" },
   "nav.categories": { en: "Categories", "pt-BR": "Categorias" },

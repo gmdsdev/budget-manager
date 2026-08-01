@@ -1,4 +1,16 @@
-import { formatDate, parseDateString } from "../../dates";
+import {
+  formatDate,
+  monthDateRange,
+  monthKeyOf,
+  parseDateString,
+} from "../../dates";
+import {
+  buildBudgetProgress,
+  buildBudgetTotals,
+  type BudgetPeriodRow,
+  type BudgetProgress,
+  type BudgetTotals,
+} from "../budget";
 import {
   type CategoryColor,
   TransactionStatus,
@@ -77,6 +89,10 @@ export type CardSlice = {
 
 export type CurrencySummary = {
   currencyCode: string;
+  /** Every budgeted category this month, worst-off first. */
+  budgets: BudgetProgress[];
+  /** What those budgets add up to; absent when the currency has none. */
+  budgetTotals: BudgetTotals | null;
   walletCount: number;
   balanceCents: number;
   projectedBalanceCents: number;
@@ -104,48 +120,21 @@ function counts(status: string) {
   return isTransactionStatus(status) && status !== TransactionStatus.CANCELLED;
 }
 
-export function resolveMonth(today: Date): string {
-  const month = `${today.getMonth() + 1}`.padStart(2, "0");
-
-  return `${today.getFullYear()}-${month}`;
-}
-
-// formatDate now lives in src/dates.ts, shared with the credit-card cycles.
+// The month arithmetic lives in src/dates.ts, shared with the credit-card
+// cycles and the budget schedule; these names are the dashboard's own vocabulary
+// for it.
 export { formatDate };
-
-/**
- * Inclusive first/last day of a `YYYY-MM` month. Day 0 of the *next* month is
- * the last day of this one, which keeps leap years and 30/31-day months right.
- */
-export function monthRange(month: string): { from: string; to: string } {
-  const match = /^(\d{4})-(\d{2})$/.exec(month);
-
-  if (!match?.[1] || !match[2]) {
-    throw new Error(`Expected a YYYY-MM month, received "${month}"`);
-  }
-
-  const year = Number(match[1]);
-  const monthIndex = Number(match[2]) - 1;
-
-  if (monthIndex < 0 || monthIndex > 11) {
-    throw new Error(`Month out of range in "${month}"`);
-  }
-
-  return {
-    from: formatDate(new Date(year, monthIndex, 1)),
-    to: formatDate(new Date(year, monthIndex + 1, 0)),
-  };
-}
+export { monthKeyOf as resolveMonth, monthDateRange as monthRange };
 
 /** The `YYYY-MM` months ending at `month`, oldest first. */
 export function trailingMonths(month: string, count: number): string[] {
-  const anchor = parseDateString(monthRange(month).from);
+  const anchor = parseDateString(monthDateRange(month).from);
   const months: string[] = [];
 
   for (let offset = count - 1; offset >= 0; offset -= 1) {
     const point = new Date(anchor.getFullYear(), anchor.getMonth() - offset, 1);
 
-    months.push(resolveMonth(point));
+    months.push(monthKeyOf(point));
   }
 
   return months;
@@ -244,6 +233,7 @@ export function buildCurrencySummaries({
   trendMonths,
   trendMovements,
   categoryMovements,
+  budgetPeriods = [],
   topCategoryLimit = 5,
 }: {
   wallets: WalletBalanceRow[];
@@ -252,9 +242,28 @@ export function buildCurrencySummaries({
   trendMonths: string[];
   trendMovements: TrendMovement[];
   categoryMovements: CategoryMovement[];
+  budgetPeriods?: BudgetPeriodRow[];
   topCategoryLimit?: number;
 }): CurrencySummary[] {
   const trends = trendByCurrency(trendMovements, trendMonths);
+  // The budget rules come from the budget module and are fed the very
+  // movements the spending breakdown above uses, so a category's bar and its
+  // budget meter can never report different spending.
+  const budgetProgress = buildBudgetProgress(budgetPeriods, categoryMovements);
+  const budgetTotalsByCurrency = new Map(
+    buildBudgetTotals(budgetProgress).map((totals) => [
+      totals.currencyCode,
+      totals,
+    ]),
+  );
+  const budgetsByCurrency = new Map<string, BudgetProgress[]>();
+
+  for (const entry of budgetProgress) {
+    const bucket = budgetsByCurrency.get(entry.currencyCode) ?? [];
+
+    bucket.push(entry);
+    budgetsByCurrency.set(entry.currencyCode, bucket);
+  }
   const selectedMonth = trendMonths.at(-1);
   const categoryTotals = topCategoriesByCurrency(
     categoryMovements,
@@ -270,6 +279,8 @@ export function buildCurrencySummaries({
 
     const created: CurrencySummary = {
       currencyCode,
+      budgets: [],
+      budgetTotals: null,
       walletCount: 0,
       balanceCents: 0,
       projectedBalanceCents: 0,
@@ -339,6 +350,15 @@ export function buildCurrencySummaries({
 
   for (const [currencyCode, categories] of categoryTotals) {
     ensure(currencyCode).topCategories = categories;
+  }
+
+  // A currency the user only budgets in still deserves a row: an empty wallet
+  // with a limit set against it is exactly the case worth surfacing.
+  for (const [currencyCode, entries] of budgetsByCurrency) {
+    const summary = ensure(currencyCode);
+
+    summary.budgets = entries;
+    summary.budgetTotals = budgetTotalsByCurrency.get(currencyCode) ?? null;
   }
 
   return [...byCurrency.values()].sort((a, b) =>

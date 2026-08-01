@@ -1,4 +1,4 @@
-import type { CategoryColor } from "@budget-manager/schemas";
+import type { BudgetStatus, CategoryColor } from "@budget-manager/schemas";
 
 export type MonthPoint = {
   month: string;
@@ -29,8 +29,37 @@ export type CardSlice = {
   availableCents: number;
 };
 
+export type BudgetProgress = {
+  periodId: string;
+  budgetId: string | null;
+  categoryId: string;
+  categoryName: string;
+  categoryColor: CategoryColor;
+  currencyCode: string;
+  periodMonth: string;
+  limitCents: number;
+  spentCents: number;
+  projectedSpentCents: number;
+  remainingCents: number;
+  usedRatio: number;
+  status: BudgetStatus;
+  isOverride: boolean;
+};
+
+export type BudgetTotals = {
+  currencyCode: string;
+  budgetCount: number;
+  limitCents: number;
+  spentCents: number;
+  projectedSpentCents: number;
+  remainingCents: number;
+  exceededCount: number;
+};
+
 export type CurrencySummary = {
   currencyCode: string;
+  budgets: BudgetProgress[];
+  budgetTotals: BudgetTotals | null;
   walletCount: number;
   balanceCents: number;
   projectedBalanceCents: number;

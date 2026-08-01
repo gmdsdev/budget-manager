@@ -81,6 +81,18 @@ export const validation = {
     en: "Fixed installments need a count",
     "pt-BR": "Parcelamento fixo precisa de uma quantidade",
   },
+  "validation.monthRequired": {
+    en: "Pick a month",
+    "pt-BR": "Escolha um mês",
+  },
+  "validation.categoryRequired": {
+    en: "Category is required",
+    "pt-BR": "A categoria é obrigatória",
+  },
+  "validation.budgetInstallments": {
+    en: "A fixed budget needs a number of months",
+    "pt-BR": "Um orçamento fixo precisa de uma quantidade de meses",
+  },
   "validation.currentPasswordRequired": {
     en: "Current password is required",
     "pt-BR": "A senha atual é obrigatória",

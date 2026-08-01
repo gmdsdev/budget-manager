@@ -1,11 +1,13 @@
 import { minorUnitDigits } from "@budget-manager/money";
 import {
+  RecurrenceType,
   TransactionKind,
   TransactionStatus,
-  type WalletCurrency,
+  WalletCurrency,
 } from "@budget-manager/schemas";
 import { createCalendar } from "./calendar";
 import {
+  BUDGETS,
   CARDS,
   CARD_SPENDING,
   CUSTOM_CATEGORIES,
@@ -457,6 +459,27 @@ export async function seedDemoAccount({
   });
 
   count("cancelled", 1);
+
+  // --- Budgets --------------------------------------------------------------
+
+  // Anchored at the oldest month of history, so every seeded month already has
+  // a limit to read against rather than only the months ahead.
+  log("Setting monthly budgets…");
+
+  count(
+    "budgets",
+    await inBatches(BUDGETS, async (spec) => {
+      await client.budget.create.mutate({
+        categoryId: categoryId(spec.category),
+        currencyCode: WalletCurrency.BRL,
+        amountCents: minor(spec.limitMajor, WalletCurrency.BRL),
+        recurrenceType: RecurrenceType.MONTHLY,
+        interval: spec.everyMonths ?? 1,
+        installments: null,
+        startsOn: calendar.monthKey(-pastMonths),
+      });
+    }),
+  );
 
   // --- Paying the card bills ------------------------------------------------
 

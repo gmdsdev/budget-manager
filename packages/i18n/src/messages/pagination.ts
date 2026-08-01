@@ -43,6 +43,14 @@ export const pagination = {
     en: "Showing {from}–{to} of {total} transactions",
     "pt-BR": "Exibindo {from}–{to} de {total} transações",
   },
+  "pagination.budgets.empty": {
+    en: "No budgets",
+    "pt-BR": "Nenhum orçamento",
+  },
+  "pagination.budgets.summary": {
+    en: "Showing {from}\u2013{to} of {total} budgets",
+    "pt-BR": "Exibindo {from}\u2013{to} de {total} orçamentos",
+  },
   "pagination.statements.empty": {
     en: "No statements",
     "pt-BR": "Nenhuma fatura",

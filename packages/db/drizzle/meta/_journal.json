@@ -64,6 +64,13 @@
       "when": 1785527195346,
       "tag": "0008_whole_king_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785542686651,
+      "tag": "0009_skinny_captain_america",
+      "breakpoints": true
     }
   ]
 }

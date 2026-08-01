@@ -1,3 +1,4 @@
+export * from "./budget/budget.schema";
 export * from "./category/category-color";
 export * from "./category/category.schema";
 export * from "./category/default-categories";

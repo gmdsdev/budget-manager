@@ -2,6 +2,7 @@ import type { Translate } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { CurrencySummary } from "../types";
+import { BudgetProgressCard } from "./budget-progress-card";
 import { CardUtilisationCard } from "./card-utilisation-card";
 import { CashFlowChart } from "./cash-flow-chart";
 import { NetSparkline } from "./net-sparkline";
@@ -38,6 +39,7 @@ export function CurrencySection({
   const hasPending = summary.projectedBalanceCents !== summary.balanceCents;
   const hasCards = summary.cardCount > 0;
   const hasWallets = summary.wallets.length > 0;
+  const hasBudgets = summary.budgets.length > 0;
 
   return (
     <section
@@ -141,6 +143,15 @@ export function CurrencySection({
           />
         </div>
       </div>
+
+      {hasBudgets && (
+        <BudgetProgressCard
+          budgets={summary.budgets}
+          totals={summary.budgetTotals}
+          currencyCode={summary.currencyCode}
+          monthLabel={monthLabel}
+        />
+      )}
 
       {(hasWallets || hasCards) && (
         <div className="grid gap-4 lg:grid-cols-12">

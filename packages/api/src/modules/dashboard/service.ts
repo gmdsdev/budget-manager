@@ -43,6 +43,7 @@ export class DashboardService {
       billMovements,
       trendMovements,
       categoryMovements,
+      budgetPeriods,
       pending,
     ] = await Promise.all([
       this.repository.listActiveWallets({ userId }),
@@ -53,6 +54,7 @@ export class DashboardService {
       this.repository.getBillMovementTotals({ userId }),
       this.repository.getTrendMovements({ userId, from: trendFrom, to }),
       this.repository.getMonthCategoryMovements({ userId, from, to }),
+      this.repository.listBudgetPeriods({ userId, month: resolvedMonth }),
       this.repository.getPending({ userId, limit: PENDING_LIMIT }),
     ]);
 
@@ -80,6 +82,7 @@ export class DashboardService {
         trendMonths,
         trendMovements,
         categoryMovements,
+        budgetPeriods,
       }),
       pending,
       statements,

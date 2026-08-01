@@ -154,6 +154,25 @@ export const dashboard = {
     "pt-BR": "{percent}% usado · {amount} disponível",
   },
 
+  "dashboard.budgets.title": { en: "Budgets", "pt-BR": "Orçamentos" },
+  "dashboard.budgets.description": {
+    en: "How much of each limit {month} has used.",
+    "pt-BR": "Quanto de cada limite {month} já usou.",
+  },
+  "dashboard.budgets.empty": {
+    en: "No limits set for this month.",
+    "pt-BR": "Nenhum limite definido para este mês.",
+  },
+  "dashboard.budgets.action": { en: "Open budgets", "pt-BR": "Abrir orçamentos" },
+  "dashboard.budgets.left": {
+    en: "{amount} left to spend",
+    "pt-BR": "{amount} disponível para gastar",
+  },
+  "dashboard.budgets.more": {
+    en: "{count} more budgeted categories.",
+    "pt-BR": "Mais {count} categorias com orçamento.",
+  },
+
   "dashboard.statements.title": {
     en: "Card statements",
     "pt-BR": "Faturas de cartão",

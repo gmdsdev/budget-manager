@@ -1,4 +1,5 @@
 import type { Db } from "@budget-manager/db";
+import { budgetPeriods } from "@budget-manager/db/schema/budget";
 import { categories } from "@budget-manager/db/schema/category";
 import { creditCards } from "@budget-manager/db/schema/creditCard";
 import { creditCardBills } from "@budget-manager/db/schema/creditCardBill";
@@ -37,6 +38,41 @@ const occurrenceMonth = sql<string>`to_char(${transactionOccurrences.occurrenceD
  */
 export class DashboardRepository {
   constructor(private readonly db: Db) {}
+
+  /**
+   * The budgeted months for the month in view. The rules that turn these into
+   * progress live in the budget module, which is also what the budget page
+   * reads — so the widget can never disagree with the page it links to.
+   */
+  async listBudgetPeriods({
+    userId,
+    month,
+  }: {
+    userId: string;
+    month: string;
+  }) {
+    return this.db
+      .select({
+        id: budgetPeriods.id,
+        budgetId: budgetPeriods.budgetId,
+        categoryId: budgetPeriods.categoryId,
+        categoryName: categories.name,
+        categoryColor: categories.color,
+        currencyCode: budgetPeriods.currencyCode,
+        periodMonth: budgetPeriods.periodMonth,
+        amountCents: budgetPeriods.amountCents,
+        isOverride: budgetPeriods.isOverride,
+      })
+      .from(budgetPeriods)
+      .innerJoin(categories, eq(categories.id, budgetPeriods.categoryId))
+      .where(
+        and(
+          eq(budgetPeriods.userId, userId),
+          eq(budgetPeriods.periodMonth, month),
+        ),
+      )
+      .orderBy(asc(categories.name), asc(budgetPeriods.id));
+  }
 
   async listActiveWallets({ userId }: { userId: string }) {
     return this.db

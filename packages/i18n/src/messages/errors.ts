@@ -69,6 +69,15 @@ export const errors = {
     "pt-BR": "Transação recorrente não encontrada",
   },
 
+  "error.notFound.budget": {
+    en: "Budget not found",
+    "pt-BR": "Orçamento não encontrado",
+  },
+  "error.notFound.budgetPeriod": {
+    en: "Budget month not found",
+    "pt-BR": "Mês do orçamento não encontrado",
+  },
+
   "error.conflict.walletInUse": {
     en: "This wallet is used by {references} record(s). Archive it instead of deleting.",
     "pt-BR":
@@ -140,6 +149,25 @@ export const errors = {
   "error.conflict.cardPurchaseSeriesNeedsCard": {
     en: "A card purchase series needs a card.",
     "pt-BR": "Uma série de compras no cartão precisa de um cartão.",
+  },
+  "error.conflict.budgetAlreadyExists": {
+    en: "This category already has a {currency} budget. Edit that one instead.",
+    "pt-BR":
+      "Esta categoria já tem um orçamento em {currency}. Edite esse orçamento.",
+  },
+  "error.conflict.budgetCategoryType": {
+    en: "A {categoryType} category cannot carry a budget.",
+    "pt-BR": "Uma categoria de {categoryType} não pode ter orçamento.",
+  },
+  "error.conflict.budgetCategoryArchived": {
+    en: "That category is archived. Restore it before budgeting for it.",
+    "pt-BR":
+      "Esta categoria está arquivada. Restaure-a antes de criar um orçamento para ela.",
+  },
+  "error.conflict.budgetPeriodOrphaned": {
+    en: "This month no longer belongs to a budget, so there is nothing to follow.",
+    "pt-BR":
+      "Este mês não pertence mais a um orçamento, então não há série a seguir.",
   },
   "error.conflict.seriesNeedsWallet": {
     en: "An income or expense series needs a wallet.",
