@@ -14,6 +14,24 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
  */
 const NATIVE_SCHEME = "kivo://";
 
+/**
+ * Expo Go cannot register a custom scheme, so `Linking.createURL` there ignores
+ * `kivo` and reports the bundler instead (`exp://127.0.0.1:8081`) — which is the
+ * origin the plugin then sends, and an untrusted one is a `403 Invalid origin` on
+ * the sign-in request itself. `@better-auth/expo` trusts this scheme on its own,
+ * but only when `process.env.NODE_ENV` is literally `"development"`, and nothing
+ * in this repo sets it; `packages/env` only *defaults* its own `NODE_ENV` to that
+ * value. Trusted here instead so the allowance keys off the validated env rather
+ * than a variable the dev scripts would have to remember to export.
+ */
+const EXPO_GO_SCHEME = "exp://";
+
+function trustedOrigins() {
+  return env.NODE_ENV === "development"
+    ? [env.CORS_ORIGIN, NATIVE_SCHEME, EXPO_GO_SCHEME]
+    : [env.CORS_ORIGIN, NATIVE_SCHEME];
+}
+
 export function createAuth(db: Db = sharedDb) {
   return betterAuth({
     database: drizzleAdapter(db, {
@@ -21,7 +39,7 @@ export function createAuth(db: Db = sharedDb) {
 
       schema: schema,
     }),
-    trustedOrigins: [env.CORS_ORIGIN, NATIVE_SCHEME],
+    trustedOrigins: trustedOrigins(),
     emailAndPassword: {
       enabled: true,
     },
