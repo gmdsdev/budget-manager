@@ -16,8 +16,8 @@ import { useI18n, useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
-import { useResetBudgetPeriodMutation } from "../mutations/use-budget-mutation";
-import type { BudgetProgressRow, BudgetTotalsRow } from "../types";
+import { useResetBudgetPeriodMutation } from "@budget-manager/client/react";
+import type { BudgetProgressRow, BudgetTotalsRow } from "@budget-manager/client";
 import { BudgetMeter } from "./budget-meter";
 import { EditBudgetPeriodDialog } from "./edit-budget-period-dialog";
 

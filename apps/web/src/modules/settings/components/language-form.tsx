@@ -16,8 +16,8 @@ import {
   SelectValue,
 } from "@budget-manager/ui/components/select";
 import { useId } from "react";
-import { useLanguageForm } from "../hooks/use-language-form";
-import { useUpdateLanguageMutation } from "../mutations/use-user-mutation";
+import { useLanguageForm } from "@budget-manager/client/react";
+import { useUpdateLanguageMutation } from "@budget-manager/client/react";
 import { SettingsSection } from "./settings-section";
 
 /**

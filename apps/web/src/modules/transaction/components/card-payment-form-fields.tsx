@@ -1,7 +1,7 @@
-import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
-import { useBillOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-bills-query";
-import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useCreditCardOptionsQuery } from "@budget-manager/client/react";
+import { useBillOptionsQuery } from "@budget-manager/client/react";
+import { useWalletOptionsQuery } from "@budget-manager/client/react";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { TransactionStatus } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
@@ -24,7 +24,7 @@ import {
 import { Textarea } from "@budget-manager/ui/components/textarea";
 import { useSelector } from "@tanstack/react-form";
 import { FieldRow } from "./field-row";
-import type { UseCardPaymentFormReturnType } from "../hooks/use-card-payment-form";
+import type { UseCardPaymentFormReturnType } from "@budget-manager/client/react";
 
 const NO_BILL = "none";
 

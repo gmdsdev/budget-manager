@@ -1,5 +1,5 @@
-import { usePreferredCurrency } from "@/hooks/use-preferred-currency";
-import { getErrorMessage } from "@/utils/error-message";
+import { usePreferredCurrency } from "@budget-manager/client/react";
+import { getErrorMessage } from "@budget-manager/client";
 import {
   Button,
   buttonVariants,
@@ -26,8 +26,8 @@ import { useState } from "react";
 import { CurrencySection } from "../components/currency-section";
 import { PendingList } from "../components/pending-list";
 import { StatementsDueList } from "../components/statements-due-list";
-import { useDashboardQuery } from "../queries/use-dashboard-query";
-import { currentMonth, shiftMonth } from "@/lib/month";
+import { useDashboardQuery } from "@budget-manager/client/react";
+import { currentMonth, shiftMonth } from "@budget-manager/client";
 
 export default function DashboardPage() {
   const { t, formatMonthString } = useI18n();

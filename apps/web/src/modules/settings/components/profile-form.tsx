@@ -9,8 +9,8 @@ import {
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Input } from "@budget-manager/ui/components/input";
 import { useId } from "react";
-import { useProfileForm } from "../hooks/use-profile-form";
-import { useUpdateProfileMutation } from "../mutations/use-user-mutation";
+import { useProfileForm } from "@budget-manager/client/react";
+import { useUpdateProfileMutation } from "@budget-manager/client/react";
 import { SettingsSection } from "./settings-section";
 
 export function ProfileForm({

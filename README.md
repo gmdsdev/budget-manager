@@ -8,6 +8,9 @@ This project was created with [Better-T-Stack](https://github.com/AmanVarshney01
 - **TanStack Router** - File-based routing with full type safety
 - **TailwindCSS** - Utility-first CSS for rapid UI development
 - **Shared UI package** - shadcn/ui primitives live in `packages/ui`
+- **React Native** - The same app on a phone, in `apps/native` (Expo + expo-router)
+- **Shared client package** - the whole client layer both apps read (row shapes, filters, query
+  inputs, query/mutation hooks, form hooks), in `packages/client`
 - **Hono** - Lightweight, performant server framework
 - **tRPC** - End-to-end type-safe APIs
 - **Bun** - Runtime environment
@@ -70,9 +73,36 @@ bun run dev
 Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
 The API is running at [http://localhost:3000](http://localhost:3000).
 
+## Mobile app
+
+`apps/native` is the same product as a React Native app. It needs the server running, then:
+
+```bash
+bun run dev:native        # Expo dev server (Metro)
+bun run native:ios        # …and open the iOS simulator
+bun run native:android    # …and open the Android emulator
+```
+
+`bun run dev` deliberately starts only web + server: Metro owns a terminal of its own, so run
+`dev:native` beside it.
+
+On a simulator the API is found automatically. On a **physical device**, set
+`EXPO_PUBLIC_SERVER_URL` in `apps/native/.env` to an address the phone can reach (your machine's
+LAN address, e.g. `http://192.168.0.10:3000`) — otherwise the app falls back to the Metro host,
+which is usually right but cannot be if you are tunnelling.
+
+To check the app still bundles without a simulator:
+
+```bash
+cd apps/native && bunx expo export --platform ios
+```
+
 ## UI Customization
 
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
+React web apps in this stack share shadcn/ui primitives through `packages/ui`. React Native
+renders none of it, so `apps/native` has its own primitives in `src/components/ui/` and mirrors
+the same tokens in `src/theme/tokens.ts` — change a token in `globals.css` and change it there
+too.
 
 - Change design tokens and global styles in `packages/ui/src/styles/globals.css`
 - Update shared primitives in `packages/ui/src/components/*`
@@ -124,10 +154,12 @@ For more details, see the guide on [Deploying to Vercel](https://www.better-t-st
 ```
 budget-manager/
 ├── apps/
-│   ├── web/         # Frontend application (React + TanStack Router)
+│   ├── web/         # Web application (React + TanStack Router)
+│   ├── native/      # Mobile application (Expo + React Native + expo-router)
 │   └── server/      # Backend API (Hono, TRPC)
 ├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
+│   ├── ui/          # Shared shadcn/ui components and styles (web only)
+│   ├── client/      # Client layer shared by web and native (data, forms, filters)
 │   ├── api/         # API layer / business logic
 │   ├── auth/        # Authentication configuration & logic
 │   └── db/          # Database schema & queries
@@ -139,6 +171,8 @@ budget-manager/
 - `bun run build`: Build all applications
 - `bun run dev:web`: Start only the web application
 - `bun run dev:server`: Start only the server
+- `bun run dev:native`: Start the Expo dev server for the mobile app
+- `bun run native:ios` / `bun run native:android`: Start Expo and open a simulator
 - `bun run check-types`: Check TypeScript types across all packages
 - `bun run lint`: Lint the whole workspace (ESLint, one flat config at the root)
 - `bun run lint:fix`: Lint and auto-fix

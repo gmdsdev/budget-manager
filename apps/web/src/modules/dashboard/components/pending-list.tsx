@@ -1,4 +1,4 @@
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useI18n } from "@budget-manager/i18n/react";
 import {
   Card,
@@ -11,7 +11,7 @@ import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { Link } from "@tanstack/react-router";
 import { buttonVariants } from "@budget-manager/ui/components/button";
 import { CategoryDot } from "@/modules/category/components/category-dot";
-import type { PendingItem } from "../types";
+import type { PendingItem } from "@budget-manager/client";
 
 export function PendingList({
   items,

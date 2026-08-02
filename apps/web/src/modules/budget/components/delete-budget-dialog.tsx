@@ -9,8 +9,8 @@ import {
   AlertDialogTitle,
 } from "@budget-manager/ui/components/alert-dialog";
 import { useTranslate } from "@budget-manager/i18n/react";
-import { useDeleteBudgetMutation } from "../mutations/use-budget-mutation";
-import type { BudgetRow } from "../types";
+import { useDeleteBudgetMutation } from "@budget-manager/client/react";
+import type { BudgetRow } from "@budget-manager/client";
 
 export function DeleteBudgetDialog({
   budget,

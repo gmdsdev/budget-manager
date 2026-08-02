@@ -3,8 +3,8 @@ import {
   CategoryLabel,
   type CategoryItem,
 } from "@/modules/category/components/category-dot";
-import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useCategoryOptionsQuery } from "@budget-manager/client/react";
+import { useEnumLabels } from "@budget-manager/client/react";
 import type { MessageKey } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
 import {
@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@budget-manager/ui/components/select";
 import { useSelector } from "@tanstack/react-form";
-import type { UseBudgetFormReturnType } from "../hooks/use-budget-form";
+import type { UseBudgetFormReturnType } from "@budget-manager/client/react";
 import { MonthPicker } from "./month-picker";
 
 const INTERVAL_UNIT = {

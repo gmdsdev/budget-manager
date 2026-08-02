@@ -11,7 +11,7 @@ import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { ArchiveWalletDialog } from "../archive-wallet-dialog";
 import { EditWalletDialog } from "../edit-wallet-dialog";
-import type { WalletRow } from "../../types";
+import type { WalletRow } from "@budget-manager/client";
 
 type RowDialog = "edit" | "archive" | null;
 

@@ -3,10 +3,10 @@ import {
   CategoryLabel,
   type CategoryItem,
 } from "@/modules/category/components/category-dot";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
-import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
-import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
+import { useCategoryOptionsQuery } from "@budget-manager/client/react";
+import { useWalletOptionsQuery } from "@budget-manager/client/react";
 import {
   CategoryType,
   TRANSACTION_FORM_KINDS,
@@ -32,8 +32,8 @@ import {
 } from "@budget-manager/ui/components/select";
 import { Textarea } from "@budget-manager/ui/components/textarea";
 import { useSelector } from "@tanstack/react-form";
-import type { UseTransactionFormReturnType } from "../hooks/use-transaction-form";
-import { TRANSACTION_CATEGORY_NONE } from "../types";
+import type { UseTransactionFormReturnType } from "@budget-manager/client/react";
+import { TRANSACTION_CATEGORY_NONE } from "@budget-manager/client";
 import { FieldRow } from "./field-row";
 
 const KIND_TO_CATEGORY_TYPE: Record<TransactionFormKind, CategoryType> = {

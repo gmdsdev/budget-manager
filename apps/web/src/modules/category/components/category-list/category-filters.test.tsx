@@ -2,7 +2,7 @@ import { CategoryType } from "@budget-manager/schemas";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test } from "bun:test";
 
-import { EMPTY_CATEGORY_FILTERS } from "../../types";
+import { EMPTY_CATEGORY_FILTERS } from "@budget-manager/client";
 import { CategoryFilters } from "./category-filters";
 
 describe("CategoryFilters", () => {

@@ -2,8 +2,8 @@ import { FilterBar } from "@/components/filter-bar";
 import { FilterSearch } from "@/components/filter-search";
 import { FilterSelect, type FilterItem } from "@/components/filter-select";
 import { categoryColorVar } from "@/modules/category/colors";
-import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useCategoryOptionsQuery } from "@budget-manager/client/react";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { CategoryType, WalletCurrency } from "@budget-manager/schemas";
 import {
@@ -16,7 +16,7 @@ import {
   isBudgetFiltered,
   type BudgetFiltersState,
   type BudgetStateFilterValue,
-} from "../../types";
+} from "@budget-manager/client";
 
 export function BudgetFilters({
   filters,

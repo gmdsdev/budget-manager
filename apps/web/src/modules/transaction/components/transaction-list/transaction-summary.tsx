@@ -10,7 +10,7 @@ import {
 import { useI18n } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { Fragment } from "react";
-import type { TransactionSummaryRow } from "../../types";
+import type { TransactionSummaryRow } from "@budget-manager/client";
 
 /** Narrower than `MessageKey`: none of the four takes a placeholder, so `t`
  * can be called with the label alone. */

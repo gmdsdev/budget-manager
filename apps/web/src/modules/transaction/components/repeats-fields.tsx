@@ -1,4 +1,4 @@
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useEnumLabels } from "@budget-manager/client/react";
 import type { MessageKey } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { RECURRENCE_YEARS, RecurrenceType } from "@budget-manager/schemas";

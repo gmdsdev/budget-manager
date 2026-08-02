@@ -1,74 +1,39 @@
-import { getServerUrl } from "@/lib/server-url";
-import { getErrorMessage, isUnauthorizedError } from "@/utils/error-message";
-import type { AppRouter } from "@budget-manager/api/routers/index";
-import { getActiveLocale, t } from "@budget-manager/i18n";
+import { createClientRuntime } from "@budget-manager/client/runtime";
 import { env } from "@budget-manager/env/web";
-import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
-import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { toast } from "sonner";
 
-declare module "@tanstack/react-query" {
-  interface Register {
-    mutationMeta: {
-      errorMessage?: string;
-      suppressErrorToast?: boolean;
-    };
-  }
-}
+import { authClient } from "@/lib/auth-client";
+import { getServerUrl } from "@/lib/server-url";
+import { invalidateSessionCache } from "@/lib/session";
 
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      gcTime: 5 * 60_000,
-      retry: (failureCount, error) =>
-        !isUnauthorizedError(error) && failureCount < 2,
-    },
+/**
+ * The client layer itself is shared with the native app (`@budget-manager/client`): the
+ * query and mutation hooks, the invalidation lists, the retry rule and the cache error
+ * handlers all live there. What is web-specific is what this file passes in — where the
+ * API is, how the cookie gets sent, and what a toast looks like.
+ */
+const { trpc, queryClient, trpcClient } = createClientRuntime({
+  serverUrl: getServerUrl(env.VITE_SERVER_URL),
+  // The session cookie is the browser's to attach, and in development the API is a
+  // different origin.
+  fetch: (url, options) => fetch(url, { ...options, credentials: "include" }),
+  toast: {
+    success: (message) => toast.success(message),
+    error: (message, options) =>
+      toast.error(message, {
+        action: options?.action
+          ? { label: options.action.label, onClick: options.action.onAction }
+          : undefined,
+      }),
   },
-
-  queryCache: new QueryCache({
-    onError: (error, query) => {
-      toast.error(getErrorMessage(error), {
-        action: {
-          label: t("common.retry"),
-          onClick: () => {
-            void query.invalidate();
-          },
-        },
-      });
-    },
-  }),
-
-  mutationCache: new MutationCache({
-    onError: (error, _variables, _onMutateResult, mutation) => {
-      if (mutation.meta?.suppressErrorToast) {
-        return;
-      }
-
-      toast.error(mutation.meta?.errorMessage ?? getErrorMessage(error));
-    },
-  }),
+  session: { useSession: authClient.useSession },
+  auth: {
+    updateUser: (values) => authClient.updateUser(values),
+    changePassword: (values) => authClient.changePassword(values),
+    // The `_auth` layout reads the session through a 10s cache, which a write to the
+    // `user` row has just made stale.
+    onSessionChanged: invalidateSessionCache,
+  },
 });
 
-export const trpcClient = createTRPCClient<AppRouter>({
-  links: [
-    httpBatchLink({
-      url: `${getServerUrl(env.VITE_SERVER_URL)}/trpc`,
-      // Read per request, not captured once: the server localizes the domain
-      // errors it throws, and the language can change mid-session.
-      headers: () => ({ "x-locale": getActiveLocale() }),
-      fetch(url, options) {
-        return fetch(url, {
-          ...options,
-          credentials: "include",
-        });
-      },
-    }),
-  ],
-});
-
-export const trpc = createTRPCOptionsProxy<AppRouter>({
-  client: trpcClient,
-  queryClient,
-});
+export { queryClient, trpc, trpcClient };

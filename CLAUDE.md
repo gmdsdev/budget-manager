@@ -8,24 +8,32 @@ Bun + Turborepo monorepo. Run everything from the repo root unless noted.
 
 ```bash
 bun install
-bun run dev                # all apps (web :3001, server :3000)
+bun run dev                # web :3001 + server :3000 — deliberately not the native app
 bun run dev:web            # web only
 bun run dev:server         # server only
+bun run dev:native         # Expo dev server (Metro); needs the server running too
+bun run native:ios         # Expo + iOS simulator
+bun run native:android     # Expo + Android emulator
 bun run check-types        # tsc across every workspace
 bun run lint               # single flat ESLint config at the root
 bun run lint:fix
-bun run test               # turbo test (apps/web + packages/api + packages/i18n + packages/money + packages/schemas)
+bun run test               # turbo test (apps/web + packages/api + packages/client + packages/i18n + packages/money + packages/schemas)
 bun run build
 ```
 
+`dev` stays web + server: Metro owns a terminal and a port of its own, and starting it inside
+turbo's TUI alongside two other watchers is not what anyone wants from `bun run dev`. Run
+`dev:native` in a second terminal.
+
 ### Single test
 
-Tests are `bun:test`. Turbo wires `test` in `apps/web`, `packages/api`, `packages/i18n`, `packages/money` and `packages/schemas`; run a single file from inside that workspace so `bunfig.toml` preloads happy-dom:
+Tests are `bun:test`. Turbo wires `test` in `apps/web`, `packages/api`, `packages/client`, `packages/i18n`, `packages/money` and `packages/schemas`; run a single file from inside that workspace so `bunfig.toml` preloads happy-dom:
 
 ```bash
 cd apps/web && bun test src/modules/wallet/components/currency-input.test.tsx
 cd apps/web && bun test -t "reads typed digits"    # filter by test name
 cd packages/api && bun test
+cd packages/client && bun test
 cd packages/i18n && bun test
 cd packages/money && bun test
 cd packages/schemas && bun test
@@ -145,18 +153,48 @@ Git hooks: `lint-staged` (eslint --fix) on commit, `check-types` + `test` on pus
 ```
 apps/server      Hono host — mounts better-auth at /api/auth/* and tRPC at /trpc/*
 apps/web         Vite + React 19 + TanStack Router/Query/Form/Table
+apps/native      Expo + React Native + expo-router, the same app on a phone
 apps/e2e         Live-stack end-to-end tests (API + Playwright), outside `turbo test`
 packages/api     tRPC routers + business logic (routes → service → repository)
                  modules: wallet, category, transaction, credit-card, budget, dashboard
 packages/db      Drizzle schema, migrations, the `db` singleton
 packages/auth    better-auth instance (drizzle adapter)
 packages/schemas Zod schemas + enums shared by client and server
+packages/client  Platform-agnostic client layer both apps read (rows, filters, query inputs)
 packages/i18n    Message catalogs, `translate`, locale-aware date formatting (no deps but React, on a subpath)
 packages/money   Minor-unit math and currency formatting (no deps)
-packages/ui      shadcn primitives built on @base-ui/react
-packages/env     @t3-oss/env-core validated env (`/server` and `/web` entries)
+packages/ui      shadcn primitives built on @base-ui/react (web only)
+packages/env     @t3-oss/env-core validated env (`/server`, `/web` and `/native` entries)
 packages/config  shared tsconfig.base.json
 ```
+
+**Two apps, one client layer.** `packages/client` is everything a screen needs that is not a
+screen. Three entries, and the split between them is the point:
+
+- **`.`** — no DOM, no renderer, no network: row shapes, the `XFiltersState` trio per module, the
+  query-input builders that drop the filter sentinels, pagination and `yyyy-MM` arithmetic, the
+  date-range presets, the repeats labels, and `getErrorMessage`/`runAuthAction`. This is the entry
+  a test with no renderer can import.
+- **`./runtime`** — `createClientRuntime`, which builds the `QueryClient` (retry rule, cache error
+  toasts) and the tRPC client and options proxy, and holds them module-scoped. Each app calls it
+  **once**, before rendering, passing the four things only it can answer: where the API is, how the
+  session cookie travels, what a toast looks like, and its better-auth client's `updateUser` /
+  `changePassword` / `useSession`.
+- **`./react`** — every query and mutation hook, every form hook, `useEnumLabels`,
+  `usePagedFilters`, `usePreferredCurrency` and `useApiMutation`. They reach the proxy through
+  `api()`, which is why they need no `trpc` argument threaded through a dozen signatures.
+
+The rules this exists to enforce, all of which were previously a copy per app:
+
+- **A filter that exists on the web and not on the phone is a bug in a screen**, not a difference
+  in what the two clients know how to ask for.
+- **Invalidation follows the join** — and the lists that encode which joins a mutation moves are
+  written once. Two copies are two chances for a rename to linger in one screen.
+- **One validation cause, revalidated on change**, because `FORM_VALIDATION_LOGIC` and every
+  `useXForm` are shared; a form cannot invent its own logic on one platform.
+
+What stays per app: the tRPC/auth *configuration*, the toast rendering, the session cache (web
+only), and everything that draws.
 
 **New accounts start with a default set of categories.** `DEFAULT_CATEGORIES` in
 `packages/schemas/src/category/default-categories.ts` is the one list (8 income, 20 expense,
@@ -200,7 +238,7 @@ while the dialog is shut. Every transaction create dialog defaults `occurrenceDa
 same — and the plain one preselects the first wallet, which a wallet created in the meantime
 should win.
 
-Every mutation on that screen goes through `runAuthAction` (`apps/web/src/lib/auth-error.ts`),
+Every mutation on that screen goes through `runAuthAction` (`@budget-manager/client`),
 which turns better-auth's `{ data, error }` into a thrown `AuthActionError` so the shared
 `MutationCache` toast fires; `getErrorMessage` special-cases it to surface the library's own
 copy (`Invalid password`) instead of the generic string. Anything calling better-auth from a
@@ -492,24 +530,34 @@ and a bare prefetch would sit under a different one and leave the card loading o
 
 Routes are file-based under `src/routes/` (`routeTree.gen.ts` is generated — never edit, it's gitignored and ESLint-ignored). The `_auth` layout route redirects to `/login` in `beforeLoad` using `getCachedSession()` from `src/lib/session.ts`, a 10s TTL + in-flight-dedupe cache around `authClient.getSession()`; call `invalidateSessionCache()` after sign-in/out. Route `loader`s prefetch with `context.queryClient.ensureQueryData(context.trpc.<path>.queryOptions())` — `trpc` and `queryClient` are injected as router context in `main.tsx`.
 
-Feature code lives in `src/modules/<feature>/` split into `pages/`, `components/`, `hooks/`, `queries/`, `mutations/`, `types.ts`. Components never call tRPC directly — they use the module's query/mutation hooks.
+Feature code lives in `src/modules/<feature>/` split into `pages/` and `components/`. There are no
+`queries/`, `mutations/`, `hooks/` or `types.ts` directories any more: those are
+`@budget-manager/client`, shared with the native app. Components never call tRPC directly — they
+use the shared query/mutation hooks, and a route loader reads the shared query-input builder.
 
-**A helper two modules both need lives in `src/lib/`, not copied into each.** `month.ts` is the
-`yyyy-MM` key arithmetic the dashboard and the budget page step through (they had a byte-identical
-copy each, which is one copy too many for something two screens have to agree on), and
-`server-url.ts` resolves `VITE_SERVER_URL` for both the tRPC link and better-auth — two copies of
-that one could drift into pointing the API and the auth cookie at different origins, which is
-exactly the split a session does not survive. Tests for a `packages/ui` primitive live in
-`src/components/` beside the other primitive tests, since `apps/web`'s `bunfig.toml` is what
-preloads happy-dom.
+**A helper two screens both need lives in `packages/client`, not copied into each** — and
+now that a second app reads it, "two screens" usually means two *apps*. `month.ts` is the
+`yyyy-MM` key arithmetic the dashboard and the budget screen step through, `date-range.ts`
+is what "this month" means to both a picker and a list, and the module files carry the row
+shapes and the query inputs. What stays in `apps/web/src/lib/` is what only the web can
+answer: `server-url.ts` resolves `VITE_SERVER_URL` for both the tRPC link and better-auth —
+two copies of that one could drift into pointing the API and the auth cookie at different
+origins, which is exactly the split a session does not survive. Tests for a `packages/ui`
+primitive, or for a shared hook that needs a renderer, live in `apps/web/src/` beside the
+other component tests, since `apps/web`'s `bunfig.toml` is what preloads happy-dom.
 
-Error handling is centralized: `src/utils/trpc.ts` configures a `QueryCache`/`MutationCache` that toasts `getErrorMessage(error)` (see `src/utils/error-message.ts`, which unwraps `zodError` and code-specific copy). Mutations go through `useApiMutation` (`src/hooks/use-api-mutation.ts`), which takes `successMessage` / `errorMessage` / `suppressErrorToast` / `invalidateQueries` — pass `trpc.<path>.queryFilter()` for invalidation. Don't add per-call `onError` toasts.
+Error handling is centralized, and shared: `createClientRuntime` configures the
+`QueryCache`/`MutationCache` that toast `getErrorMessage(error)` (which unwraps `zodError` and
+code-specific copy), and `src/utils/trpc.ts` only tells it what a sonner toast looks like.
+Mutations go through `useApiMutation` (`@budget-manager/client/react`), which takes
+`successMessage` / `errorMessage` / `suppressErrorToast` / `invalidateQueries`. Don't add
+per-call `onError` toasts.
 
 Paged lists pair `<DataTable>` with `<Pagination>` (`src/components/pagination.tsx`) and hold
 their state in `usePagedFilters`, which keeps filters and the page number in **one** piece of
 state so changing a filter always resets to page 1. Two `useState` calls would let a caller
-forget the reset and strand the user on a page that no longer exists. `PAGE_SIZE` and the
-offset math live in `src/lib/pagination.ts`.
+forget the reset and strand the user on a page that no longer exists. `PAGE_SIZE`, the offset
+math and that hook are all in `@budget-manager/client`.
 
 **The dashboard reads top-down: figures, then charts, then the lists that need acting on.**
 `dashboard.page.tsx` owns only the two controls and the statements / awaiting-payment lists;
@@ -555,7 +603,7 @@ are ordered to match the columns, and the bar is **left-aligned** — `FilterBar
 (`src/components/filter-bar.tsx`) owns that alignment and the `Clear filters` button, so no
 page positions its own. `FilterSelect` and `FilterSearch` are the two control shapes;
 `FilterSearch` debounces, because a request per keystroke is not a filter. Each module keeps a
-`XFiltersState` + `EMPTY_X_FILTERS` + `isXFiltered` trio in `types.ts` and one
+`XFiltersState` + `EMPTY_X_FILTERS` + `isXFiltered` trio in `@budget-manager/client` and one
 `xQueryInput(filters?, page?)` builder that drops sentinel values — the route loaders call it
 with no arguments, so it must always work bare.
 
@@ -612,10 +660,11 @@ repositories turn into `IS NULL`. Search terms go through `containsPattern`
 (`packages/api/src/search.ts`), which escapes `%` and `_` so a term containing them is matched
 literally; every new search filter must use it rather than interpolating a pattern.
 
-Forms use TanStack Form with the shared Zod schema as the **single** `onDynamic` validator
-under `revalidateLogic({ mode: "change", modeAfterSubmission: "change" })`
-(`use-wallet-form.ts` is the pattern); the same schema is the tRPC input validator, so client
-and server validation cannot diverge.
+Forms use TanStack Form with the shared Zod schema as the **single** `onDynamic` validator under
+`revalidateLogic({ mode: "change", modeAfterSubmission: "change" })`; the same schema is the tRPC
+input validator, so client and server validation cannot diverge. Both apps build their forms with
+the `useXForm` hooks in `@budget-manager/client/react`, so that logic is stated once —
+`packages/client/src/forms.ts` is the pattern.
 
 **That includes the auth forms**, even though they are the two that validate `onSubmit` only
 (nothing to revalidate before the one submit that matters). `SignInFormSchema` and
@@ -630,8 +679,9 @@ the same cause clears them, so a blur-sourced error survives every later change.
 Select never fires blur, so picking a value could not clear the error it had just fixed —
 `canSubmit` stayed false, and `form.handleSubmit()` silently returns on the first attempt when
 `canSubmit` is false, which made the transfer dialog need two clicks to submit. One cause,
-revalidated on change, is what keeps `canSubmit` honest. See
-`use-transfer-form.test.tsx` for the regression test.
+revalidated on change, is what keeps `canSubmit` honest — which is why
+`FORM_VALIDATION_LOGIC` is shared and no form spells it out. See
+`packages/client/src/forms.test.tsx` for the regression test.
 
 **A dependent select empties itself; don't reset it by hand.** Where one field narrows another —
 the card payment's statement list is its card's, and its wallet list is filtered to that card's
@@ -707,6 +757,95 @@ buttons become a 2×2 grid, and `FilterBar` lays its controls out two per column
 seven stacked full-width controls would push the list itself off the first screen. `FilterSearch`
 takes a whole row anyway, since its placeholder is the only thing naming the column.
 
+### Native (apps/native)
+
+Expo SDK 57 + expo-router, with the same features as the web app and the same design language.
+Routes are file-based under `src/app/`: `login.tsx`, a `(tabs)` group, and three screens pushed
+from **More**; a route file is one line that re-exports a screen, so navigation config and
+rendering never mix.
+
+**The module layout mirrors the web's, name for name**, with `screens/` where the web has
+`pages/`: `modules/<feature>/components/` holds the form fields, the create/edit/archive sheets
+and a `<feature>-list/` with the row card and the filter bar, and `modules/<feature>/screens/`
+holds the one screen that composes them. A developer who knows where
+`modules/budget/components/budget-list/budget-filters.tsx` is on the web finds it in the same
+place here. There are no `queries.ts` or `mutations.ts` under a native module — that layer is
+`packages/client`.
+
+**Four tabs and a More, not seven tabs.** Dashboard, Transactions, Budgets and Wallets earn one
+each; credit cards, categories and settings sit behind More and keep a native header, because a
+pushed screen needs the back affordance the system already draws. Cramming seven destinations
+into a tab bar makes every one of them unhittable.
+
+**The tokens are mirrored, not imported.** `src/theme/tokens.ts` carries the same palette,
+spacing, radius and shadow steps as `packages/ui/src/styles/globals.css`, as the sRGB hex those
+`oklch()` values resolve to — React Native reads neither CSS custom properties nor `oklch()`.
+Change a token there and change it here; that duplication is the price of one design language
+across two renderers, and it is the *only* duplication of the design that is accepted.
+
+Elevation is the one thing that could not be translated directly: the web casts
+`4px 4px 0 0 var(--shadow-hard)` and React Native has no cross-platform zero-blur box shadow, so
+`components/ui/plate.tsx` draws the offset as a plate of ink *behind* the surface. Every card,
+sheet, picker popup and list goes through `Plate`, which is what keeps the offsets from drifting
+per screen. `Button` inlines the same geometry so it can also do the press effect — the surface
+slides into its own shadow, exactly as `buttonVariants` does with `active:translate-*`.
+
+**A dialog is a sheet.** Everything the web puts in a `Dialog` — a create form, a picker, a
+confirmation, a row menu — rises from the bottom edge, where a thumb is, through `ui/sheet.tsx`.
+`FormSheet` and `ConfirmSheet` are the two shapes above it, so a form's submit/cancel pair and a
+destructive action's confirmation are described once. **Every destructive row action is still
+confirmed**, series included; pause/resume stays unconfirmed because it is reversible from the
+same menu.
+
+The primitives keep the invariants their web counterparts have:
+
+- **`Select` empties itself** when the current value leaves `items`, so a dependent picker (the
+  card payment's statement list, its same-currency wallet list) needs no reset by hand — and the
+  forms that *do* reset a dependant are the ones where the old value stays legal and only its
+  meaning changed (kind → category, currency → billing wallet).
+- **One validation cause, revalidated on change.** `FORM_VALIDATION_LOGIC` in `components/form.tsx`
+  is the single `revalidateLogic` every form passes, and `isFieldInvalid`/`fieldErrors` gate error
+  *display* on the field being touched. Submit disables on `isSubmitting` only.
+- **A create sheet whose defaults are read from outside the form resets on open as well as close**
+  — the date is today, the wallet is the first one, the currency is the account's preference, and
+  all three can move while the sheet is shut.
+- `CurrencyInput` reads and writes **minor units**, digits shifting in from the right.
+- A listing is one card per row (`ui/row-card.tsx`), which is the shape the web's `DataTable`
+  falls back to below `md`, and it takes the same filter bar with the same `aria-label`-shaped
+  accessible names.
+
+**Charts are plain views plus `react-native-svg` for the one polyline.** Recharts is a DOM
+library, so the cash-flow chart is a pair of bars per month with the figures restated underneath
+(the web's `ChartDataTable` twin, in words), and the sparkline is a `Polyline`. Every chart rule
+holds: one series one colour, a legend when there are two, income always on the left, a hairline
+solid baseline, and no number reachable only by looking at a bar.
+
+**Auth is cookie-based, through `@better-auth/expo`.** The plugin keeps better-auth's cookie in
+the OS keychain and replays it, and identifies the app with an `expo-origin` header — which is why
+`packages/auth` trusts `kivo://` and the Hono CORS config allows that header. The tRPC client is a
+separate `fetch`, so `utils/trpc.ts` sends `authClient.getCookie()` itself, per request, alongside
+`x-locale`. The plugin's published types narrow `getActions` in a way the plugin contract rejects,
+so `lib/auth-client.ts` declares the one action the app calls; left uncast it poisons the whole
+plugin tuple and with it the session's `preferredCurrency`/`preferredLocale`.
+
+**Where the API is.** `EXPO_PUBLIC_SERVER_URL` when set, otherwise the Metro host in development
+(`lib/server-url.ts`) — a device on the LAN reaches the API at the machine running the bundler,
+which `localhost` would resolve to the phone itself.
+
+`metro.config.js` watches the repo root and keeps **hierarchical lookup on**, against the usual
+monorepo recipe: bun installs isolated, so a package's dependencies live in a nested
+`node_modules` beside it and disabling the walk makes Metro fail to resolve them. It also hands
+`.svg` to `react-native-svg-transformer`, so the logo is the web app's own artwork imported as
+components — a pair of files per shape, picked by a ternary on the theme, which is again why there
+is no `system` mode.
+
+There is no `test` script, so `turbo run test` stays hermetic and fast: the logic worth
+unit-testing lives in `packages/client`, and its tests live there too — that package registers its
+own happy-dom preload rather than borrowing an app's, because a test belongs beside the code it
+pins. `check-types` runs in CI like every other workspace. The bundle is the other check worth
+running by hand — `bunx expo export --platform ios` fails on an unresolved import or a broken
+transform without needing a simulator.
+
 ### Language
 
 **The app ships English and Portuguese, and no user-visible string is written at
@@ -772,7 +911,7 @@ than the raw enum, so the embedded word is translated too.
 **Enum labels are derived from the value, not kept in a second map.** The
 `XLabelMap` constants that used to live in `packages/schemas` are gone; the
 enums stayed (both sides of the wire read them) and the words became catalog
-entries keyed `enum.<enum>.<value>`. `useEnumLabels()` (`lib/enum-labels.ts`) is
+entries keyed `enum.<enum>.<value>`. `useEnumLabels()` (`@budget-manager/client/react`) is
 how the app reads one — TypeScript resolves the template literal to a real key,
 so a new enum member is a compile error until it is translated. The two that
 take a plain `string` (currency, transaction kind) are fed by `text` columns and
@@ -788,8 +927,8 @@ both. The same reasoning is why `FilterSearch` builds its placeholder from
 **Where the locale comes from.** `preferredLocale` is a better-auth
 `additionalField` beside `preferredCurrency`, declared once in
 `USER_ADDITIONAL_FIELDS` and backed by `user.preferred_locale` (migration
-`0008`) — a language belongs to the person, so a second device must not put the
-app back into English. `AppI18nProvider` (`lib/i18n.tsx`) derives it from the
+`0008`) — a language belongs to the person, so a second device, or the phone
+rather than the browser, must not put the app back into English. `AppI18nProvider` (`lib/i18n.tsx`) derives it from the
 session during render and mirrors it to `kivo-locale` in localStorage; that
 mirror is what the login screen and the first paint read, before any session
 exists, and it seeds from `navigator.language` when nothing is stored. The
@@ -820,6 +959,13 @@ thing on that screen that is **not** translated: each language names itself
 (`LocaleLabelMap`), so a reader looking for their own language in a list they
 cannot read finds *Português*, never *Portuguese*.
 
+`apps/native` reads the same catalogs the same three ways, with one substitution
+per platform primitive: the pre-session mirror is `AsyncStorage` under the same
+`kivo-locale` key rather than localStorage, and the first guess comes from
+`expo-localization`'s `getLocales()` instead of `navigator.language`. Nothing
+about the catalogs is native-aware, which is the point — a key added for a phone
+screen is a key the web can render, and a reworded message moves both.
+
 Default category names are **data, not copy**: they are per-user rows written at
 sign-up by `ensureDefaultCategories`, in English, and the user can rename them.
 Nothing translates existing rows, and nothing should — renaming a category the
@@ -827,7 +973,7 @@ user may already have edited would be worse than leaving it.
 
 ### Money
 
-Amounts are integer **minor units** everywhere — DB column, tRPC payload, form state, React state (`openingBalanceCents`, `int4`, hence the `MONEY_MIN/MAX_MINOR_UNITS` bounds in `MoneyMinorUnitsSchema`). Never introduce floats. `packages/money` owns `minorUnitDigits` (zero- and three-decimal currencies), `formatMinorUnits`, `formatCompactMinorUnits`, and `parseMinorUnits`; `packages/ui/src/lib/currency.ts` just re-exports them. `CurrencyInput` reads/writes minor units directly.
+Amounts are integer **minor units** everywhere — DB column, tRPC payload, form state, React state (`openingBalanceCents`, `int4`, hence the `MONEY_MIN/MAX_MINOR_UNITS` bounds in `MoneyMinorUnitsSchema`). Never introduce floats. `packages/money` owns `minorUnitDigits` (zero- and three-decimal currencies), `formatMinorUnits`, `formatCompactMinorUnits`, and `parseMinorUnits`; `packages/ui/src/lib/currency.ts` just re-exports them, and `apps/native` imports the package directly. Both apps' `CurrencyInput` reads/writes minor units directly.
 
 `formatCompactMinorUnits` is for **axis ticks only**, where the full figure would collide with
 its neighbours. It keeps anything under one thousand exact — a rounded tick the user cannot find
@@ -836,7 +982,7 @@ in the list below it is worse than a long one — and compacts the locale's own 
 
 ### UI
 
-Primitives in `packages/ui/src/components` are shadcn (`style: base-lyra`, `iconLibrary: remixicon`) on top of **@base-ui/react**, not Radix. Base UI composes via the `render` prop, not `asChild`: `<DialogTrigger render={<Button>Create</Button>} />`. Design tokens live in `packages/ui/src/styles/globals.css` (Tailwind v4, CSS-first).
+Primitives in `packages/ui/src/components` are shadcn (`style: base-lyra`, `iconLibrary: remixicon`) on top of **@base-ui/react**, not Radix. The package is **web only** — React Native renders none of it, so `apps/native` has its own primitives under `src/components/ui/` speaking the same design language (see Native, above). Base UI composes via the `render` prop, not `asChild`: `<DialogTrigger render={<Button>Create</Button>} />`. Design tokens live in `packages/ui/src/styles/globals.css` (Tailwind v4, CSS-first).
 
 **The design language is pastel neobrutalism, and it is carried by tokens plus a handful of
 recurring classes.** One mono face everywhere (`JetBrains Mono Variable` is both `--font-sans`
@@ -960,7 +1106,7 @@ every future-dated row out of reach.
 **A start-and-end pair is one `DateRangePicker`, not two `DatePicker`s.** It lives in the same
 file and takes `{ from, to }` as the same ISO strings, with the presets (`This month`,
 `Last month`, `Last 3 months`, `This year`, `Next 12 months`) in
-`packages/ui/src/lib/date-range.ts` next to `currentMonthRange` — the transaction module reads
+`@budget-manager/client` next to `currentMonthRange` — the transaction module reads
 that same helper for its default filters, so the picker and the list cannot disagree about what
 "this month" means. Two rules are load-bearing: every pick **starts a fresh range** (first click
 the start, second the end, ordered if the second lands earlier), and only a *complete* range is

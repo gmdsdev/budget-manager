@@ -1,9 +1,9 @@
-import { type EnumLabels, useEnumLabels } from "@/lib/enum-labels";
+import { type EnumLabels, useEnumLabels } from "@budget-manager/client/react";
 import type { Translate } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import type { CategoryRow } from "../../types";
+import type { CategoryRow } from "@budget-manager/client";
 import { CategoryLabel } from "../category-dot";
 import { CategoryRowActions } from "./category-row-actions";
 

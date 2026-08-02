@@ -1,4 +1,4 @@
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import {
   AlertDialog,
@@ -10,8 +10,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@budget-manager/ui/components/alert-dialog";
-import { useArchiveCategoryMutation } from "../mutations/use-category-mutation";
-import type { CategoryRow } from "../types";
+import { useArchiveCategoryMutation } from "@budget-manager/client/react";
+import type { CategoryRow } from "@budget-manager/client";
 
 export function ArchiveCategoryDialog({
   category,

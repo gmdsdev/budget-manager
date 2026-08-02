@@ -1,4 +1,4 @@
-import { getErrorMessage } from "@/utils/error-message";
+import { getErrorMessage } from "@budget-manager/client";
 import { useI18n } from "@budget-manager/i18n/react";
 import { BudgetStatus } from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
@@ -22,8 +22,8 @@ import { useIsCompact } from "@budget-manager/ui/hooks/use-media-query";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { PencilSimpleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
-import { useBudgetPeriodsQuery } from "../queries/use-budget-periods-query";
-import type { BudgetProgressRow, BudgetRow } from "../types";
+import { useBudgetPeriodsQuery } from "@budget-manager/client/react";
+import type { BudgetProgressRow, BudgetRow } from "@budget-manager/client";
 import { EditBudgetPeriodDialog } from "./edit-budget-period-dialog";
 
 const STATUS_TONE: Record<BudgetStatus, string> = {

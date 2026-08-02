@@ -1,8 +1,8 @@
 import { DataTable } from "@/components/data-table";
 import { Pagination } from "@/components/pagination";
-import { usePagedFilters } from "@/hooks/use-paged-filters";
-import { usePreferredCurrency } from "@/hooks/use-preferred-currency";
-import { getErrorMessage } from "@/utils/error-message";
+import { usePagedFilters } from "@budget-manager/client/react";
+import { usePreferredCurrency } from "@budget-manager/client/react";
+import { getErrorMessage } from "@budget-manager/client";
 import { useI18n } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import {
@@ -26,15 +26,15 @@ import { BudgetFilters } from "../components/budget-list/budget-filters";
 import { useBudgetColumns } from "../components/budget-list/columns";
 import { BudgetMonthCard } from "../components/budget-month-card";
 import { CreateBudgetDialog } from "../components/create-budget-dialog";
-import { useBudgetMonthQuery } from "../queries/use-budget-month-query";
-import { useBudgetsQuery } from "../queries/use-budgets-query";
+import { useBudgetMonthQuery } from "@budget-manager/client/react";
+import { useBudgetsQuery } from "@budget-manager/client/react";
 import {
   EMPTY_BUDGET_FILTERS,
   isBudgetFiltered,
   type BudgetFiltersState,
   type BudgetProgressRow,
-} from "../types";
-import { currentMonth, shiftMonth } from "@/lib/month";
+} from "@budget-manager/client";
+import { currentMonth, shiftMonth } from "@budget-manager/client";
 
 export default function ListBudgetsPage() {
   const { t, formatMonthString } = useI18n();

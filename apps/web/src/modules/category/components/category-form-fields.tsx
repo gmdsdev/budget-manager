@@ -1,4 +1,4 @@
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { type CategoryColor, CategoryType } from "@budget-manager/schemas";
 import {
@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@budget-manager/ui/components/select";
-import type { UseCategoryFormReturnType } from "../hooks/use-category-form";
+import type { UseCategoryFormReturnType } from "@budget-manager/client/react";
 import { CategoryColorPicker } from "./category-color-picker";
 
 export function CategoryFormFields({

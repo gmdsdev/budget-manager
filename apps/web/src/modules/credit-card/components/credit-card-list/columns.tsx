@@ -3,7 +3,7 @@ import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import type { CreditCardRow } from "../../types";
+import type { CreditCardRow } from "@budget-manager/client";
 import { CreditCardRowActions } from "./credit-card-row-actions";
 
 export function useCreditCardColumns(): ColumnDef<CreditCardRow>[] {

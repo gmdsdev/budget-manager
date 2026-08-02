@@ -1,4 +1,4 @@
-import { PAGE_SIZE, pageCount, pageRange } from "@/lib/pagination";
+import { PAGE_SIZE, pageCount, pageRange } from "@budget-manager/client";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 

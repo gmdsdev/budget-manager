@@ -4,7 +4,7 @@ import { useTranslate } from "@budget-manager/i18n/react";
 import { BudgetStatus } from "@budget-manager/schemas";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { ReactNode } from "react";
-import type { BudgetProgressRow } from "../types";
+import type { BudgetProgressRow } from "@budget-manager/client";
 
 /**
  * The bar is plain HTML rather than a chart mark: it carries a long category

@@ -12,9 +12,9 @@ import {
   DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
 import { useId, useState } from "react";
-import { useCardPaymentForm } from "../hooks/use-card-payment-form";
-import { useCreateCardPaymentMutation } from "../mutations/use-transaction-mutation";
-import { todayAsDateString } from "../utils/date";
+import { useCardPaymentForm } from "@budget-manager/client/react";
+import { useCreateCardPaymentMutation } from "@budget-manager/client/react";
+import { todayAsDateString } from "@budget-manager/client";
 import { CardPaymentFormFields } from "./card-payment-form-fields";
 
 export function CreateCardPaymentDialog() {

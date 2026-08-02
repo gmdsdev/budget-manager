@@ -16,11 +16,11 @@ import {
   DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
 import { useEffect, useId, useState } from "react";
-import { useCreateRecurringMutation } from "@/modules/recurring/mutations/use-recurring-mutation";
-import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import { useTransactionForm } from "../hooks/use-transaction-form";
-import { useCreateTransactionMutation } from "../mutations/use-transaction-mutation";
-import { todayAsDateString } from "../utils/date";
+import { useCreateRecurringMutation } from "@budget-manager/client/react";
+import { useWalletOptionsQuery } from "@budget-manager/client/react";
+import { useTransactionForm } from "@budget-manager/client/react";
+import { useCreateTransactionMutation } from "@budget-manager/client/react";
+import { todayAsDateString } from "@budget-manager/client";
 import {
   NO_REPEAT_STATE,
   RepeatsFields,

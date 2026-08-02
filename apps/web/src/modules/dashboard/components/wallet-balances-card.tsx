@@ -7,7 +7,7 @@ import {
 } from "@budget-manager/ui/components/card";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
-import type { WalletSlice } from "../types";
+import type { WalletSlice } from "@budget-manager/client";
 
 export function WalletBalancesCard({
   wallets,

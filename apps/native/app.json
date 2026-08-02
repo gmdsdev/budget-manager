@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Kivo",
+    "slug": "kivo",
+    "scheme": "kivo",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "backgroundColor": "#191919",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.gmds.kivo"
+    },
+    "android": {
+      "package": "dev.gmds.kivo",
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-font",
+      "expo-web-browser",
+      "expo-localization"
+    ]
+  }
+}

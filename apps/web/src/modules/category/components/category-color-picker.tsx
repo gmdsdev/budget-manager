@@ -1,4 +1,4 @@
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { CATEGORY_COLORS, type CategoryColor } from "@budget-manager/schemas";
 import { cn } from "@budget-manager/ui/lib/utils";
 import { categoryColorVar } from "../colors";

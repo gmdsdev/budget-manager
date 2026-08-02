@@ -11,6 +11,7 @@
   },
   "scripts": {},
   "dependencies": {
+    "@better-auth/expo": "^1.6.25",
     "@budget-manager/db": "workspace:*",
     "@budget-manager/env": "workspace:*",
     "@budget-manager/schemas": "workspace:*",

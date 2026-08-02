@@ -1,4 +1,4 @@
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { WalletCurrency, WalletType } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@budget-manager/ui/components/select";
 import { useSelector } from "@tanstack/react-form";
-import type { UseWalletFormReturnType } from "../hooks/use-wallet-form";
+import type { UseWalletFormReturnType } from "@budget-manager/client/react";
 
 function OpeningBalanceField({ form }: { form: UseWalletFormReturnType }) {
   const t = useTranslate();

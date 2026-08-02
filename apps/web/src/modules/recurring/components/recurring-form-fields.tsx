@@ -3,10 +3,10 @@ import {
   CategoryLabel,
   type CategoryItem,
 } from "@/modules/category/components/category-dot";
-import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
-import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
-import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useCategoryOptionsQuery } from "@budget-manager/client/react";
+import { useCreditCardOptionsQuery } from "@budget-manager/client/react";
+import { useWalletOptionsQuery } from "@budget-manager/client/react";
+import { useEnumLabels } from "@budget-manager/client/react";
 import type { MessageKey } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
 import {
@@ -36,7 +36,7 @@ import {
 } from "@budget-manager/ui/components/select";
 import { Textarea } from "@budget-manager/ui/components/textarea";
 import { useSelector } from "@tanstack/react-form";
-import type { UseRecurringFormReturnType } from "../hooks/use-recurring-form";
+import type { UseRecurringFormReturnType } from "@budget-manager/client/react";
 
 const NONE = "none";
 

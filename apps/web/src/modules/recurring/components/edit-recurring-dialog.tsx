@@ -10,9 +10,9 @@ import {
   DialogTitle,
 } from "@budget-manager/ui/components/dialog";
 import { useId } from "react";
-import { useRecurringForm } from "../hooks/use-recurring-form";
-import { useUpdateRecurringMutation } from "../mutations/use-recurring-mutation";
-import type { RecurringRow } from "../types";
+import { useRecurringForm } from "@budget-manager/client/react";
+import { useUpdateRecurringMutation } from "@budget-manager/client/react";
+import type { RecurringRow } from "@budget-manager/client";
 import { RecurringFormFields } from "./recurring-form-fields";
 
 export function EditRecurringDialog({

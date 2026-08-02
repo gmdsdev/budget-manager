@@ -9,7 +9,7 @@ import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { CategoryLabel } from "@/modules/category/components/category-dot";
 import { categoryColorVarOrNeutral } from "@/modules/category/colors";
-import type { CategorySpend } from "../types";
+import type { CategorySpend } from "@budget-manager/client";
 
 /**
  * Each bar wears its category's own colour, so the same hue means the same

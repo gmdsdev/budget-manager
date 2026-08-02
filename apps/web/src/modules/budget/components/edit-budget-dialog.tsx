@@ -11,9 +11,9 @@ import {
   DialogTitle,
 } from "@budget-manager/ui/components/dialog";
 import { useId } from "react";
-import { useBudgetForm } from "../hooks/use-budget-form";
-import { useUpdateBudgetMutation } from "../mutations/use-budget-mutation";
-import type { BudgetRow } from "../types";
+import { useBudgetForm } from "@budget-manager/client/react";
+import { useUpdateBudgetMutation } from "@budget-manager/client/react";
+import type { BudgetRow } from "@budget-manager/client";
 import { BudgetFormFields } from "./budget-form-fields";
 
 export function EditBudgetDialog({

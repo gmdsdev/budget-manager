@@ -11,9 +11,9 @@ import {
   DialogTitle,
 } from "@budget-manager/ui/components/dialog";
 import { useId } from "react";
-import { useTransactionForm } from "../hooks/use-transaction-form";
-import { useUpdateTransactionMutation } from "../mutations/use-transaction-mutation";
-import type { TransactionRow } from "../types";
+import { useTransactionForm } from "@budget-manager/client/react";
+import { useUpdateTransactionMutation } from "@budget-manager/client/react";
+import type { TransactionRow } from "@budget-manager/client";
 import { TransactionFormFields } from "./transaction-form-fields";
 
 export function EditTransactionDialog({

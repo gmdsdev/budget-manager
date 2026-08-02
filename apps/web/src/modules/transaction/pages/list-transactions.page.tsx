@@ -1,8 +1,8 @@
 import { DataTable } from "@/components/data-table";
 import { useI18n } from "@budget-manager/i18n/react";
 import { Pagination } from "@/components/pagination";
-import { usePagedFilters } from "@/hooks/use-paged-filters";
-import { getErrorMessage } from "@/utils/error-message";
+import { usePagedFilters } from "@budget-manager/client/react";
+import { getErrorMessage } from "@budget-manager/client";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Empty,
@@ -19,13 +19,13 @@ import { CreateTransferDialog } from "../components/create-transfer-dialog";
 import { useTransactionColumns } from "../components/transaction-list/columns";
 import { TransactionFilters } from "../components/transaction-list/transaction-filters";
 import { TransactionSummary } from "../components/transaction-list/transaction-summary";
-import { useTransactionSummaryQuery } from "../queries/use-transaction-summary-query";
-import { useTransactionsQuery } from "../queries/use-transactions-query";
+import { useTransactionSummaryQuery } from "@budget-manager/client/react";
+import { useTransactionsQuery } from "@budget-manager/client/react";
 import {
   defaultTransactionFilters,
   isTransactionFiltered,
   type TransactionFiltersState,
-} from "../types";
+} from "@budget-manager/client";
 
 export default function ListTransactionsPage() {
   const { t, formatDateString } = useI18n();

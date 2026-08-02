@@ -10,8 +10,8 @@ import {
 } from "@budget-manager/ui/components/alert-dialog";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
-import { useArchiveCreditCardMutation } from "../mutations/use-credit-card-mutation";
-import type { CreditCardRow } from "../types";
+import { useArchiveCreditCardMutation } from "@budget-manager/client/react";
+import type { CreditCardRow } from "@budget-manager/client";
 
 export function ArchiveCreditCardDialog({
   card,

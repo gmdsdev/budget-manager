@@ -10,8 +10,8 @@ import {
 } from "@budget-manager/ui/components/alert-dialog";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
-import { useArchiveWalletMutation } from "../mutations/use-wallet-mutation";
-import type { WalletRow } from "../types";
+import { useArchiveWalletMutation } from "@budget-manager/client/react";
+import type { WalletRow } from "@budget-manager/client";
 
 export function ArchiveWalletDialog({
   wallet,

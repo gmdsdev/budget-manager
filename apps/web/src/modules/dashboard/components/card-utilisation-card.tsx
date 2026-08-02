@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@budget-manager/ui/components/card";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
-import type { CardSlice } from "../types";
+import type { CardSlice } from "@budget-manager/client";
 
 const NEAR_LIMIT_PERCENT = 80;
 

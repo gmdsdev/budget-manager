@@ -15,7 +15,14 @@ app.use(
   cors({
     origin: env.CORS_ORIGIN,
     allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "x-locale"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-locale",
+      // `@better-auth/expo` identifies the native app with this instead of an
+      // Origin, which a request from a phone does not carry.
+      "expo-origin",
+    ],
     credentials: true,
   }),
 );

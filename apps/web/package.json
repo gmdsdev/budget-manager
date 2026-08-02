@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@budget-manager/api": "workspace:*",
+    "@budget-manager/client": "workspace:*",
     "@budget-manager/env": "workspace:*",
     "@budget-manager/i18n": "workspace:*",
     "@budget-manager/schemas": "workspace:*",

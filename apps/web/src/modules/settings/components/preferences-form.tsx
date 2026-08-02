@@ -1,4 +1,4 @@
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { WalletCurrency } from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
@@ -17,8 +17,8 @@ import {
   SelectValue,
 } from "@budget-manager/ui/components/select";
 import { useId } from "react";
-import { usePreferencesForm } from "../hooks/use-preferences-form";
-import { useUpdatePreferencesMutation } from "../mutations/use-user-mutation";
+import { usePreferencesForm } from "@budget-manager/client/react";
+import { useUpdatePreferencesMutation } from "@budget-manager/client/react";
 import { SettingsSection } from "./settings-section";
 
 export function PreferencesForm({

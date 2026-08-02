@@ -11,9 +11,9 @@ import {
   DialogTitle,
 } from "@budget-manager/ui/components/dialog";
 import { useId } from "react";
-import { useCreditCardForm } from "../hooks/use-credit-card-form";
-import { useUpdateCreditCardMutation } from "../mutations/use-credit-card-mutation";
-import type { CreditCardRow } from "../types";
+import { useCreditCardForm } from "@budget-manager/client/react";
+import { useUpdateCreditCardMutation } from "@budget-manager/client/react";
+import type { CreditCardRow } from "@budget-manager/client";
 import { CreditCardFormFields } from "./credit-card-form-fields";
 
 export function EditCreditCardDialog({

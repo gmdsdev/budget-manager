@@ -1,7 +1,7 @@
 import { FilterBar } from "@/components/filter-bar";
 import { FilterSearch } from "@/components/filter-search";
 import { FilterSelect, type FilterItem } from "@/components/filter-select";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { CategoryType } from "@budget-manager/schemas";
 import {
@@ -10,7 +10,7 @@ import {
   isCategoryFiltered,
   type CategoryFiltersState,
   type CategoryTypeFilterValue,
-} from "../../types";
+} from "@budget-manager/client";
 
 export function CategoryFilters({
   filters,

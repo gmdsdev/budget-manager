@@ -1,5 +1,5 @@
-import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useWalletOptionsQuery } from "@budget-manager/client/react";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { TransactionStatus } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
@@ -22,7 +22,7 @@ import {
 import { Textarea } from "@budget-manager/ui/components/textarea";
 import { useSelector } from "@tanstack/react-form";
 import { FieldRow } from "./field-row";
-import type { UseTransferFormReturnType } from "../hooks/use-transfer-form";
+import type { UseTransferFormReturnType } from "@budget-manager/client/react";
 
 function WalletSelectField({
   form,

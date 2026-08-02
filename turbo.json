@@ -40,6 +40,10 @@
       "cache": false,
       "persistent": true
     },
+    "start": {
+      "cache": false,
+      "persistent": true
+    },
     "db:push": {
       "cache": false
     },
@@ -67,6 +71,14 @@
     },
     "db:down": {
       "cache": false
+    },
+    "ios": {
+      "cache": false,
+      "persistent": true
+    },
+    "android": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

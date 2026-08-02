@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, test } from "bun:test";
 import { DEFAULT_LOCALE, formatDateString } from "@budget-manager/i18n";
-import type { TransactionSummaryRow } from "../../types";
+import type { TransactionSummaryRow } from "@budget-manager/client";
 import { TransactionSummary } from "./transaction-summary";
 
 function summaryRow(

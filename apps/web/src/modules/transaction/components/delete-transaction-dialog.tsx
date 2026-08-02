@@ -10,8 +10,8 @@ import {
 } from "@budget-manager/ui/components/alert-dialog";
 import { useI18n } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
-import { useDeleteTransactionMutation } from "../mutations/use-transaction-mutation";
-import type { TransactionRow } from "../types";
+import { useDeleteTransactionMutation } from "@budget-manager/client/react";
+import type { TransactionRow } from "@budget-manager/client";
 
 export function DeleteTransactionDialog({
   transaction,

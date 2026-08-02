@@ -1,11 +1,11 @@
-import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
+import { useCreditCardOptionsQuery } from "@budget-manager/client/react";
 import {
   CategoryItemLabel,
   CategoryLabel,
   type CategoryItem,
 } from "@/modules/category/components/category-dot";
-import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useCategoryOptionsQuery } from "@budget-manager/client/react";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { TransactionStatus } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
@@ -28,9 +28,9 @@ import {
 import { Textarea } from "@budget-manager/ui/components/textarea";
 import { useSelector } from "@tanstack/react-form";
 import { FieldRow } from "./field-row";
-import type { UseCardPurchaseFormReturnType } from "../hooks/use-card-purchase-form";
+import type { UseCardPurchaseFormReturnType } from "@budget-manager/client/react";
 import { CategoryType } from "@budget-manager/schemas";
-import { TRANSACTION_CATEGORY_NONE } from "../types";
+import { TRANSACTION_CATEGORY_NONE } from "@budget-manager/client";
 
 function CardAmountField({ form }: { form: UseCardPurchaseFormReturnType }) {
   const t = useTranslate();

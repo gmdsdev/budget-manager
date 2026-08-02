@@ -9,8 +9,8 @@ import {
   AlertDialogTitle,
 } from "@budget-manager/ui/components/alert-dialog";
 import { useTranslate } from "@budget-manager/i18n/react";
-import { useDeleteRecurringMutation } from "../mutations/use-recurring-mutation";
-import type { RecurringRow } from "../types";
+import { useDeleteRecurringMutation } from "@budget-manager/client/react";
+import type { RecurringRow } from "@budget-manager/client";
 
 export function DeleteRecurringDialog({
   series,

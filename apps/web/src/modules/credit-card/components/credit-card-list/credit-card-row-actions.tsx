@@ -12,7 +12,7 @@ import { useState } from "react";
 import { ArchiveCreditCardDialog } from "../archive-credit-card-dialog";
 import { CreditCardBillsDialog } from "../credit-card-bills-dialog";
 import { EditCreditCardDialog } from "../edit-credit-card-dialog";
-import type { CreditCardRow } from "../../types";
+import type { CreditCardRow } from "@budget-manager/client";
 
 type RowDialog = "edit" | "archive" | "bills" | null;
 

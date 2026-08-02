@@ -9,8 +9,8 @@ import {
 } from "@budget-manager/ui/components/dropdown-menu";
 import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
-import { useSetBudgetActiveMutation } from "../../mutations/use-budget-mutation";
-import type { BudgetRow } from "../../types";
+import { useSetBudgetActiveMutation } from "@budget-manager/client/react";
+import type { BudgetRow } from "@budget-manager/client";
 import { BudgetPeriodsDialog } from "../budget-periods-dialog";
 import { DeleteBudgetDialog } from "../delete-budget-dialog";
 import { EditBudgetDialog } from "../edit-budget-dialog";

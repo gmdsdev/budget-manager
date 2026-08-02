@@ -1,8 +1,8 @@
 import { FilterBar } from "@/components/filter-bar";
 import { FilterSearch } from "@/components/filter-search";
 import { FilterSelect, type FilterItem } from "@/components/filter-select";
-import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useWalletOptionsQuery } from "@budget-manager/client/react";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { FILTER_NONE, WalletCurrency } from "@budget-manager/schemas";
 import {
@@ -10,7 +10,7 @@ import {
   EMPTY_CREDIT_CARD_FILTERS,
   isCreditCardFiltered,
   type CreditCardFiltersState,
-} from "../../types";
+} from "@budget-manager/client";
 
 export function CreditCardFilters({
   filters,

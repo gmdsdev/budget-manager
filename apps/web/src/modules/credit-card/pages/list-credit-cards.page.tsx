@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/data-table";
 import { Pagination } from "@/components/pagination";
-import { usePagedFilters } from "@/hooks/use-paged-filters";
-import { getErrorMessage } from "@/utils/error-message";
+import { usePagedFilters } from "@budget-manager/client/react";
+import { getErrorMessage } from "@budget-manager/client";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Empty,
@@ -15,12 +15,12 @@ import { useTranslate } from "@budget-manager/i18n/react";
 import { useCreditCardColumns } from "../components/credit-card-list/columns";
 import { CreditCardFilters } from "../components/credit-card-list/credit-card-filters";
 import { CreateCreditCardDialog } from "../components/create-credit-card-dialog";
-import { useCreditCardsQuery } from "../queries/use-credit-cards-query";
+import { useCreditCardsQuery } from "@budget-manager/client/react";
 import {
   EMPTY_CREDIT_CARD_FILTERS,
   isCreditCardFiltered,
   type CreditCardFiltersState,
-} from "../types";
+} from "@budget-manager/client";
 
 export default function ListCreditCardsPage() {
   const t = useTranslate();

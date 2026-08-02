@@ -1,10 +1,10 @@
-import { type EnumLabels, useEnumLabels } from "@/lib/enum-labels";
+import { type EnumLabels, useEnumLabels } from "@budget-manager/client/react";
 import type { Translate } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import type { WalletRow } from "../../types";
+import type { WalletRow } from "@budget-manager/client";
 import { WalletRowActions } from "./wallet-row-actions";
 
 /**

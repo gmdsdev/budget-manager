@@ -4,7 +4,7 @@ import {
   DATE_RANGE_PRESETS,
   type DateRangePresetKey,
   type DateRangeValue,
-} from "@budget-manager/ui/lib/date-range";
+} from "@budget-manager/client";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, test } from "bun:test";
 import { useState } from "react";

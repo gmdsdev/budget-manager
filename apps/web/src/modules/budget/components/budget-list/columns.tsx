@@ -4,8 +4,8 @@ import { useI18n } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import type { BudgetRow } from "../../types";
-import { repeatsLabel } from "../../utils/repeats";
+import type { BudgetRow } from "@budget-manager/client";
+import { repeatsLabel } from "@budget-manager/client";
 import { BudgetRowActions } from "./budget-row-actions";
 
 export function useBudgetColumns(): ColumnDef<BudgetRow>[] {

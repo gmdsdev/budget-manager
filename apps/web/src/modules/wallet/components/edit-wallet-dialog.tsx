@@ -11,9 +11,9 @@ import {
   DialogTitle,
 } from "@budget-manager/ui/components/dialog";
 import { useId } from "react";
-import { useWalletForm } from "../hooks/use-wallet-form";
-import { useUpdateWalletMutation } from "../mutations/use-wallet-mutation";
-import type { WalletRow } from "../types";
+import { useWalletForm } from "@budget-manager/client/react";
+import { useUpdateWalletMutation } from "@budget-manager/client/react";
+import type { WalletRow } from "@budget-manager/client";
 import { WalletFormFields } from "./wallet-form-fields";
 
 export function EditWalletDialog({

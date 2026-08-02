@@ -19,8 +19,8 @@ import {
 } from "@budget-manager/ui/components/field";
 import { revalidateLogic, useForm } from "@tanstack/react-form";
 import { useId } from "react";
-import { useSetBudgetPeriodAmountMutation } from "../mutations/use-budget-mutation";
-import type { BudgetProgressRow } from "../types";
+import { useSetBudgetPeriodAmountMutation } from "@budget-manager/client/react";
+import type { BudgetProgressRow } from "@budget-manager/client";
 
 /**
  * One month's limit. Saving marks the month as the user's own, so the series

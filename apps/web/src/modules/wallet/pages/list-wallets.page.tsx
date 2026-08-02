@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/data-table";
 import { Pagination } from "@/components/pagination";
-import { usePagedFilters } from "@/hooks/use-paged-filters";
-import { getErrorMessage } from "@/utils/error-message";
+import { usePagedFilters } from "@budget-manager/client/react";
+import { getErrorMessage } from "@budget-manager/client";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Empty,
@@ -15,12 +15,12 @@ import { useTranslate } from "@budget-manager/i18n/react";
 import { CreateWalletDialog } from "../components/create-wallet-dialog";
 import { useWalletColumns } from "../components/wallet-list/columns";
 import { WalletFilters } from "../components/wallet-list/wallet-filters";
-import { useWalletsQuery } from "../queries/use-wallets-query";
+import { useWalletsQuery } from "@budget-manager/client/react";
 import {
   EMPTY_WALLET_FILTERS,
   isWalletFiltered,
   type WalletFiltersState,
-} from "../types";
+} from "@budget-manager/client";
 
 export default function ListWalletsPage() {
   const t = useTranslate();

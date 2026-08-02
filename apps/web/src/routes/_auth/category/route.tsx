@@ -1,6 +1,6 @@
 import { RouteError } from "@/components/route-error";
 import ListCategoriesPage from "@/modules/category/pages/list-categories.page";
-import { categoriesQueryInput } from "@/modules/category/queries/use-categories-query";
+import { categoriesQueryInput } from "@budget-manager/client";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_auth/category")({

@@ -1,5 +1,5 @@
 import { Pagination } from "@/components/pagination";
-import { getErrorMessage } from "@/utils/error-message";
+import { getErrorMessage } from "@budget-manager/client";
 import {
   Dialog,
   DialogContent,
@@ -20,12 +20,12 @@ import { useI18n } from "@budget-manager/i18n/react";
 import { useIsCompact } from "@budget-manager/ui/hooks/use-media-query";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { useState } from "react";
+import { useCreditCardBillsQuery } from "@budget-manager/client/react";
 import {
   BILL_STATUS_KEYS,
-  useCreditCardBillsQuery,
   type BillStatus,
-} from "../queries/use-credit-card-bills-query";
-import type { CreditCardRow } from "../types";
+  type CreditCardRow,
+} from "@budget-manager/client";
 
 const STATUS_TONE: Record<BillStatus, string> = {
   open: "text-muted-foreground",

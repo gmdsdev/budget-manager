@@ -10,9 +10,9 @@ import {
   DialogTitle,
 } from "@budget-manager/ui/components/dialog";
 import { useId } from "react";
-import { useCardPurchaseForm } from "../hooks/use-card-purchase-form";
-import { useUpdateCardPurchaseMutation } from "../mutations/use-transaction-mutation";
-import type { TransactionRow } from "../types";
+import { useCardPurchaseForm } from "@budget-manager/client/react";
+import { useUpdateCardPurchaseMutation } from "@budget-manager/client/react";
+import type { TransactionRow } from "@budget-manager/client";
 import { CardPurchaseFormFields } from "./card-purchase-form-fields";
 
 export function EditCardPurchaseDialog({

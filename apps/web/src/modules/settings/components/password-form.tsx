@@ -8,8 +8,8 @@ import {
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Input } from "@budget-manager/ui/components/input";
 import { useId } from "react";
-import { usePasswordForm } from "../hooks/use-password-form";
-import { useChangePasswordMutation } from "../mutations/use-user-mutation";
+import { usePasswordForm } from "@budget-manager/client/react";
+import { useChangePasswordMutation } from "@budget-manager/client/react";
 import { SettingsSection } from "./settings-section";
 
 const PASSWORD_FIELDS = [

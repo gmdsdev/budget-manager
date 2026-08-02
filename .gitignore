@@ -40,6 +40,11 @@ lerna-debug.log*
 .turbo
 .nx
 
+# Expo
+.expo
+apps/native/ios
+apps/native/android
+
 # Better-T-Stack
 .alchemy
 .vercel

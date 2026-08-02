@@ -19,7 +19,7 @@ import {
 } from "@budget-manager/ui/lib/currency";
 import { useI18n } from "@budget-manager/i18n/react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import type { MonthPoint } from "../types";
+import type { MonthPoint } from "@budget-manager/client";
 import { ChartDataTable } from "./chart-data-table";
 
 export function CashFlowChart({

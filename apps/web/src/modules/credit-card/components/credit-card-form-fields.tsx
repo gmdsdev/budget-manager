@@ -1,5 +1,5 @@
-import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useWalletOptionsQuery } from "@budget-manager/client/react";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { WalletCurrency } from "@budget-manager/schemas";
 import { CurrencyInput } from "@budget-manager/ui/components/currency-input";
@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@budget-manager/ui/components/select";
 import { useSelector } from "@tanstack/react-form";
-import type { UseCreditCardFormReturnType } from "../hooks/use-credit-card-form";
+import type { UseCreditCardFormReturnType } from "@budget-manager/client/react";
 
 const NO_WALLET = "none";
 

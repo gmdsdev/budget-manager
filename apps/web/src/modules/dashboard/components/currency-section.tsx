@@ -1,7 +1,7 @@
 import type { Translate } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
-import type { CurrencySummary } from "../types";
+import type { CurrencySummary } from "@budget-manager/client";
 import { BudgetProgressCard } from "./budget-progress-card";
 import { CardUtilisationCard } from "./card-utilisation-card";
 import { CashFlowChart } from "./cash-flow-chart";

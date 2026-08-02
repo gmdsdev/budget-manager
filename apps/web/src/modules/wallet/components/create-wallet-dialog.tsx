@@ -1,4 +1,4 @@
-import { usePreferredCurrency } from "@/hooks/use-preferred-currency";
+import { usePreferredCurrency } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { WalletType } from "@budget-manager/schemas";
 import { Button } from "@budget-manager/ui/components/button";
@@ -13,8 +13,8 @@ import {
   DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
 import { useId, useState } from "react";
-import { useWalletForm } from "../hooks/use-wallet-form";
-import { useCreateWalletMutation } from "../mutations/use-wallet-mutation";
+import { useWalletForm } from "@budget-manager/client/react";
+import { useCreateWalletMutation } from "@budget-manager/client/react";
 import { WalletFormFields } from "./wallet-form-fields";
 
 export function CreateWalletDialog() {

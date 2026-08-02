@@ -11,7 +11,7 @@ import { DotsThreeIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { ArchiveCategoryDialog } from "../archive-category-dialog";
 import { EditCategoryDialog } from "../edit-category-dialog";
-import type { CategoryRow } from "../../types";
+import type { CategoryRow } from "@budget-manager/client";
 
 type RowDialog = "edit" | "archive" | null;
 

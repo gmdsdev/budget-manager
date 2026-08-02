@@ -3,8 +3,16 @@ import { ensureDefaultCategories } from "@budget-manager/db/defaults/categories"
 import * as schema from "@budget-manager/db/schema/auth";
 import { env } from "@budget-manager/env/server";
 import { USER_ADDITIONAL_FIELDS } from "@budget-manager/schemas";
+import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+
+/**
+ * The native app has no browser origin: `@better-auth/expo` identifies itself
+ * with an `expo-origin` header carrying the app's scheme, which has to be
+ * trusted the same way `CORS_ORIGIN` is.
+ */
+const NATIVE_SCHEME = "kivo://";
 
 export function createAuth(db: Db = sharedDb) {
   return betterAuth({
@@ -13,7 +21,7 @@ export function createAuth(db: Db = sharedDb) {
 
       schema: schema,
     }),
-    trustedOrigins: [env.CORS_ORIGIN],
+    trustedOrigins: [env.CORS_ORIGIN, NATIVE_SCHEME],
     emailAndPassword: {
       enabled: true,
     },
@@ -48,7 +56,7 @@ export function createAuth(db: Db = sharedDb) {
         httpOnly: true,
       },
     },
-    plugins: [],
+    plugins: [expo()],
   });
 }
 

@@ -1,16 +1,15 @@
-import { type EnumLabels, useEnumLabels } from "@/lib/enum-labels";
+import { type EnumLabels, useEnumLabels } from "@budget-manager/client/react";
 import { CategoryLabel } from "@/modules/category/components/category-dot";
 import type { Translate } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
-import {
-  CREDITED_TRANSACTION_KINDS,
-  RecurrenceType,
-  TransactionRepeats,
-} from "@budget-manager/schemas";
+import { CREDITED_TRANSACTION_KINDS } from "@budget-manager/schemas";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import type { TransactionRow } from "../../types";
+import {
+  transactionRepeatsLabel,
+  type TransactionRow,
+} from "@budget-manager/client";
 import { TransactionRowActions } from "./transaction-row-actions";
 
 export function useTransactionColumns(): ColumnDef<TransactionRow>[] {
@@ -57,33 +56,19 @@ function transactionColumns(
     {
       id: "repeats",
       header: t("transaction.column.repeats"),
-      cell: ({ row }) => {
-        const { recurrenceType, recurrenceInterval, recurrenceInstallments } =
-          row.original;
-
-        if (!recurrenceType) {
-          return (
-            <span className="text-xs text-muted-foreground">
-              {labels.transactionRepeats(TransactionRepeats.ONE_OFF)}
-            </span>
-          );
-        }
-
-        const type = recurrenceType as RecurrenceType;
-        const label =
-          type === RecurrenceType.FIXED
-            ? t("transaction.repeats.fixed", {
-                count: recurrenceInstallments ?? 0,
-              })
-            : recurrenceInterval && recurrenceInterval > 1
-              ? t("transaction.repeats.withInterval", {
-                  type: labels.recurrenceType(type),
-                  interval: recurrenceInterval,
-                })
-              : labels.recurrenceType(type);
-
-        return <span className="whitespace-nowrap text-xs">{label}</span>;
-      },
+      // The label is a display rule the native app reads too, so it lives in
+      // `@budget-manager/client`; only the muted styling of a one-off is web's.
+      cell: ({ row }) => (
+        <span
+          className={
+            row.original.recurrenceType
+              ? "whitespace-nowrap text-xs"
+              : "text-xs text-muted-foreground"
+          }
+        >
+          {transactionRepeatsLabel(t, labels, row.original)}
+        </span>
+      ),
     },
     {
       accessorKey: "status",

@@ -15,8 +15,8 @@ import {
   DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
 import { useId, useState } from "react";
-import { useCategoryForm } from "../hooks/use-category-form";
-import { useCreateCategoryMutation } from "../mutations/use-category-mutation";
+import { useCategoryForm } from "@budget-manager/client/react";
+import { useCreateCategoryMutation } from "@budget-manager/client/react";
 import { CategoryFormFields } from "./category-form-fields";
 
 export function CreateCategoryDialog() {

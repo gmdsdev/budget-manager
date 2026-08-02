@@ -48,6 +48,16 @@ export default tseslint.config(
     },
   },
 
+  // The native app gets the same hook and query rules as the web one; `jsx-a11y` is
+  // deliberately absent, since it reasons about DOM elements React Native has none of.
+  {
+    files: ["apps/native/src/**/*.{ts,tsx}", "packages/client/**/*.{ts,tsx}"],
+    extends: [
+      reactHooks.configs.flat["recommended-latest"],
+      ...pluginQuery.configs["flat/recommended"],
+    ],
+  },
+
   {
     files: [
       "packages/api/**/*.ts",
@@ -96,5 +106,18 @@ export default tseslint.config(
   {
     files: ["**/*.config.{js,ts,mjs}", "eslint.config.js", "scripts/**/*.ts"],
     extends: [tseslint.configs.disableTypeChecked],
+  },
+
+  // Metro and Babel read their config through CommonJS, so these two are the one
+  // place in the repo where `require` and `__dirname` are the correct spelling.
+  {
+    files: ["apps/native/*.config.js"],
+    languageOptions: {
+      globals: globals.node,
+      sourceType: "commonjs",
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
   },
 );

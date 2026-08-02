@@ -10,7 +10,7 @@ import {
 } from "@budget-manager/ui/components/card";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import { Link } from "@tanstack/react-router";
-import type { BudgetProgress, BudgetTotals } from "../types";
+import type { BudgetProgress, BudgetTotals } from "@budget-manager/client";
 
 /** How many meters fit before the card stops being scannable. */
 const VISIBLE = 5;

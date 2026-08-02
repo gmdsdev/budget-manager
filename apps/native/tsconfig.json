@@ -1,0 +1,15 @@
+{
+  "extends": "@budget-manager/config/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ESNext"],
+    "types": ["react", "react-native"],
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "expo-env.d.ts"],
+  "exclude": ["node_modules"]
+}

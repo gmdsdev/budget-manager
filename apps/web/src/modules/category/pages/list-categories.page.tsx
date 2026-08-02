@@ -1,7 +1,7 @@
 import { DataTable } from "@/components/data-table";
 import { Pagination } from "@/components/pagination";
-import { usePagedFilters } from "@/hooks/use-paged-filters";
-import { getErrorMessage } from "@/utils/error-message";
+import { usePagedFilters } from "@budget-manager/client/react";
+import { getErrorMessage } from "@budget-manager/client";
 import { Button } from "@budget-manager/ui/components/button";
 import {
   Empty,
@@ -15,12 +15,12 @@ import { useTranslate } from "@budget-manager/i18n/react";
 import { CategoryFilters } from "../components/category-list/category-filters";
 import { useCategoryColumns } from "../components/category-list/columns";
 import { CreateCategoryDialog } from "../components/create-category-dialog";
-import { useCategoriesQuery } from "../queries/use-categories-query";
+import { useCategoriesQuery } from "@budget-manager/client/react";
 import {
   EMPTY_CATEGORY_FILTERS,
   isCategoryFiltered,
   type CategoryFiltersState,
-} from "../types";
+} from "@budget-manager/client";
 
 export default function ListCategoriesPage() {
   const t = useTranslate();

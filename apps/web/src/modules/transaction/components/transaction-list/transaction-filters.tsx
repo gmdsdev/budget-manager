@@ -2,10 +2,10 @@ import { FilterBar } from "@/components/filter-bar";
 import { FilterSearch } from "@/components/filter-search";
 import { FilterSelect, type FilterItem } from "@/components/filter-select";
 import { categoryColorVar } from "@/modules/category/colors";
-import { useCategoryOptionsQuery } from "@/modules/category/queries/use-category-options-query";
-import { useCreditCardOptionsQuery } from "@/modules/credit-card/queries/use-credit-card-options-query";
-import { useWalletOptionsQuery } from "@/modules/wallet/queries/use-wallet-options-query";
-import { useEnumLabels } from "@/lib/enum-labels";
+import { useCategoryOptionsQuery } from "@budget-manager/client/react";
+import { useCreditCardOptionsQuery } from "@budget-manager/client/react";
+import { useWalletOptionsQuery } from "@budget-manager/client/react";
+import { useEnumLabels } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import {
   FILTER_NONE,
@@ -21,7 +21,7 @@ import {
   TRANSACTION_FILTER_ALL,
   walletAccountValue,
   type TransactionFiltersState,
-} from "../../types";
+} from "@budget-manager/client";
 
 export function TransactionFilters({
   filters,

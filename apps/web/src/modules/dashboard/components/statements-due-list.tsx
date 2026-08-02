@@ -9,7 +9,7 @@ import {
 import { useI18n } from "@budget-manager/i18n/react";
 import { buttonVariants } from "@budget-manager/ui/components/button";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
-import type { StatementDue } from "../types";
+import type { StatementDue } from "@budget-manager/client";
 
 // `as const` keeps each value a literal key, so `t` can see that none of them
 // takes a placeholder.

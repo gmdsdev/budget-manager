@@ -1,4 +1,4 @@
-import { usePreferredCurrency } from "@/hooks/use-preferred-currency";
+import { usePreferredCurrency } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
 import {
@@ -12,8 +12,8 @@ import {
   DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
 import { useId, useState } from "react";
-import { useCreditCardForm } from "../hooks/use-credit-card-form";
-import { useCreateCreditCardMutation } from "../mutations/use-credit-card-mutation";
+import { useCreditCardForm } from "@budget-manager/client/react";
+import { useCreateCreditCardMutation } from "@budget-manager/client/react";
 import { CreditCardFormFields } from "./credit-card-form-fields";
 
 export function CreateCreditCardDialog() {

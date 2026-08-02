@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@budget-manager/ui/components/select";
-import { currentMonth, monthParts, toMonthKey } from "@/lib/month";
+import { currentMonth, monthParts, toMonthKey } from "@budget-manager/client";
 
 /** How far either side of today a budget may be anchored. */
 const YEARS_BACK = 2;

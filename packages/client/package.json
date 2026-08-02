@@ -1,0 +1,33 @@
+{
+  "name": "@budget-manager/client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./runtime": "./src/runtime.ts",
+    "./react": "./src/react.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@budget-manager/i18n": "workspace:*",
+    "@budget-manager/money": "workspace:*",
+    "@budget-manager/schemas": "workspace:*",
+    "@tanstack/react-form": "^1.33.0",
+    "@tanstack/react-query": "^5.101.2",
+    "@trpc/client": "catalog:",
+    "@trpc/tanstack-react-query": "^11.18.0",
+    "react": "catalog:"
+  },
+  "devDependencies": {
+    "@budget-manager/api": "workspace:*",
+    "@budget-manager/config": "workspace:*",
+    "@happy-dom/global-registrator": "^20.11.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "catalog:",
+    "typescript": "catalog:"
+  }
+}

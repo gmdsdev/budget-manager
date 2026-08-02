@@ -1,0 +1,15 @@
+{
+  "extends": "@budget-manager/config/tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    /**
+     * DOM is here for the tests, which render through @testing-library — not a licence
+     * for the source to reach for a browser API. That guard lives where it belongs:
+     * `apps/native` compiles these same source files with no DOM lib at all, so a
+     * `document` in here fails its `check-types`.
+     */
+    "lib": ["ESNext", "DOM", "DOM.Iterable"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}

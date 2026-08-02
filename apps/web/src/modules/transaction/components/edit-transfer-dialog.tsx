@@ -1,4 +1,4 @@
-import { getErrorMessage } from "@/utils/error-message";
+import { getErrorMessage } from "@budget-manager/client";
 import { TransactionKind } from "@budget-manager/schemas";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Button } from "@budget-manager/ui/components/button";
@@ -13,13 +13,13 @@ import {
 } from "@budget-manager/ui/components/dialog";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
 import { useId } from "react";
-import { useTransferForm } from "../hooks/use-transfer-form";
-import { useUpdateTransferMutation } from "../mutations/use-transaction-mutation";
+import { useTransferForm } from "@budget-manager/client/react";
+import { useUpdateTransferMutation } from "@budget-manager/client/react";
 import {
   type TransferLeg,
   useTransferQuery,
-} from "../queries/use-transfer-query";
-import type { TransactionRow } from "../types";
+} from "@budget-manager/client/react";
+import type { TransactionRow } from "@budget-manager/client";
 import { TransferFormFields } from "./transfer-form-fields";
 
 function EditTransferForm({

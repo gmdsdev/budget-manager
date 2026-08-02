@@ -4,7 +4,7 @@ import {
 } from "@budget-manager/ui/components/chart";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Area, AreaChart, ReferenceLine, YAxis } from "recharts";
-import type { MonthPoint } from "../types";
+import type { MonthPoint } from "@budget-manager/client";
 
 /**
  * The last months of net, as context for the figure beside it. No axes and no

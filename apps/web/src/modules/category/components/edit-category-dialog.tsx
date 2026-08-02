@@ -10,9 +10,9 @@ import {
   DialogTitle,
 } from "@budget-manager/ui/components/dialog";
 import { useId } from "react";
-import { useCategoryForm } from "../hooks/use-category-form";
-import { useUpdateCategoryMutation } from "../mutations/use-category-mutation";
-import type { CategoryRow } from "../types";
+import { useCategoryForm } from "@budget-manager/client/react";
+import { useUpdateCategoryMutation } from "@budget-manager/client/react";
+import type { CategoryRow } from "@budget-manager/client";
 import { CategoryFormFields } from "./category-form-fields";
 
 export function EditCategoryDialog({
