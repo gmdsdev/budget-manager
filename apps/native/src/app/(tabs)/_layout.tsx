@@ -1,6 +1,7 @@
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/theme/theme-provider";
 import { FONTS, PLATE_BORDER_WIDTH } from "@/theme/tokens";
@@ -14,12 +15,21 @@ import { FONTS, PLATE_BORDER_WIDTH } from "@/theme/tokens";
 export default function TabsLayout() {
   const t = useTranslate();
   const colors = useColors();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        sceneStyle: { backgroundColor: colors.background },
+        // A tab screen draws its own title, so nothing is consuming the status bar
+        // and it read straight through the clock. The inset is applied here rather
+        // than in `Screen`, beside the `headerShown` that creates the need for it:
+        // the three screens pushed from More keep a native header, which already
+        // clears the status bar, and paying it twice leaves them a hole under it.
+        sceneStyle: {
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+        },
         tabBarActiveTintColor: colors.foreground,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
