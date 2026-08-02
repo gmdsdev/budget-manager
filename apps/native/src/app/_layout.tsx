@@ -90,12 +90,21 @@ function AppStack() {
 
   const pushedOptions = {
     headerShown: true,
+    // Without this the back button reads `(tabs)`: the label falls back to the
+    // previous route's title, and the previous route is the tab group, whose
+    // `Stack.Screen` has no title to give. All three of these are pushed from
+    // **More**, so that is where back goes and what it should say.
+    headerBackTitle: t("common.menu"),
     headerStyle: { backgroundColor: colors.card },
     headerTintColor: colors.foreground,
     headerTitleStyle: {
       fontFamily: FONTS.bold,
       fontSize: 14,
       letterSpacing: 0.8,
+    },
+    headerBackTitleStyle: {
+      fontFamily: FONTS.regular,
+      fontSize: 14,
     },
   };
 
