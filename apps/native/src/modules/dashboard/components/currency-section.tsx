@@ -69,7 +69,7 @@ export function CurrencySection({
         </Text>
       </View>
 
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING.md }}>
+      <View style={{ gap: SPACING.md }}>
         <StatTile
           lead
           label={t("dashboard.stat.inWallets")}
@@ -117,7 +117,7 @@ export function CurrencySection({
       </View>
 
       {hasCards && (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING.md }}>
+        <View style={{ gap: SPACING.md }}>
           <StatTile
             label={t("dashboard.stat.onCards")}
             amountCents={summary.cardOutstandingCents}
