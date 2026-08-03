@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
 import { useEffect, useId, useState } from "react";
 import { useCreateRecurringMutation } from "@budget-manager/client/react";
@@ -28,9 +27,14 @@ import {
 } from "./repeats-fields";
 import { TransactionFormFields } from "./transaction-form-fields";
 
-export function CreateTransactionDialog() {
+export function CreateTransactionDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const t = useTranslate();
-  const [open, setOpen] = useState(false);
   const formId = useId();
 
   const createMutation = useCreateTransactionMutation();
@@ -89,7 +93,7 @@ export function CreateTransactionDialog() {
   // from outside the form, so a tab left open across midnight would otherwise
   // offer yesterday — and a wallet created since would not be preselected.
   function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
+    onOpenChange(nextOpen);
     form.reset();
     setRepeat(NO_REPEAT_STATE);
   }
@@ -102,10 +106,7 @@ export function CreateTransactionDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger
-        render={<Button>{t("transaction.create.trigger")}</Button>}
-      />
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("transaction.create.title")}</DialogTitle>
           <DialogDescription>

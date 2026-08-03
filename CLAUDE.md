@@ -73,11 +73,20 @@ Four hard-won details in `src/support/web.ts`:
   to dodge on the API side; here the consumer is the browser, so pass the result into
   `dayThisMonth`/`dayLastMonth` rather than letting them read `new Date()`. A suite that seeds
   "today" without it passes for twenty-one hours a day and fails for three.
-- Assert on row *counts* via `waitForRowCount` rather than sleeping. Its selector is scoped to
-  `[data-list-table]` — the marker `DataTable` puts on its own `<table>` — so a second table on
-  the page (the transaction totals) can never inflate a count.
+- Assert on row *counts* via `waitForRowCount` rather than sleeping. Its selector is
+  `[data-list-table] [data-list-row]`, and those two markers are what keep the helpers
+  independent of the markup: `data-list-table` marks the listing whether it draws as a
+  `DataTable`'s `<table>`, that table's card fallback, or the transaction ledger's row list, so a
+  second table on the page (the transaction totals) can never inflate a count, and a
+  `data-group-header` carries no row marker so a date heading is not a row.
 - Read text through `rowTexts`/`bodyText`, which flatten the non-breaking spaces `Intl` money
-  formatting emits (a plain `"R$ 300,00"` never matches raw `innerText`).
+  formatting emits (a plain `"R$ 300,00"` never matches raw `innerText`). `rowTexts` reads
+  `[data-list-cell]`, not `<td>`, for the same reason — and the first cell is always the
+  record's name, which the `cells[0]` assertions rely on.
+- **The transaction list has no per-row menu**, so reach for `openTransaction(page, name)` and
+  then act on the buttons inside the detail dialog. `openFromDetail` covers the actions that open
+  a *second* dialog: the detail view closes as the next one opens, so waiting on `dialog(page)`
+  alone can match either — it waits on the new dialog's heading instead.
 - **One shared Chromium, a fresh context per suite** (`openApp`/`closeApp`). Launching a browser
   per suite file starved the machine badly enough that `page.goto` timed out at 60s; contexts
   give the same cookie isolation for a fraction of the cost. Teardown hooks also need an
@@ -88,7 +97,8 @@ Four hard-won details in `src/support/web.ts`:
 form and then asserts the nav, a listing, an empty state and a shared Zod message against
 the **catalog** rather than against copy pasted into the test, so a reworded translation
 does not break it but a screen that stops reading from the catalog does. It folds case on
-both sides, because headings and buttons are uppercased in CSS and `innerText` reports that.
+both sides — copy is sentence case now, but the eyebrow labels are still uppercased in CSS and
+`innerText` reports that, so folding is what keeps the suite indifferent to which is which.
 
 `apps/web/test-setup.ts` registers a global `afterEach(cleanup)`. Don't rely on
 `@testing-library/react`'s built-in auto-cleanup: it registers its hook at import
@@ -422,9 +432,10 @@ module rather than leaking into transactions.
 the ledger and a template is only provenance — "what generated this row". So there is no
 recurring screen: the transaction form carries a `Repeats` select (`repeats-fields.tsx`), and
 choosing a schedule routes the same submit to `recurring.create` instead of
-`transaction.create`. One-offs and generated rows live in one list, with a `Repeats` column
-(`One-off` vs `Monthly` / `6× monthly`) and series actions — edit / pause / delete series —
-on any row that carries a `templateId`. Don't reintroduce a separate screen for them.
+`transaction.create`. One-offs and generated rows live in one list, which states a row's
+repeats (`One-off` vs `Monthly` / `6× monthly`) on its meta line and offers series actions —
+edit / pause / delete series — in the detail dialog of any row that carries a `templateId`.
+Don't reintroduce a separate screen for them.
 
 **Nobody is asked when a series ends.** `endsOn` is not a form field or a tRPC input: an
 open-ended series runs for `RECURRENCE_YEARS` (50) and `seriesEndsOn` derives the date from
@@ -448,14 +459,32 @@ pointing at a series.
 Each transaction shape has its **own** editor and its own routes — plain, transfer, card
 purchase, card payment. `transaction.update` refuses transfer legs and card rows with a
 `ConflictError`, because the plain form cannot carry a card reference or a transfer pair, and
-the row actions route each kind to the matching dialog.
+`TransactionDetailDialog` routes each kind to the matching dialog.
 
-**Every destructive row action is confirmed through an `AlertDialog`, series included.** The row
-menu is a dropdown, which puts an irreversible action one click from a mis-tap: `Delete series`
-sat directly under `Pause series` and fired the mutation on click, taking the rule and every
-occurrence still ahead of today with it, across months. `DeleteRecurringDialog` was already
-written and translated for exactly that and simply was not wired up. Pause/resume stays
-unconfirmed on purpose — it is reversible from the same menu.
+**Recording something is one primary action, not four peers.** `CreateTransactionMenu` is a split
+button — `Create Transaction` on the left half, and a caret opening card purchase / pay card /
+transfer. Nearly every visit is an ordinary income or expense, and four equal-weight CTAs made
+that common case as hard to find as the rare ones (and took a 2×2 grid of a phone's first
+screen). The four create dialogs are **controlled from that component and stay mounted**, which
+is what keeps their reset-on-open behaviour — the date defaults to today and the wallet to the
+first one, both read from outside the form. In e2e, `openCreateDialog(page, item)` goes through
+the caret; only `Create Transaction` is still a button of its own.
+
+**The ledger has no row menu: the row opens the record, and every action lives inside it.**
+`TransactionDetailDialog` (`modules/transaction/components/`) is what a row click opens — the
+transaction in full, then Mark as paid / the kind's own editor / the series actions / Delete, as
+buttons. A dropdown in a list of hundreds of rows puts an irreversible action one mis-tap from a
+reversible one, which is exactly how `Delete series` used to sit directly under `Pause series`.
+
+Two things about it are load-bearing:
+
+- **A nested dialog replaces the detail view rather than stacking on it** (two modals deep,
+  Escape becomes ambiguous and the scrim doubles up), so the detail view's own `open` is
+  *derived* from `dialog === null`. It must not be a prop the page drives: the page dropping
+  `selected` unmounts the component that holds the nested dialog it just opened, and the edit
+  form never appears.
+- **Every destructive action is still confirmed through an `AlertDialog`, series included.**
+  Pause/resume stays unconfirmed on purpose — it is reversible from the same place.
 
 **Wallet balances are derived, never stored.** `wallets.current_balance_cents` is dead —
 nothing writes it and it is absent from `WALLET_PUBLIC_COLUMNS`. `WalletService.getAll`
@@ -553,11 +582,17 @@ Mutations go through `useApiMutation` (`@budget-manager/client/react`), which ta
 `successMessage` / `errorMessage` / `suppressErrorToast` / `invalidateQueries`. Don't add
 per-call `onError` toasts.
 
-Paged lists pair `<DataTable>` with `<Pagination>` (`src/components/pagination.tsx`) and hold
+Paged lists pair `<DataTable>` (or, on transactions, `<TransactionRows>`) with `<Pagination>`
+(`src/components/pagination.tsx`) and hold
 their state in `usePagedFilters`, which keeps filters and the page number in **one** piece of
 state so changing a filter always resets to page 1. Two `useState` calls would let a caller
 forget the reset and strand the user on a page that no longer exists. `PAGE_SIZE`, the offset
 math and that hook are all in `@budget-manager/client`.
+
+**Every screen opens with `<PageHeader>`** (`src/components/page-header.tsx`): title, an optional
+line of context, and the actions or scoping controls opposite, stacking below `sm`. All seven
+pages used to spell that markup out themselves, which was seven chances for one heading to drift
+out of step with the rest.
 
 **The dashboard reads top-down: figures, then charts, then the lists that need acting on.**
 `dashboard.page.tsx` owns only the two controls and the statements / awaiting-payment lists;
@@ -595,14 +630,17 @@ figure whose row label has scrolled away is unreadable (its `group-hover` is wha
 highlight whole). Mutations on transactions, series and wallets all invalidate
 `trpc.transaction.summary` — every figure is derived.
 
-**A column on a listing table gets a filter for it.** All five list pages follow this: wallets
+**Every field a listing shows gets a filter for it.** All five list pages follow this: wallets
 (name, type, currency), categories (name, type), cards (name, currency, billing wallet),
 budgets (category, currency, status) and transactions (date range, description, account,
-category, kind, repeats, status). The controls
-are ordered to match the columns, and the bar is **left-aligned** — `FilterBar`
+category, kind, repeats, status) — the transaction ledger has no columns any more, but the rule
+is about what a row *states*, not how it is laid out. The controls
+are ordered to match the row, and the bar is **left-aligned** — `FilterBar`
 (`src/components/filter-bar.tsx`) owns that alignment and the `Clear filters` button, so no
-page positions its own. `FilterSelect` and `FilterSearch` are the two control shapes;
-`FilterSearch` debounces, because a request per keystroke is not a filter. Each module keeps a
+page positions its own. `FilterSelect` and `FilterSearch` are the two control shapes, both
+`rounded-full` chips; a `FilterSelect` whose column is actually filtered switches from outlined
+to the pale-green filled state, so the bar shows at a glance which columns are narrowing the
+list. `FilterSearch` debounces, because a request per keystroke is not a filter. Each module keeps a
 `XFiltersState` + `EMPTY_X_FILTERS` + `isXFiltered` trio in `@budget-manager/client` and one
 `xQueryInput(filters?, page?)` builder that drops sentinel values — the route loaders call it
 with no arguments, so it must always work bare.
@@ -729,8 +767,18 @@ unset becomes a labelled line — so a new column joins the card layout automati
 is only needed when `header` is a function. `credit-card-bills-dialog.tsx` hand-rolls the same
 shape for its six-column statement table, since it is not a `DataTable`.
 
+**The transaction ledger is the one listing that is not a `DataTable` at any width.**
+`transaction-rows.tsx` renders one row per movement — category-tinted kind glyph, description
+over a `category · account · kind · repeats` meta line, a status pill, the amount opposite —
+grouped under a date heading, at every breakpoint. Eight nowrap columns wanted about 1000px and
+put the figure a reader is scanning for at the far edge; a row is one thing that happened, so it
+reads as a block. Below `sm` the kind and repeats drop out of the meta line (it already wraps to
+two rows without them) and the status pill hides, since both are restated in the detail dialog
+the row opens. It carries the same `data-list-*` markers a `DataTable` does, so the e2e row
+helpers do not care which one they are looking at.
+
 The one `ColumnMeta` flag the **table** layout reads is `grow`, and each listing marks exactly
-one column with it — Description on transactions, Name on wallets, cards and categories. A
+one column with it — Name on wallets, cards and categories. A
 `w-full` on that column's cells is what makes an auto-layout table hand it every pixel the
 others do not need, instead of spreading the slack evenly and leaving the column that carries
 free text as narrow as `Currency`. It is also the only column allowed to wrap: the rest keep the
@@ -744,18 +792,24 @@ they keep doing so because `useIsCompact` is false when `matchMedia` is missing 
 viewport the suites use. It is `useSyncExternalStore`, so there is no setState-in-effect. The
 date **range** picker uses it too, dropping to one month: two side by side is wider than a phone.
 
-**Controls are 40px below md and keep the dense 32px above it.** `Button`, `Input`,
-`SelectTrigger` and the calendar's `--cell-size` all carry that pair; `xs` is the one size left
-alone, being used inside compositions that would break. Two traps: a `data-[size=default]:h-8`
-variant out-specifies a plain `max-md:h-10`, so the responsive rule has to be data-scoped too
-(`md:data-[size=default]:h-8`), and a caller passing `className="size-8"` silently defeats the
-variant — row-action triggers just use `size="icon"`. Inputs and select triggers are also 16px
-text below md, because iOS Safari zooms the whole page when a focused field's text is smaller.
+**One control scale, and it does not change with the viewport.** Wise's everyday control is
+**48px** — `13px 24px` of padding around 16px/1.2 text — and `Button` `size="default"`, `Input`,
+`SelectTrigger` and the calendar's `--cell-size` (40px) are all built to it. That already clears
+the touch minimum, so there is no dense desktop variant and no `md:` override to get wrong; the
+whole `max-md:h-10` / `md:data-[size=default]:h-8` dance the old scale needed is gone, along with
+its two traps. 16px field text is still what stops iOS Safari zooming a focused input.
 
-Above the lists: page headers stack (`flex-col sm:flex-row`), the transaction page's four create
-buttons become a 2×2 grid, and `FilterBar` lays its controls out two per column on a phone —
-seven stacked full-width controls would push the list itself off the first screen. `FilterSearch`
-takes a whole row anyway, since its placeholder is the only thing naming the column.
+Below the default sit **`sm` at 36px** — Wise's `9px 16px` chip, which is what the filter bar,
+the month steppers and the row-action triggers wear (`size="sm"` / `size="icon-sm"`, and
+`DateRangePicker` takes a `size` prop so one picker serves both) — and `xs` at 28px for dense
+compositions. `lg` is 56px, for a form's own primary action. A caller passing
+`className="h-8"` still silently defeats the variant, so reach for a size rather than a class.
+
+Above the lists: page headers stack (`flex-col sm:flex-row`) and `FilterBar` lays its controls
+out two per column on a phone — seven stacked full-width controls would push the list itself off
+the first screen. `FilterSearch` takes a whole row anyway, since its placeholder is the only
+thing naming the column. The transaction page's create actions are one split button rather than
+four peers, so they need no grid of their own.
 
 ### Native (apps/native)
 
@@ -984,19 +1038,50 @@ in the list below it is worse than a long one — and compacts the locale's own 
 
 Primitives in `packages/ui/src/components` are shadcn (`style: base-lyra`, `iconLibrary: remixicon`) on top of **@base-ui/react**, not Radix. The package is **web only** — React Native renders none of it, so `apps/native` has its own primitives under `src/components/ui/` speaking the same design language (see Native, above). Base UI composes via the `render` prop, not `asChild`: `<DialogTrigger render={<Button>Create</Button>} />`. Design tokens live in `packages/ui/src/styles/globals.css` (Tailwind v4, CSS-first).
 
-**The design language is pastel neobrutalism, and it is carried by tokens plus a handful of
-recurring classes.** One mono face everywhere (`JetBrains Mono Variable` is both `--font-sans`
-and `--font-heading`); `--radius` is `0rem` and every `--radius-*` step is pinned to it, so
-nothing is ever rounded; surfaces are warm — oatmeal page, warm-white cards, warm charcoal in
-dark — and `--border`/`--input`/`--ring` are the ink, not a hairline grey. Elevation is the
-hard offset shadow, never blur: `--shadow-brutal-xs/sm/(default)/lg` all cast
-`var(--shadow-hard)` (ink in light, black in dark). The recurring grammar: plates (cards,
-tables, dialogs, popovers) are `border border-border bg-… shadow-brutal*`; pressables add the
-press effect (`active:translate-x-0.5 active:translate-y-0.5 active:shadow-none`, already in
-`buttonVariants` — ghost and the date-picker triggers deliberately opt out); headings, buttons,
-labels and table headers are bold uppercase with tracking. Swatches and chart marks are square
-with an ink outline (`border border-border`), which doubles as the contrast relief for the
-pastel fills. New components should speak this grammar rather than invent a parallel one.
+**The design language is Wise's Neptune, and it is carried by tokens plus a handful of
+recurring classes.** The palette is Wise's own, mapped onto the shadcn variable names so no
+primitive had to learn new ones: `--primary` is **Bright Green `#9fe870` with a Forest Green
+`#163300` label, in both themes** — it is the brand surface, not a themed one, which is the one
+place a literal colour is correct. `--secondary` is the pale-green pill the active nav and an
+applied filter wear. Surfaces are plain white over `#121511`/`#1e211d`, `--border` is a hairline
+(`#e3e4e1` / `#33372f`) rather than ink, and `--ring` is `--foreground`, because Wise focus is a
+dark ring not a glow.
+
+Four rules follow from that and are easy to undo by accident:
+
+- **Nothing is square and nothing casts a hard shadow.** The radius scale is Wise's — `--radius-md`
+  10px (inputs, select triggers), `--radius-lg` 16px (menus, popovers, tooltips), `--radius-xl`
+  24px (cards, dialogs, sheets, listings), `--radius-2xl` 32px (the dashboard hero) — and
+  **buttons, chips, nav pills, swatches, meters and glyphs are `rounded-full`**. `--shadow-brutal-*`
+  is gone; elevation is `--shadow-menu` on things that float over the page and nothing at all on
+  a card, which reads as elevated by its border alone. In dark mode a card drops its border
+  (`dark:border-transparent`) and is separated by its lighter fill instead.
+- **Type is Inter, sentence case, on Wise's own scale.** `@fontsource-variable/inter` backs both
+  `--font-sans` and `--font-heading`. The `uppercase` + `tracking-wide` treatment that used to sit
+  on every heading, button, label and table header is gone; what survives is the **eyebrow** —
+  `text-xs font-semibold tracking-[0.02em] uppercase text-muted-foreground` — used only for a
+  small label over a figure (stat tiles, hero splits, nav group headings). Everything else is
+  sized off the reference: page title 32px/-0.04em, dialog title 24px/-0.03em, card title
+  18px/-0.015em, body and controls 16px, meta and captions 14px, eyebrows and tags 12px. Figures
+  get their own steps — 60px on the hero, 32px on a stat tile, 18px on a ledger row's amount —
+  and headings take negative tracking rather than extra weight.
+- **`text-primary` is not a text colour.** Bright green on white is unreadable, so links and the
+  button `link` variant read `--link` (Forest Green in light, Bright Green in dark) and
+  `--content-secondary` is the softer body ink. A destructive action is outlined
+  (`border-destructive/40 text-destructive`), never a filled red block.
+- **A swatch carries no ink outline any more** — it is a plain round fill, so a category dot is
+  paired with its name (see the category-colour note below) and a chart bar leans on its legend
+  and table twin for relief rather than on a border.
+
+`--wise-bright-green/-forest-green/-bright-blue/-bright-yellow/-bright-orange/-bright-pink` are
+the brand palette itself, for surfaces that are deliberately branded rather than themed: the
+dashboard hero and the account avatar. Reach for a semantic token first; these are the exception.
+
+New components should speak this grammar rather than invent a parallel one.
+
+**`apps/native` has not been migrated yet.** `src/theme/tokens.ts` still mirrors the old
+neobrutalist palette, so the two apps are knowingly out of sync until it is ported — the
+"change a token there and change it here" rule below is a debt, not a description.
 
 **The app is Kivo, and the logo is a pair of files per shape, not a `currentColor` SVG.**
 `apps/web/src/assets/logos/` holds the light and dark artwork for the mark and the lockup
@@ -1053,7 +1138,16 @@ steps. `--category-*` in `globals.css` holds them, eight aliasing `--chart-1…8
 bar and a chart series of the same hue cannot drift apart) plus four filling the gaps the chart
 ring leaves — cyan, lime, purple and a neutral slate. Those four were run through the same
 colourblind-and-contrast check as the chart steps, tuned so picker-order neighbours stay apart
-(worst adjacent pair ΔE ≥ ~6.5 OKLab under normal vision, both modes) at pastel chroma.
+(worst adjacent pair ΔE ≥ ~6.5 OKLab under normal vision, both modes).
+
+The whole ring was **re-saturated for the Wise redesign**: the old steps were tuned pastel for a
+muted page and read washed-out beside bright green, and the ink outline that used to carry their
+contrast relief is gone. Lightness was held and only chroma raised, then the check was re-run —
+every hue now clears **3:1** against its own card surface (`#ffffff` light, `#1e211d` dark), which
+the pastel ramp deliberately did not, and worst adjacent separation is **6.7 ΔE light / 7.1 dark**.
+Cyan, lime and yellow had to be darkened rather than merely saturated to clear 3:1. Dichromacy
+separation is still imperfect and always will be at twelve hues — which is exactly why the swatch
+is never the message.
 Twelve hues **cannot** all stay separable under dichromacy — pastel steps make that harder, not
 easier — so the swatch is never the message: `CategoryLabel`
 (`apps/web/src/modules/category/components/category-dot.tsx`) always pairs it with the name, and

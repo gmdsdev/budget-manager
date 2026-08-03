@@ -23,7 +23,7 @@ export function FilterBar({
         <Button
           variant="ghost"
           onClick={onClear}
-          className="col-span-2 sm:col-span-1"
+          className="col-span-2 text-link sm:col-span-1"
         >
           {t("common.clearFilters")}
         </Button>

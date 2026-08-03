@@ -5,14 +5,14 @@ import { Link } from "@tanstack/react-router";
 import { KivoLockup, KivoMark } from "./logo";
 import { MobileNav } from "./mobile-nav";
 import { ModeToggle } from "./mode-toggle";
-import { MAIN_LINKS, type NavLabel, SETTINGS_LINKS } from "./nav-links";
+import { NAV_GROUPS, type NavLabel } from "./nav-links";
 import UserMenu from "./user-menu";
 
 const NAV_LINK_CLASS =
-  "flex h-10 items-center gap-2 border border-transparent px-3 text-xs font-semibold tracking-wide uppercase text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground";
+  "flex h-11 items-center gap-3 rounded-full px-4 text-base font-medium text-content-secondary transition-colors hover:bg-accent hover:text-foreground";
 
 const NAV_LINK_ACTIVE_CLASS =
-  "border-border bg-card text-foreground shadow-brutal-xs";
+  "bg-secondary font-semibold text-secondary-foreground hover:bg-secondary hover:text-secondary-foreground";
 
 function SidebarLink({
   to,
@@ -31,7 +31,7 @@ function SidebarLink({
       className={NAV_LINK_CLASS}
       activeProps={{ className: NAV_LINK_ACTIVE_CLASS }}
     >
-      <Icon aria-hidden className="size-4 shrink-0" />
+      <Icon aria-hidden className="size-5 shrink-0" />
       {t(label)}
     </Link>
   );
@@ -41,29 +41,37 @@ export function Sidebar() {
   const t = useTranslate();
 
   return (
-    <aside className="sticky top-0 hidden h-svh min-w-0 flex-col border-r-2 border-border bg-sidebar md:flex">
-      <div className="border-b-2 border-border px-4 py-5">
-        <Link
-          to="/dashboard"
-          aria-label={t("nav.homeLink")}
-          className="block text-foreground"
-        >
-          <KivoLockup className="h-10" alt="" />
-        </Link>
-      </div>
+    <aside className="sticky top-0 hidden h-svh min-w-0 flex-col gap-8 border-r border-border bg-sidebar px-4 py-6 md:flex">
+      <Link
+        to="/dashboard"
+        aria-label={t("nav.homeLink")}
+        className="block px-2 text-foreground"
+      >
+        <KivoLockup className="h-10" alt="" />
+      </Link>
 
-      <nav aria-label={t("nav.main")} className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
-        {[...MAIN_LINKS, ...SETTINGS_LINKS].map((link) => (
-          <SidebarLink
-            key={link.to}
-            to={link.to}
-            label={link.label}
-            icon={link.icon}
-          />
+      <nav
+        aria-label={t("nav.main")}
+        className="flex flex-1 flex-col gap-4 overflow-y-auto"
+      >
+        {NAV_GROUPS.map((group) => (
+          <div key={group.heading} className="flex flex-col gap-0.5">
+            <p className="px-4 pb-1 text-xs font-semibold tracking-[0.02em] uppercase text-muted-foreground">
+              {t(group.heading)}
+            </p>
+            {group.links.map((link) => (
+              <SidebarLink
+                key={link.to}
+                to={link.to}
+                label={link.label}
+                icon={link.icon}
+              />
+            ))}
+          </div>
         ))}
       </nav>
 
-      <div className="flex flex-col gap-3 border-t-2 border-border p-3">
+      <div className="flex flex-col gap-3">
         <ModeToggle />
         <UserMenu />
       </div>
@@ -75,8 +83,8 @@ export default function Header() {
   const t = useTranslate();
 
   return (
-    <header className="min-w-0 border-b-2 border-border md:hidden">
-      <div className="container mx-auto flex min-w-0 flex-row items-center gap-4 px-4 py-2 sm:px-6">
+    <header className="min-w-0 border-b border-border md:hidden">
+      <div className="container mx-auto flex min-w-0 flex-row items-center gap-4 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 flex-1 items-center">
           <Link
             to="/dashboard"

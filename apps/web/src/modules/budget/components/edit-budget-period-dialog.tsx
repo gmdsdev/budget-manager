@@ -69,7 +69,7 @@ export function EditBudgetPeriodDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {t("budget.period.edit.title", { month: monthLabel })}

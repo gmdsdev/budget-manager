@@ -59,7 +59,7 @@ function BillCards({
   const { t, formatDateString } = useI18n();
 
   return (
-    <ul aria-label={t("creditCard.bills.listLabel")} className="divide-y divide-border/25 rounded-none border border-border">
+    <ul aria-label={t("creditCard.bills.listLabel")} className="divide-y divide-border overflow-hidden rounded-lg border border-border">
       {bills.map((bill) => (
         <li key={bill.id} className="space-y-2 p-3">
           <div className="flex flex-row items-start justify-between gap-2">
@@ -155,7 +155,7 @@ export function CreditCardBillsDialog({
             {isCompact ? (
               <BillCards bills={data.rows} currencyCode={data.currencyCode} />
             ) : (
-            <div className="overflow-x-auto rounded-none border border-border">
+            <div className="overflow-x-auto rounded-lg border border-border">
               <Table>
                 <TableHeader>
                   <TableRow>

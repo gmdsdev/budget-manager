@@ -18,8 +18,8 @@ export function CategoryDot({
     <span
       aria-hidden
       className={cn(
-        "size-2 shrink-0 rounded-none",
-        color ? "border border-border" : "border border-muted-foreground/60",
+        "size-2.5 shrink-0 rounded-full",
+        color ? undefined : "border border-muted-foreground/60",
         className,
       )}
       style={color ? { backgroundColor: categoryColorVar(color) } : undefined}

@@ -61,7 +61,7 @@ export function EditCardPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("cardPayment.edit.title")}</DialogTitle>
           <DialogDescription>

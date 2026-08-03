@@ -61,7 +61,7 @@ export function EditBudgetDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("budget.edit.title")}</DialogTitle>
           <DialogDescription>{t("budget.edit.description")}</DialogDescription>

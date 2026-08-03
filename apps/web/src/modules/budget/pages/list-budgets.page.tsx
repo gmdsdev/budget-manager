@@ -1,4 +1,3 @@
-import { DataTable } from "@/components/data-table";
 import { Pagination } from "@/components/pagination";
 import { usePagedFilters } from "@budget-manager/client/react";
 import { usePreferredCurrency } from "@budget-manager/client/react";
@@ -22,8 +21,9 @@ import {
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { useState } from "react";
+import { BudgetDetailDialog } from "../components/budget-detail-dialog";
 import { BudgetFilters } from "../components/budget-list/budget-filters";
-import { useBudgetColumns } from "../components/budget-list/columns";
+import { BudgetRows } from "../components/budget-list/budget-rows";
 import { BudgetMonthCard } from "../components/budget-month-card";
 import { CreateBudgetDialog } from "../components/create-budget-dialog";
 import { useBudgetMonthQuery } from "@budget-manager/client/react";
@@ -33,12 +33,14 @@ import {
   isBudgetFiltered,
   type BudgetFiltersState,
   type BudgetProgressRow,
+  type BudgetRow,
 } from "@budget-manager/client";
 import { currentMonth, shiftMonth } from "@budget-manager/client";
+import { PageHeader } from "@/components/page-header";
 
 export default function ListBudgetsPage() {
   const { t, formatMonthString } = useI18n();
-  const columns = useBudgetColumns();
+  const [selected, setSelected] = useState<BudgetRow | null>(null);
   const [month, setMonth] = useState(currentMonth());
   const [currencyCode, setCurrencyCode] = useState<string | null>(null);
   const preferredCurrency: string = usePreferredCurrency();
@@ -67,10 +69,7 @@ export default function ListBudgetsPage() {
 
   return (
     <div className="pb-8">
-      <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
-          {t("budget.title")}
-        </h1>
+      <PageHeader title={t("budget.title")}>
 
         {/* Both controls sit above everything they scope. */}
         <div className="flex flex-row flex-wrap items-center gap-2">
@@ -106,7 +105,7 @@ export default function ListBudgetsPage() {
           <div className="flex flex-1 flex-row items-center gap-1 sm:flex-none">
             <Button
               variant="outline"
-              size="icon"
+              size="icon-sm"
               aria-label={t("budget.month.previous")}
               onClick={() => setMonth(shiftMonth(month, -1))}
             >
@@ -117,7 +116,7 @@ export default function ListBudgetsPage() {
             </span>
             <Button
               variant="outline"
-              size="icon"
+              size="icon-sm"
               aria-label={t("budget.month.next")}
               onClick={() => setMonth(shiftMonth(month, 1))}
             >
@@ -127,7 +126,7 @@ export default function ListBudgetsPage() {
 
           <CreateBudgetDialog month={month} />
         </div>
-      </header>
+      </PageHeader>
 
       {/* The month card answers "is there money left"; the list below is what
           set those limits. A refetch holds the previous figures at reduced
@@ -177,28 +176,24 @@ export default function ListBudgetsPage() {
         </Empty>
       ) : (
         <>
-          <DataTable
-            columns={columns}
-            data={data.rows}
-            getRowId={(budget) => budget.id}
-            caption={t("budget.caption")}
-            emptyState={
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>
-                    {isFiltered
-                      ? t("budget.emptyFiltered.title")
-                      : t("budget.empty.title")}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {isFiltered
-                      ? t("budget.emptyFiltered.description")
-                      : t("budget.empty.description")}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            }
-          />
+          {data.rows.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>
+                  {isFiltered
+                    ? t("budget.emptyFiltered.title")
+                    : t("budget.empty.title")}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {isFiltered
+                    ? t("budget.emptyFiltered.description")
+                    : t("budget.empty.description")}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <BudgetRows budgets={data.rows} onSelect={setSelected} />
+          )}
           <Pagination
             page={page}
             total={data.total}
@@ -206,6 +201,14 @@ export default function ListBudgetsPage() {
             isFetching={isFetching}
             resource="budgets"
           />
+
+          {selected && (
+            <BudgetDetailDialog
+              key={selected.id}
+              budget={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </>
       )}
     </div>

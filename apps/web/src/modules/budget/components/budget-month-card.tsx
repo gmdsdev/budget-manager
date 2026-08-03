@@ -6,15 +6,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@budget-manager/ui/components/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@budget-manager/ui/components/dropdown-menu";
 import { useI18n, useTranslate } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
-import { DotsThreeIcon } from "@phosphor-icons/react";
+import {
+  ArrowCounterClockwiseIcon,
+  PencilSimpleIcon,
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import { useResetBudgetPeriodMutation } from "@budget-manager/client/react";
 import type { BudgetProgressRow, BudgetTotalsRow } from "@budget-manager/client";
@@ -34,7 +31,7 @@ function Figure({
 }) {
   return (
     <div className="space-y-0.5">
-      <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+      <p className="text-xs font-semibold tracking-[0.02em] text-muted-foreground uppercase">
         {label}
       </p>
       <p
@@ -53,38 +50,36 @@ function PeriodActions({ period }: { period: BudgetProgressRow }) {
   const [editing, setEditing] = useState(false);
   const resetMutation = useResetBudgetPeriodMutation();
 
+  // Two direct buttons rather than a menu: there are at most two actions here,
+  // and a dropdown would put them one click further away while reintroducing the
+  // per-row menu the listings deliberately dropped. Named by month as well as
+  // category — the same category also owns a row in the list below.
+  const forMonth = {
+    name: period.categoryName,
+    month: formatMonthString(period.periodMonth, "monthYear"),
+  };
+
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button variant="ghost" size="icon">
-              <DotsThreeIcon />
-              {/* Named by month as well as category: the same category also
-                  owns a row in the list below, whose menu is a different one. */}
-              <span className="sr-only">
-                {t("budget.period.actionsFor", {
-                  name: period.categoryName,
-                  month: formatMonthString(period.periodMonth, "monthYear"),
-                })}
-              </span>
-            </Button>
-          }
-        />
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setEditing(true)}>
-            {t("budget.period.edit.action")}
-          </DropdownMenuItem>
-          {period.isOverride && period.budgetId && (
-            <DropdownMenuItem
-              disabled={resetMutation.isPending}
-              onClick={() => resetMutation.mutate({ id: period.periodId })}
-            >
-              {t("budget.period.reset.action")}
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label={t("budget.period.editFor", forMonth)}
+        onClick={() => setEditing(true)}
+      >
+        <PencilSimpleIcon />
+      </Button>
+      {period.isOverride && period.budgetId && (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t("budget.period.resetFor", forMonth)}
+          disabled={resetMutation.isPending}
+          onClick={() => resetMutation.mutate({ id: period.periodId })}
+        >
+          <ArrowCounterClockwiseIcon />
+        </Button>
+      )}
 
       {editing && (
         <EditBudgetPeriodDialog

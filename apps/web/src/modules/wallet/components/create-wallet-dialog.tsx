@@ -52,7 +52,7 @@ export function CreateWalletDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button>{t("wallet.create.trigger")}</Button>} />
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("wallet.create.title")}</DialogTitle>
           <DialogDescription>

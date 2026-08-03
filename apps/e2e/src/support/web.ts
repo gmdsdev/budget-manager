@@ -144,6 +144,69 @@ export function dialog(page: Page) {
 }
 
 /**
+ * The transaction page leads with one primary action — `Create Transaction` —
+ * and keeps the rarer shapes behind its caret, so opening a card purchase, a
+ * card payment or a transfer means going through the menu rather than looking
+ * for a peer button.
+ */
+export async function openCreateDialog(page: Page, item: string) {
+  await page.getByRole("button", { name: "More transaction types" }).click();
+  await page.getByRole("menuitem", { name: item, exact: true }).click();
+  await dialog(page).waitFor({ state: "visible" });
+
+  return dialog(page);
+}
+
+/**
+ * The transaction list carries no row menu: the row itself opens a detail
+ * dialog, and every action on the record lives inside it. This is the way in to
+ * all of them, so a suite never reaches for a per-row trigger that is not there.
+ *
+ * Located by `[data-list-row]` rather than by the row's accessible name: the
+ * name is a translated message wrapped in typographic quotes, which a test
+ * should not have to spell.
+ */
+export async function openTransaction(page: Page, name: string) {
+  return openRecord(page, name);
+}
+
+/**
+ * The same way in for every other listing — wallets, cards, budgets,
+ * categories — none of which carries a row menu either. It is markup-driven
+ * rather than per-screen: `[data-list-row]` is one record on all of them, so
+ * this is the one helper any of those suites needs, and the actions inside are
+ * plain buttons rather than menu items.
+ */
+export async function openRecord(page: Page, name: string) {
+  await page
+    .locator("[data-list-row]")
+    .filter({ hasText: name })
+    .first()
+    .click();
+  await dialog(page).waitFor({ state: "visible" });
+
+  return dialog(page);
+}
+
+/**
+ * A detail-dialog action that opens a second dialog: the detail view closes as
+ * the next one opens, so waiting on `dialog(page)` alone can match either. Wait
+ * on the heading the new dialog is known by instead.
+ */
+export async function openFromDetail(
+  page: Page,
+  action: string,
+  heading: string,
+) {
+  await dialog(page).getByRole("button", { name: action, exact: true }).click();
+  await page
+    .getByRole("heading", { name: heading })
+    .waitFor({ state: "visible", timeout: 10_000 });
+
+  return dialog(page);
+}
+
+/**
  * Base UI renders the select popup in a portal, so the option lookup is
  * page-wide while the trigger lookup is scoped to `root`. Label text repeats
  * between the filter bar and the dialogs, hence the explicit scope.
@@ -198,12 +261,15 @@ export async function bodyText(page: Page) {
 }
 
 /**
- * Data rows of the listing itself: `[data-list-table]` is the `DataTable`, so a
- * summary or breakdown table on the same page never inflates a count, and
- * `data-group-header` rows (one per date on the transaction list) are not rows
+ * Data rows of the listing itself. `[data-list-table]` marks the listing —
+ * whether it draws as a `DataTable`'s `<table>`, that table's card fallback, or
+ * the transaction ledger's row list — so a summary or breakdown table on the
+ * same page never inflates a count. `[data-list-row]` is one record in any of
+ * those three, which is what keeps the helpers independent of the markup: a
+ * `data-group-header` (one per date) carries no such marker and so is not a row
  * in any assertion's sense.
  */
-const DATA_ROW_SELECTOR = "[data-list-table] tbody tr:not([data-group-header])";
+const DATA_ROW_SELECTOR = "[data-list-table] [data-list-row]";
 
 export function rows(page: Page) {
   return page.locator(DATA_ROW_SELECTOR);
@@ -222,11 +288,15 @@ export async function waitForRowCount(page: Page, expected: number) {
 /**
  * Cell text with non-breaking spaces flattened — Intl money formatting uses
  * U+00A0/U+202F, which silently defeats assertions written with a plain space.
+ *
+ * `[data-list-cell]` is the field marker, so a row reads the same whether it
+ * draws as a `<tr>` of `<td>`s or as a list row: the first cell is always the
+ * record's name, which is what `cells[0]` assertions rely on.
  */
 export async function rowTexts(page: Page) {
-  return page.$$eval(DATA_ROW_SELECTOR, (trs) =>
-    trs.map((tr) =>
-      Array.from(tr.querySelectorAll("td")).map((td) =>
+  return page.$$eval(DATA_ROW_SELECTOR, (rows) =>
+    rows.map((tr) =>
+      Array.from(tr.querySelectorAll("[data-list-cell]")).map((td) =>
         (td as HTMLElement).innerText.replace(/[\u00a0\u202f]/g, " ").trim(),
       ),
     ),

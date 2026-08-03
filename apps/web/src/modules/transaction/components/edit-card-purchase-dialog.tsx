@@ -60,7 +60,7 @@ export function EditCardPurchaseDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("cardPurchase.edit.title")}</DialogTitle>
           <DialogDescription>

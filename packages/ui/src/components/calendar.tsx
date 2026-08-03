@@ -47,9 +47,9 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        // A 28px day is a hard target for a thumb; 40px on a phone still leaves
-        // the seven columns inside 390px, and the pointer density returns at md.
-        "group/calendar bg-background p-2 [--cell-size:--spacing(10)] md:[--cell-size:--spacing(7)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent",
+        // 40px cells at every width, matching the control scale: seven columns
+        // still fit inside 390px, and a 28px day was a hard target for a thumb.
+        "group/calendar bg-background p-2 [--cell-radius:9999px] [--cell-size:--spacing(10)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className

@@ -7,10 +7,11 @@ import {
   apiForPage,
   bodyText,
   closeApp,
-  closeMenu,
   dialog,
   fillField,
   openApp,
+  openFromDetail,
+  openRecord,
   pickSelect,
   rowFor,
   signUpThroughUi,
@@ -101,11 +102,8 @@ describe("budgets", () => {
   }, 60_000);
 
   test("one month can be given its own limit without moving the rest", async () => {
-    await page
-      .getByRole("button", { name: "Actions for Groceries", exact: true })
-      .click();
-    await page.getByRole("menuitem", { name: "View months" }).click();
-    await dialog(page).waitFor({ state: "visible" });
+    await openRecord(page, "Groceries");
+    await openFromDetail(page, "View months", "Months for “Groceries”");
 
     const monthsDialog = dialog(page).last();
     const rows = monthsDialog.locator("tbody tr");
@@ -139,7 +137,7 @@ describe("budgets", () => {
 
     const body = await bodyText(page);
 
-    expect(body).toContain("BUDGETS");
+    expect(body).toContain("Budgets");
     expect(body).toContain("R$ 600,00 left");
     expect(body).toContain("R$ 600,00 left to spend");
   }, 60_000);
@@ -169,14 +167,19 @@ describe("budgets", () => {
   }, 60_000);
 
   test("pausing a budget clears the months it had not started", async () => {
-    await page
-      .getByRole("button", { name: "Actions for Groceries", exact: true })
+    const detail = await openRecord(page, "Groceries");
+
+    // Reversible from the same place, so it stays put rather than closing —
+    // which is why the row behind it is what the assertion waits on.
+    await detail
+      .getByRole("button", { name: "Pause budget", exact: true })
       .click();
-    await page.getByRole("menuitem", { name: "Pause budget" }).click();
-    await closeMenu(page).catch(() => undefined);
+    await page.keyboard.press("Escape");
+    await detail.waitFor({ state: "hidden" });
 
     await page
-      .getByRole("cell", { name: "Paused", exact: true })
+      .locator("[data-list-row]")
+      .filter({ hasText: "Paused" })
       .first()
       .waitFor({ state: "visible" });
 

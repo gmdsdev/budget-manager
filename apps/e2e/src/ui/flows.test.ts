@@ -12,6 +12,7 @@ import {
   dialog,
   fillField,
   openApp,
+  openCreateDialog,
   pickSelect,
   rowFor,
   rowTexts,
@@ -146,7 +147,7 @@ describe("transaction page", () => {
   }, 60_000);
 
   test("creates a transfer as two signed legs, on the first submit", async () => {
-    await page.getByRole("button", { name: "Transfer", exact: true }).click();
+    await openCreateDialog(page, "Transfer");
     await dialog(page).waitFor({ state: "visible" });
     await fillField(dialog(page), "Description", "To savings");
     await pickSelect(page, dialog(page), "From wallet", "Checking (BRL)");
@@ -169,7 +170,7 @@ describe("transaction page", () => {
   }, 60_000);
 
   test("blocks a transfer between the same wallet, showing the reason", async () => {
-    await page.getByRole("button", { name: "Transfer", exact: true }).click();
+    await openCreateDialog(page, "Transfer");
     await dialog(page).waitFor({ state: "visible" });
     await fillField(dialog(page), "Description", "Self move");
     await pickSelect(page, dialog(page), "From wallet", "Checking (BRL)");

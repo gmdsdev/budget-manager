@@ -30,3 +30,29 @@ export const SETTINGS_LINKS = [
 export type NavLabel =
   | (typeof MAIN_LINKS)[number]["label"]
   | (typeof SETTINGS_LINKS)[number]["label"];
+
+export type NavGroupHeading =
+  | "nav.group.overview"
+  | "nav.group.money"
+  | "nav.group.account";
+
+/**
+ * Seven flat destinations read as one undifferentiated column. The headings are
+ * what let the eye skip to the right third of the list.
+ */
+export const NAV_GROUPS = [
+  { heading: "nav.group.overview", links: [MAIN_LINKS[0], MAIN_LINKS[1]] },
+  {
+    heading: "nav.group.money",
+    links: [
+      SETTINGS_LINKS[0],
+      SETTINGS_LINKS[1],
+      MAIN_LINKS[2],
+      SETTINGS_LINKS[2],
+    ],
+  },
+  { heading: "nav.group.account", links: [SETTINGS_LINKS[3]] },
+] as const satisfies readonly {
+  heading: NavGroupHeading;
+  links: readonly { to: string; label: NavLabel; icon: unknown }[];
+}[];

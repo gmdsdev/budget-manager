@@ -101,10 +101,11 @@ export function TransactionFilters({
       <DateRangePicker
         id="transaction-date-range-filter"
         aria-label={t("transaction.filter.dateRange")}
+        size="sm"
         // Sized to its content above sm, not pinned: a formatted range is far
         // longer in some languages than in English ("1 de jul. – 31 de jul. de
         // 2026"), and a fixed width clipped it.
-        className="col-span-2 w-full sm:col-span-1 sm:w-auto sm:min-w-56"
+        className="col-span-2 w-full rounded-full sm:col-span-1 sm:w-auto sm:min-w-56"
         value={{ from: filters.dateFrom, to: filters.dateTo }}
         onValueChange={({ from, to }) =>
           patch({ dateFrom: from, dateTo: to })

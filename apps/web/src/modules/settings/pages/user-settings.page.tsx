@@ -19,6 +19,7 @@ import { LanguageForm } from "../components/language-form";
 import { PasswordForm } from "../components/password-form";
 import { PreferencesForm } from "../components/preferences-form";
 import { ProfileForm } from "../components/profile-form";
+import { PageHeader } from "@/components/page-header";
 
 export default function UserSettingsPage() {
   const t = useTranslate();
@@ -26,14 +27,10 @@ export default function UserSettingsPage() {
 
   return (
     <div className="pb-8">
-      <header className="flex flex-col gap-1 pt-6 pb-4 sm:pt-10">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
-          {t("settings.title")}
-        </h1>
-        <p className="text-xs text-muted-foreground">
-          {t("settings.description")}
-        </p>
-      </header>
+      <PageHeader
+        title={t("settings.title")}
+        description={t("settings.description")}
+      />
 
       {isPending ? (
         <div

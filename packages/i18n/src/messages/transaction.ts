@@ -222,6 +222,28 @@ export const transaction = {
     "pt-BR": "Atualize os dados de “{name}”.",
   },
 
+  "transaction.create.moreTypes": {
+    en: "More transaction types",
+    "pt-BR": "Mais tipos de transação",
+  },
+
+  "transaction.detail.title": {
+    en: "Transaction",
+    "pt-BR": "Transação",
+  },
+  "transaction.detail.open": {
+    en: "Open “{name}”",
+    "pt-BR": "Abrir “{name}”",
+  },
+  "transaction.detail.series": {
+    en: "Series",
+    "pt-BR": "Série",
+  },
+  "transaction.detail.installments": {
+    en: "{count}× instalments",
+    "pt-BR": "{count}× parcelas",
+  },
+
   "transaction.action.markAsPaid": {
     en: "Mark as paid",
     "pt-BR": "Marcar como pago",

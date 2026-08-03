@@ -102,9 +102,6 @@ describe("dashboard", () => {
         .getByRole("table", { name: /Income, spending and net per month/i })
         .count(),
     ).toBe(1);
-    expect(await page.getByRole("img", { name: /Monthly net in BRL/i }).count()).toBe(
-      1,
-    );
     expect(body).toContain("R$ 4.800,00");
   }, 60_000);
 

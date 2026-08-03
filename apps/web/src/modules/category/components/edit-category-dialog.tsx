@@ -56,7 +56,7 @@ export function EditCategoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("category.edit.title")}</DialogTitle>
           <DialogDescription>

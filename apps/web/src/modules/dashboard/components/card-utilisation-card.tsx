@@ -59,7 +59,7 @@ export function CardUtilisationCard({
                 </div>
 
                 <div
-                  className="h-2.5 w-full border border-border bg-chart-track/40"
+                  className="h-2.5 w-full overflow-hidden rounded-full bg-chart-track"
                   role="progressbar"
                   aria-label={t("dashboard.cards.limitUsed", {
                     name: item.name,
@@ -77,7 +77,7 @@ export function CardUtilisationCard({
                         ? "bg-destructive"
                         : nearLimit
                           ? "bg-warning"
-                          : "bg-chart-1"
+                          : "bg-primary"
                     }`}
                     style={{ width: `${Math.min(Math.max(used, 0), 100)}%` }}
                   />

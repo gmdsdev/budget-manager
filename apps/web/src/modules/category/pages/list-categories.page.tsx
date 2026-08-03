@@ -1,4 +1,3 @@
-import { DataTable } from "@/components/data-table";
 import { Pagination } from "@/components/pagination";
 import { usePagedFilters } from "@budget-manager/client/react";
 import { getErrorMessage } from "@budget-manager/client";
@@ -12,19 +11,23 @@ import {
 } from "@budget-manager/ui/components/empty";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
 import { useTranslate } from "@budget-manager/i18n/react";
+import { CategoryDetailDialog } from "../components/category-detail-dialog";
 import { CategoryFilters } from "../components/category-list/category-filters";
-import { useCategoryColumns } from "../components/category-list/columns";
+import { CategoryRows } from "../components/category-list/category-rows";
 import { CreateCategoryDialog } from "../components/create-category-dialog";
 import { useCategoriesQuery } from "@budget-manager/client/react";
 import {
   EMPTY_CATEGORY_FILTERS,
   isCategoryFiltered,
   type CategoryFiltersState,
+  type CategoryRow,
 } from "@budget-manager/client";
+import { useState } from "react";
+import { PageHeader } from "@/components/page-header";
 
 export default function ListCategoriesPage() {
   const t = useTranslate();
-  const columns = useCategoryColumns();
+  const [selected, setSelected] = useState<CategoryRow | null>(null);
   const { filters, page, setFilters, setPage } =
     usePagedFilters<CategoryFiltersState>(EMPTY_CATEGORY_FILTERS);
 
@@ -35,12 +38,9 @@ export default function ListCategoriesPage() {
 
   return (
     <div>
-      <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
-          {t("category.title")}
-        </h1>
+      <PageHeader title={t("category.title")}>
         <CreateCategoryDialog />
-      </header>
+      </PageHeader>
 
       <CategoryFilters filters={filters} onFiltersChange={setFilters} />
 
@@ -68,28 +68,24 @@ export default function ListCategoriesPage() {
         </Empty>
       ) : (
         <>
-          <DataTable
-            columns={columns}
-            data={data.rows}
-            getRowId={(category) => category.id}
-            caption={t("category.caption")}
-            emptyState={
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>
-                    {isFiltered
-                      ? t("category.emptyFiltered.title")
-                      : t("category.empty.title")}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {isFiltered
-                      ? t("category.emptyFiltered.description")
-                      : t("category.empty.description")}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            }
-          />
+          {data.rows.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>
+                  {isFiltered
+                    ? t("category.emptyFiltered.title")
+                    : t("category.empty.title")}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {isFiltered
+                    ? t("category.emptyFiltered.description")
+                    : t("category.empty.description")}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <CategoryRows categories={data.rows} onSelect={setSelected} />
+          )}
           <Pagination
             page={page}
             total={data.total}
@@ -97,6 +93,14 @@ export default function ListCategoriesPage() {
             isFetching={isFetching}
             resource="categories"
           />
+
+          {selected && (
+            <CategoryDetailDialog
+              key={selected.id}
+              category={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Input } from "@budget-manager/ui/components/input";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 
 export const FILTER_SEARCH_DELAY_MS = 300;
@@ -59,19 +60,25 @@ export function FilterSearch({
   }, [text, value, delay]);
 
   return (
-    <Input
-      id={id}
-      type="search"
-      aria-label={label}
-      // A whole row on a phone: at half of one the placeholder — which is the
-      // only thing naming the column — gets clipped.
-      className="col-span-2 w-full sm:col-span-1 sm:w-48"
-      autoComplete="off"
-      placeholder={
-        placeholder ?? t("common.filterBy", { column: label.toLowerCase() })
-      }
-      value={text}
-      onChange={(event) => setText(event.currentTarget.value)}
-    />
+    // A whole row on a phone: at half of one the placeholder — which is the
+    // only thing naming the column — gets clipped.
+    <div className="relative col-span-2 w-full sm:col-span-1 sm:w-56">
+      <MagnifyingGlassIcon
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground"
+      />
+      <Input
+        id={id}
+        type="search"
+        aria-label={label}
+        className="h-9 w-full rounded-full pl-11 text-sm"
+        autoComplete="off"
+        placeholder={
+          placeholder ?? t("common.filterBy", { column: label.toLowerCase() })
+        }
+        value={text}
+        onChange={(event) => setText(event.currentTarget.value)}
+      />
+    </div>
   );
 }

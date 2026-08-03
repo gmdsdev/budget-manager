@@ -4,10 +4,11 @@ import type { Page } from "playwright";
 import { WEB_URL, requireWeb } from "../support/env";
 import {
   closeApp,
-  closeMenu,
   dialog,
   fillField,
   openApp,
+  openFromDetail,
+  openTransaction,
   pickDateRangePreset,
   pickSelect,
   rowFor,
@@ -151,41 +152,28 @@ describe("recurrence lives on the transaction form", () => {
   }, 60_000);
 
   test("a series row offers series actions; a one-off does not", async () => {
-    await page.getByRole("button", { name: "Actions for Sofa" }).first().click();
-    await page
-      .getByRole("menuitem", { name: "Edit series" })
-      .waitFor({ state: "visible" });
+    const series = await openTransaction(page, "Sofa");
+    const seriesActions = await series.getByRole("button").allInnerTexts();
 
-    const seriesItems = await page.getByRole("menuitem").allInnerTexts();
+    expect(seriesActions).toContain("Edit series");
+    expect(seriesActions).toContain("Pause series");
+    expect(seriesActions).toContain("Delete series");
 
-    expect(seriesItems).toContain("Edit series");
-    expect(seriesItems).toContain("Pause series");
-    expect(seriesItems).toContain("Delete series");
+    await page.keyboard.press("Escape");
+    await dialog(page).waitFor({ state: "hidden" });
 
-    // Wait for the menu to actually go away: reading too early returns the
-    // previous menu's items.
-    await closeMenu(page);
+    const oneOff = await openTransaction(page, "Coffee");
+    const oneOffActions = await oneOff.getByRole("button").allInnerTexts();
 
-    await page.getByRole("button", { name: "Actions for Coffee" }).click();
-    await page
-      .getByRole("menuitem", { name: "Edit" })
-      .first()
-      .waitFor({ state: "visible" });
+    expect(oneOffActions).not.toContain("Edit series");
 
-    const oneOffItems = await page.getByRole("menuitem").allInnerTexts();
-
-    expect(oneOffItems).not.toContain("Edit series");
-
-    await closeMenu(page);
+    await page.keyboard.press("Escape");
+    await dialog(page).waitFor({ state: "hidden" });
   }, 60_000);
 
   test("editing the series from a row re-prices its scheduled rows", async () => {
-    await page.getByRole("button", { name: "Actions for Sofa" }).first().click();
-    await page
-      .getByRole("menuitem", { name: "Edit series" })
-      .waitFor({ state: "visible" });
-    await page.getByRole("menuitem", { name: "Edit series" }).click();
-    await dialog(page).waitFor({ state: "visible" });
+    await openTransaction(page, "Sofa");
+    await openFromDetail(page, "Edit series", "Edit series");
     await fillField(dialog(page), "Amount", "90000");
     await page.getByRole("button", { name: "Save changes" }).click();
     await dialog(page).waitFor({ state: "hidden", timeout: 10_000 });
@@ -200,11 +188,10 @@ describe("recurrence lives on the transaction form", () => {
   }, 60_000);
 
   test("deleting the series asks first, then leaves the one-off behind", async () => {
-    await page.getByRole("button", { name: "Actions for Sofa" }).first().click();
-    await page
-      .getByRole("menuitem", { name: "Delete series" })
-      .waitFor({ state: "visible" });
-    await page.getByRole("menuitem", { name: "Delete series" }).click();
+    await openTransaction(page, "Sofa");
+    await dialog(page)
+      .getByRole("button", { name: "Delete series", exact: true })
+      .click();
 
     // Dropping a rule and every occurrence still ahead of today is the most
     // destructive thing in the app, so it is confirmed like the rest of them.

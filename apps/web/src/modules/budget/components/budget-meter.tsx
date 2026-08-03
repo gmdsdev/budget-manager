@@ -1,4 +1,3 @@
-import { categoryColorVar } from "@/modules/category/colors";
 import { CategoryLabel } from "@/modules/category/components/category-dot";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { BudgetStatus } from "@budget-manager/schemas";
@@ -8,11 +7,20 @@ import type { BudgetProgressRow } from "@budget-manager/client";
 
 /**
  * The bar is plain HTML rather than a chart mark: it carries a long category
- * name and its own value labels, which an SVG bar would clip. The fill is the
- * category's own ink, so the same hue means the same category here, in the
- * ledger and in the dashboard's spending breakdown — and the track is what
- * carries the *reading*, since a pastel fill may never be the only signal.
+ * name and its own value labels, which an SVG bar would clip.
+ *
+ * **The fill states the reading, not the category** — green on track, yellow
+ * close to the limit, red overspent. A budget meter is answering "am I fine
+ * here", so a bar tinted by category identity said nothing about the one thing
+ * it exists to report, and the only colour cue was the word beside it. The
+ * category's own ink still leads the row, in the swatch next to its name, so
+ * the hue-means-category rule holds where identity is what is being shown.
  */
+const STATUS_FILL: Record<BudgetStatus, string> = {
+  [BudgetStatus.EXCEEDED]: "var(--destructive)",
+  [BudgetStatus.WARNING]: "var(--warning-mark)",
+  [BudgetStatus.ON_TRACK]: "var(--wise-bright-green)",
+};
 export function BudgetMeter({
   budget,
   action,
@@ -63,7 +71,7 @@ export function BudgetMeter({
       </div>
 
       <div
-        className="flex h-2.5 w-full flex-row border border-border bg-chart-track/40"
+        className="flex h-2.5 w-full flex-row overflow-hidden rounded-full bg-chart-track"
         role="presentation"
       >
         {/* Two segments, not two bars: what is already paid reads solid and the
@@ -72,18 +80,14 @@ export function BudgetMeter({
           className="h-full"
           style={{
             width: `${settledWidth}%`,
-            backgroundColor: over
-              ? "var(--chart-expense)"
-              : categoryColorVar(budget.categoryColor),
+            backgroundColor: STATUS_FILL[budget.status],
           }}
         />
         <div
           className="h-full opacity-50"
           style={{
             width: `${Math.max(0, width - settledWidth)}%`,
-            backgroundColor: over
-              ? "var(--chart-expense)"
-              : categoryColorVar(budget.categoryColor),
+            backgroundColor: STATUS_FILL[budget.status],
           }}
         />
       </div>

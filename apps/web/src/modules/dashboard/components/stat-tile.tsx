@@ -26,11 +26,11 @@ export function StatTile({
   return (
     <Card className="min-w-0 justify-between gap-3">
       <CardContent className="space-y-1">
-        <p className="flex flex-row items-center gap-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+        <p className="flex flex-row items-center gap-2 text-xs font-semibold tracking-[0.02em] text-muted-foreground uppercase">
           {swatch ? (
             <span
               aria-hidden
-              className="size-2 shrink-0 border border-border"
+              className="size-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: swatch }}
             />
           ) : null}
@@ -41,8 +41,8 @@ export function StatTile({
         {/* Two tiles to a row on a phone leaves ~140px of content width, which a
             six-figure amount overruns at the desktop sizes. */}
         <p
-          className={`font-heading font-semibold ${
-            lead ? "text-xl sm:text-2xl md:text-3xl" : "text-lg sm:text-xl md:text-2xl"
+          className={`font-heading font-bold tracking-[-0.04em] ${
+            lead ? "text-3xl sm:text-4xl" : "text-2xl sm:text-[2rem]"
           } ${amountCents < 0 ? "text-destructive" : ""}`}
         >
           {formatMinorUnits(amountCents, currencyCode)}

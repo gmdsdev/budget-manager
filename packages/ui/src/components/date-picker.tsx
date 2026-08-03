@@ -61,7 +61,7 @@ function DatePicker({
             data-empty={!selected}
             onBlur={onBlur}
             className={cn(
-              "w-full justify-between border-input font-normal tracking-normal normal-case shadow-none active:translate-x-0 active:translate-y-0 data-[empty=true]:text-muted-foreground",
+              "w-full justify-between border-input font-normal data-[empty=true]:text-muted-foreground",
               className
             )}
             {...props}
@@ -122,6 +122,7 @@ function DateRangePicker({
   presets = DATE_RANGE_PRESETS,
   numberOfMonths = 2,
   disabled,
+  size = "default",
   className,
   ...props
 }: {
@@ -132,6 +133,8 @@ function DateRangePicker({
   presets?: DateRangePreset[]
   numberOfMonths?: number
   disabled?: boolean
+  /** The filter bar wants the 36px chip; a form field wants the 48px default. */
+  size?: "default" | "sm"
   className?: string
   "aria-invalid"?: boolean
   "aria-describedby"?: string
@@ -181,11 +184,12 @@ function DateRangePicker({
         render={
           <Button
             variant="outline"
+            size={size}
             id={id}
             disabled={disabled}
             data-empty={!from || !to}
             className={cn(
-              "w-full justify-between border-input font-normal tracking-normal normal-case shadow-none active:translate-x-0 active:translate-y-0 data-[empty=true]:text-muted-foreground",
+              "w-full justify-between border-input font-normal data-[empty=true]:text-muted-foreground",
               className
             )}
             {...props}
@@ -210,7 +214,7 @@ function DateRangePicker({
                   key={preset.labelKey}
                   variant={active ? "secondary" : "ghost"}
                   size="sm"
-                  className="justify-start font-normal tracking-normal normal-case shadow-none active:translate-x-0 active:translate-y-0"
+                  className="justify-start font-normal"
                   onClick={() => commit(range)}
                 >
                   {t(preset.labelKey)}

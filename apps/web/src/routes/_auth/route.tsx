@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_auth")({
 
 function AuthLayout() {
   return (
-    <div className="min-w-0 md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
+    <div className="min-w-0 md:grid md:grid-cols-[16.5rem_minmax(0,1fr)]">
       <Sidebar />
       <div className="min-w-0">
         <Header />

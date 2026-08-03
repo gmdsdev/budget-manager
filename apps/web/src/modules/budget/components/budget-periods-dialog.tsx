@@ -42,7 +42,7 @@ function EditButton({
   const { t, formatMonthString } = useI18n();
 
   return (
-    <Button variant="ghost" size="icon" onClick={() => onEdit(period)}>
+    <Button variant="ghost" size="icon-sm" onClick={() => onEdit(period)}>
       <PencilSimpleIcon />
       <span className="sr-only">
         {t("common.actionsFor", {
@@ -70,7 +70,7 @@ function PeriodCards({
   return (
     <ul
       aria-label={t("budget.periods.caption")}
-      className="divide-y divide-border/25 rounded-none border border-border"
+      className="divide-y divide-border overflow-hidden rounded-lg border border-border"
     >
       {periods.map((period) => (
         <li key={period.periodId} className="space-y-2 p-3">

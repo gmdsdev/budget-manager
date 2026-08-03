@@ -51,12 +51,12 @@ export function WalletBalancesCard({
                   </span>
                 </div>
                 <div
-                  className="h-2.5 w-full border border-border bg-chart-track/40"
+                  className="h-2.5 w-full overflow-hidden rounded-full bg-chart-track"
                   role="presentation"
                 >
                   <div
                     className={`h-full ${
-                      negative ? "bg-chart-expense" : "bg-chart-1"
+                      negative ? "bg-destructive" : "bg-primary"
                     }`}
                     style={{ width: `${width}%` }}
                   />

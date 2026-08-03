@@ -28,6 +28,12 @@ export const category = {
     "pt-BR": "Crie sua primeira categoria para classificar suas transações.",
   },
 
+  "category.detail.title": { en: "Category", "pt-BR": "Categoria" },
+  "category.detail.open": {
+    en: "Open “{name}”",
+    "pt-BR": "Abrir “{name}”",
+  },
+
   "category.field.color": { en: "Color", "pt-BR": "Cor" },
   "category.filter.allTypes": { en: "All types", "pt-BR": "Todos os tipos" },
   "category.uncategorized": {

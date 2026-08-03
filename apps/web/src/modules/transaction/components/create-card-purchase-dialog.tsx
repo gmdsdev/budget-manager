@@ -9,17 +9,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
-import { useId, useState } from "react";
+import { useId } from "react";
 import { useCardPurchaseForm } from "@budget-manager/client/react";
 import { useCreateCardPurchaseMutation } from "@budget-manager/client/react";
 import { todayAsDateString } from "@budget-manager/client";
 import { CardPurchaseFormFields } from "./card-purchase-form-fields";
 
-export function CreateCardPurchaseDialog() {
+export function CreateCardPurchaseDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const t = useTranslate();
-  const [open, setOpen] = useState(false);
   const formId = useId();
 
   const createMutation = useCreateCardPurchaseMutation();
@@ -44,7 +48,7 @@ export function CreateCardPurchaseDialog() {
   // from outside the form, so a tab left open across midnight would otherwise
   // offer yesterday.
   function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
+    onOpenChange(nextOpen);
     form.reset();
   }
 
@@ -56,12 +60,7 @@ export function CreateCardPurchaseDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger
-        render={
-          <Button variant="outline">{t("cardPurchase.create.trigger")}</Button>
-        }
-      />
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("cardPurchase.create.title")}</DialogTitle>
           <DialogDescription>

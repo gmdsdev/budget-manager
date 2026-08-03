@@ -64,7 +64,7 @@ export function CashFlowChart({
           <>
             <ChartContainer
               config={chartConfig}
-              className="aspect-auto h-56 w-full"
+              className="aspect-auto h-80 w-full"
             >
               <BarChart
                 accessibilityLayer
@@ -112,9 +112,7 @@ export function CashFlowChart({
 
                         return (
                           <div className="space-y-0.5">
-                            <p>
-                              {formatMonthString(point.month, "monthYear")}
-                            </p>
+                            <p>{formatMonthString(point.month, "monthYear")}</p>
                             <p className="font-normal text-muted-foreground">
                               {t("dashboard.cashFlow.net", {
                                 amount: formatMinorUnits(
@@ -129,7 +127,7 @@ export function CashFlowChart({
                       formatter={(value, name, item) => (
                         <div className="flex w-full items-center gap-2">
                           <span
-                            className="h-2.5 w-2.5 shrink-0 border border-border"
+                            className="h-2.5 w-2.5 shrink-0 rounded-sm"
                             style={{ backgroundColor: item.color }}
                           />
                           <span className="text-muted-foreground">
@@ -152,18 +150,14 @@ export function CashFlowChart({
                 <Bar
                   dataKey="income"
                   fill="var(--color-income)"
-                  stroke="var(--border)"
-                  strokeWidth={1}
-                  maxBarSize={24}
-                  radius={0}
+                  maxBarSize={20}
+                  radius={[6, 6, 2, 2]}
                 />
                 <Bar
                   dataKey="expense"
                   fill="var(--color-expense)"
-                  stroke="var(--border)"
-                  strokeWidth={1}
-                  maxBarSize={24}
-                  radius={0}
+                  maxBarSize={20}
+                  radius={[6, 6, 2, 2]}
                 />
               </BarChart>
             </ChartContainer>
@@ -187,7 +181,7 @@ export function CashFlowChart({
             />
           </>
         ) : (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {t("dashboard.cashFlow.empty")}
           </p>
         )}

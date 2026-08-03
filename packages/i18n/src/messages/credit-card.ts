@@ -51,6 +51,22 @@ export const creditCard = {
     en: "{amount} projected",
     "pt-BR": "{amount} projetado",
   },
+  "creditCard.column.limitValue": {
+    en: "{amount} limit",
+    "pt-BR": "limite de {amount}",
+  },
+  "creditCard.column.availableValue": {
+    en: "{amount} available",
+    "pt-BR": "{amount} disponível",
+  },
+  "creditCard.detail.title": {
+    en: "Credit card",
+    "pt-BR": "Cartão de crédito",
+  },
+  "creditCard.detail.open": {
+    en: "Open “{name}”",
+    "pt-BR": "Abrir “{name}”",
+  },
 
   "creditCard.field.closingDay": { en: "Closing day", "pt-BR": "Dia de fechamento" },
   "creditCard.field.closingDayHint": {

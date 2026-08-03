@@ -1,5 +1,4 @@
-import { DataTable } from "@/components/data-table";
-import { useI18n } from "@budget-manager/i18n/react";
+import { useTranslate } from "@budget-manager/i18n/react";
 import { Pagination } from "@/components/pagination";
 import { usePagedFilters } from "@budget-manager/client/react";
 import { getErrorMessage } from "@budget-manager/client";
@@ -12,12 +11,9 @@ import {
   EmptyTitle,
 } from "@budget-manager/ui/components/empty";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
-import { CreateCardPaymentDialog } from "../components/create-card-payment-dialog";
-import { CreateCardPurchaseDialog } from "../components/create-card-purchase-dialog";
-import { CreateTransactionDialog } from "../components/create-transaction-dialog";
-import { CreateTransferDialog } from "../components/create-transfer-dialog";
-import { useTransactionColumns } from "../components/transaction-list/columns";
+import { CreateTransactionMenu } from "../components/create-transaction-menu";
 import { TransactionFilters } from "../components/transaction-list/transaction-filters";
+import { TransactionRows } from "../components/transaction-list/transaction-rows";
 import { TransactionSummary } from "../components/transaction-list/transaction-summary";
 import { useTransactionSummaryQuery } from "@budget-manager/client/react";
 import { useTransactionsQuery } from "@budget-manager/client/react";
@@ -25,11 +21,15 @@ import {
   defaultTransactionFilters,
   isTransactionFiltered,
   type TransactionFiltersState,
+  type TransactionRow,
 } from "@budget-manager/client";
+import { useState } from "react";
+import { PageHeader } from "@/components/page-header";
+import { TransactionDetailDialog } from "../components/transaction-detail-dialog";
 
 export default function ListTransactionsPage() {
-  const { t, formatDateString } = useI18n();
-  const columns = useTransactionColumns();
+  const t = useTranslate();
+  const [selected, setSelected] = useState<TransactionRow | null>(null);
   const { filters, page, setFilters, setPage } =
     usePagedFilters<TransactionFiltersState>(defaultTransactionFilters());
 
@@ -44,19 +44,9 @@ export default function ListTransactionsPage() {
 
   return (
     <div>
-      <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
-          {t("transaction.title")}
-        </h1>
-        {/* Four ways to record something: two per row on a phone, one row at
-            sm and up. */}
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-center">
-          <CreateCardPurchaseDialog />
-          <CreateCardPaymentDialog />
-          <CreateTransferDialog />
-          <CreateTransactionDialog />
-        </div>
-      </header>
+      <PageHeader title={t("transaction.title")}>
+        <CreateTransactionMenu />
+      </PageHeader>
 
       <TransactionFilters filters={filters} onFiltersChange={setFilters} />
 
@@ -84,30 +74,24 @@ export default function ListTransactionsPage() {
         </Empty>
       ) : (
         <>
-          <DataTable
-            columns={columns}
-            data={data.rows}
-            getRowId={(transaction) => transaction.id}
-            groupBy={(transaction) => transaction.occurrenceDate}
-            groupHeader={(date) => formatDateString(date, "numeric")}
-            caption={t("transaction.caption")}
-            emptyState={
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>
-                    {isFiltered
-                      ? t("transaction.emptyFiltered.title")
-                      : t("transaction.empty.title")}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {isFiltered
-                      ? t("transaction.emptyFiltered.description")
-                      : t("transaction.empty.description")}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            }
-          />
+          {data.rows.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>
+                  {isFiltered
+                    ? t("transaction.emptyFiltered.title")
+                    : t("transaction.empty.title")}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {isFiltered
+                    ? t("transaction.emptyFiltered.description")
+                    : t("transaction.empty.description")}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <TransactionRows transactions={data.rows} onSelect={setSelected} />
+          )}
           {summary.data ? (
             <TransactionSummary
               currencies={summary.data.currencies}
@@ -122,6 +106,16 @@ export default function ListTransactionsPage() {
             isFetching={isFetching}
             resource="transactions"
           />
+
+          {/* Keyed on the row, so reopening on a different transaction starts
+              the detail view fresh rather than reusing the last one's state. */}
+          {selected && (
+            <TransactionDetailDialog
+              key={selected.id}
+              transaction={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </>
       )}
     </div>

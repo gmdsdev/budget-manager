@@ -59,7 +59,7 @@ export function CreateBudgetDialog({ month }: { month?: string }) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button>{t("budget.create.trigger")}</Button>} />
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("budget.create.title")}</DialogTitle>
           <DialogDescription>

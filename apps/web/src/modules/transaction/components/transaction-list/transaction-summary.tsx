@@ -93,12 +93,12 @@ export function TransactionSummary({
       aria-label={t("transaction.summary.heading")}
       // Held at reduced opacity on a refetch rather than swapped for a
       // skeleton, so changing a filter never jumps the page.
-      className={`mt-4 border-2 border-border bg-card shadow-brutal transition-opacity ${
+      className={`mt-4 overflow-hidden rounded-xl border border-border bg-card transition-opacity dark:border-transparent ${
         isFetching ? "opacity-60" : ""
       }`}
     >
-      <div className="border-b-2 border-border px-3 py-2">
-        <h2 className="font-heading text-sm font-bold tracking-wide uppercase">
+      <div className="border-b border-border px-4 py-3">
+        <h2 className="font-heading text-base font-bold tracking-[-0.015em]">
           {t("transaction.summary.heading")}
         </h2>
       </div>
@@ -119,7 +119,7 @@ export function TransactionSummary({
                 key={row.currencyCode}
                 scope="colgroup"
                 colSpan={2}
-                className="border-l border-border/25 text-center"
+                className="border-l border-border text-center"
               >
                 {row.currencyCode}
               </TableHead>
@@ -130,7 +130,7 @@ export function TransactionSummary({
               <Fragment key={row.currencyCode}>
                 <TableHead
                   scope="col"
-                  className="border-l border-border/25 text-right"
+                  className="border-l border-border text-right"
                 >
                   {t("transaction.summary.effective")}
                 </TableHead>
@@ -157,7 +157,7 @@ export function TransactionSummary({
                 return (
                   <Fragment key={row.currencyCode}>
                     <TableCell
-                      className={`border-l border-border/25 ${amountClass(
+                      className={`border-l border-border ${amountClass(
                         effective,
                       )}`}
                     >
@@ -176,7 +176,7 @@ export function TransactionSummary({
 
       {/* Outside the table: with a second currency the table scrolls sideways
           inside its own container, which would take this note with it. */}
-      <p className="border-t border-border/25 px-3 py-2 text-xs text-muted-foreground">
+      <p className="border-t border-border px-4 py-3 text-sm text-muted-foreground">
         {t("transaction.summary.note", {
           date: formatDateString(rangeTo, "numeric"),
         })}

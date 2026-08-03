@@ -58,7 +58,7 @@ export function EditWalletDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("wallet.edit.title")}</DialogTitle>
           <DialogDescription>

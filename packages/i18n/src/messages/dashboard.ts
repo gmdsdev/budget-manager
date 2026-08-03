@@ -62,6 +62,7 @@ export const dashboard = {
     en: "Income minus spending, pending rows included",
     "pt-BR": "Receitas menos gastos, incluindo pendentes",
   },
+  // The web dashboard dropped its sparkline; `apps/native` still draws one.
   "dashboard.stat.net.sparkline": {
     en: "Monthly net in {currency} over the last {months} months",
     "pt-BR": "Saldo mensal em {currency} nos últimos {months} meses",
@@ -198,6 +199,10 @@ export const dashboard = {
     en: "{paid} of {total} paid",
     "pt-BR": "{paid} de {total} pago",
   },
+  "dashboard.statements.open": {
+    en: "Find “{name}” in credit cards",
+    "pt-BR": "Encontrar “{name}” nos cartões de crédito",
+  },
   "dashboard.statements.action": {
     en: "Record a payment",
     "pt-BR": "Registrar um pagamento",
@@ -232,5 +237,9 @@ export const dashboard = {
   "dashboard.pending.action": {
     en: "Open transactions",
     "pt-BR": "Abrir transações",
+  },
+  "dashboard.pending.open": {
+    en: "Find “{name}” in transactions",
+    "pt-BR": "Encontrar “{name}” nas transações",
   },
 } as const satisfies MessageTable;

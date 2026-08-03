@@ -34,6 +34,15 @@ export const wallet = {
     en: "{amount} projected",
     "pt-BR": "{amount} projetado",
   },
+  "wallet.column.openingBalanceValue": {
+    en: "Opened at {amount}",
+    "pt-BR": "Aberta com {amount}",
+  },
+  "wallet.detail.title": { en: "Wallet", "pt-BR": "Carteira" },
+  "wallet.detail.open": {
+    en: "Open “{name}”",
+    "pt-BR": "Abrir “{name}”",
+  },
 
   "wallet.filter.allTypes": { en: "All types", "pt-BR": "Todos os tipos" },
   "wallet.filter.allCurrencies": {

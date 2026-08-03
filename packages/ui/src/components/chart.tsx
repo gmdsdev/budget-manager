@@ -214,7 +214,7 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        "grid min-w-32 items-start gap-1.5 rounded-none border border-border bg-popover px-2.5 py-1.5 text-xs shadow-brutal-xs",
+        "grid min-w-32 items-start gap-1.5 rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-menu",
         className
       )}
     >
@@ -248,7 +248,7 @@ function ChartTooltipContent({
                       !hideIndicator && (
                         <div
                           className={cn(
-                            "shrink-0 rounded-none border-(--color-border) bg-(--color-bg)",
+                            "shrink-0 rounded-sm border-(--color-border) bg-(--color-bg)",
                             {
                               "h-2.5 w-2.5": indicator === "dot",
                               "w-1": indicator === "line",
@@ -339,7 +339,7 @@ function ChartLegendContent({
                 <itemConfig.icon />
               ) : (
                 <div
-                  className="h-2 w-2 shrink-0 rounded-none border border-border"
+                  className="h-2.5 w-2.5 shrink-0 rounded-sm"
                   style={{
                     backgroundColor: item.color,
                   }}

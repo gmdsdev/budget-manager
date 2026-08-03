@@ -17,7 +17,7 @@ import { useSignOut } from "@/hooks/use-sign-out";
 import { authClient } from "@/lib/auth-client";
 import { useThemeMode } from "@/components/theme-provider";
 import { KivoLockup } from "./logo";
-import { MAIN_LINKS, SETTINGS_LINKS } from "./nav-links";
+import { NAV_GROUPS } from "./nav-links";
 
 const THEMES = [
   { value: "light", label: "common.light" },
@@ -59,21 +59,28 @@ export function MobileNav() {
           ) : null}
         </SheetHeader>
 
-        <nav aria-label={t("nav.main")} className="flex flex-col px-2">
-          {[...MAIN_LINKS, ...SETTINGS_LINKS].map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={close}
-              className="flex min-h-11 items-center gap-2.5 border border-transparent px-2 text-sm font-semibold tracking-wide uppercase text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              activeProps={{
-                className:
-                  "border-border bg-card text-foreground shadow-brutal-xs",
-              }}
-            >
-              <link.icon aria-hidden className="size-4 shrink-0" />
-              {t(link.label)}
-            </Link>
+        <nav aria-label={t("nav.main")} className="flex flex-col gap-4 px-2">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.heading} className="flex flex-col gap-0.5">
+              <p className="px-4 pb-1 text-xs font-semibold tracking-[0.02em] uppercase text-muted-foreground">
+                {t(group.heading)}
+              </p>
+              {group.links.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={close}
+                  className="flex min-h-11 items-center gap-3 rounded-full px-4 text-base font-medium text-content-secondary hover:bg-accent hover:text-foreground"
+                  activeProps={{
+                    className:
+                      "bg-secondary font-semibold text-secondary-foreground",
+                  }}
+                >
+                  <link.icon aria-hidden className="size-5 shrink-0" />
+                  {t(link.label)}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
 
@@ -116,7 +123,7 @@ export function MobileNav() {
             <Link
               to="/login"
               onClick={close}
-              className="flex min-h-11 items-center border border-border bg-card px-2 text-sm font-semibold tracking-wide uppercase shadow-brutal-xs hover:bg-accent"
+              className="flex min-h-11 items-center justify-center rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground hover:bg-primary-hover"
             >
               {t("nav.signIn")}
             </Link>

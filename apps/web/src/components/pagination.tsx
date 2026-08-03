@@ -42,7 +42,7 @@ export function Pagination({
   return (
     <div className="flex flex-row flex-wrap items-center justify-between gap-4 py-3">
       <p
-        className="text-xs text-muted-foreground"
+        className="text-sm text-muted-foreground"
         aria-live="polite"
         data-testid="pagination-summary"
       >
@@ -61,7 +61,7 @@ export function Pagination({
           >
             {t("pagination.previous")}
           </Button>
-          <span className="text-xs tabular-nums text-muted-foreground">
+          <span className="text-sm tabular-nums text-muted-foreground">
             {t("pagination.pageOf", { page, pages })}
           </span>
           <Button

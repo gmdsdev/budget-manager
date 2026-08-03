@@ -8,6 +8,10 @@ import {
   dialog,
   fillField,
   openApp,
+  openCreateDialog,
+  openFromDetail,
+  openRecord,
+  openTransaction,
   pickSelect,
   rowFor,
   rowTexts,
@@ -93,7 +97,7 @@ describe("credit card page", () => {
 describe("card purchases and payments", () => {
   test("a purchase raises what the card owes and lowers what is available", async () => {
     await page.goto(`${WEB_URL}/transaction`, { waitUntil: "networkidle" });
-    await page.getByRole("button", { name: "Card purchase" }).click();
+    await openCreateDialog(page, "Card purchase");
     await dialog(page).waitFor({ state: "visible" });
     await fillField(dialog(page), "Description", "Laptop");
     await pickSelect(page, dialog(page), "Card", "Visa (BRL)");
@@ -131,7 +135,7 @@ describe("card purchases and payments", () => {
 
   test("a payment debits the wallet and frees the card limit", async () => {
     await page.goto(`${WEB_URL}/transaction`, { waitUntil: "networkidle" });
-    await page.getByRole("button", { name: "Pay card" }).click();
+    await openCreateDialog(page, "Pay card");
     await dialog(page).waitFor({ state: "visible" });
     await fillField(dialog(page), "Description", "Visa bill");
     await pickSelect(page, dialog(page), "Card", "Visa (BRL)");
@@ -177,23 +181,18 @@ describe("card purchases and payments", () => {
     await page.goto(`${WEB_URL}/transaction`, { waitUntil: "networkidle" });
     await waitForRowCount(page, 2);
 
-    await page.getByRole("button", { name: "Actions for Laptop" }).click();
-    await page.getByRole("menuitem").first().waitFor({ state: "visible" });
+    const detail = await openTransaction(page, "Laptop");
+    const actions = await detail.getByRole("button").allInnerTexts();
 
-    const items = await page.getByRole("menuitem").allInnerTexts();
-
-    expect(items).toContain("Edit purchase");
+    expect(actions).toContain("Edit purchase");
 
     await page.keyboard.press("Escape");
+    await dialog(page).waitFor({ state: "hidden" });
   }, 90_000);
 
   test("editing a purchase re-prices the card", async () => {
-    await page.getByRole("button", { name: "Actions for Laptop" }).click();
-    await page
-      .getByRole("menuitem", { name: "Edit purchase" })
-      .waitFor({ state: "visible" });
-    await page.getByRole("menuitem", { name: "Edit purchase" }).click();
-    await dialog(page).waitFor({ state: "visible" });
+    await openTransaction(page, "Laptop");
+    await openFromDetail(page, "Edit purchase", "Edit card purchase");
     await fillField(dialog(page), "Amount", "80000");
     await page.getByRole("button", { name: "Save changes" }).click();
     await dialog(page).waitFor({ state: "hidden", timeout: 10_000 });
@@ -220,12 +219,8 @@ describe("card purchases and payments", () => {
     await page.goto(`${WEB_URL}/credit-card`, { waitUntil: "networkidle" });
     await waitForRowCount(page, 1);
 
-    await page.getByRole("button", { name: "Actions for Visa" }).click();
-    await page.getByRole("menuitem", { name: "Statements" }).waitFor({
-      state: "visible",
-    });
-    await page.getByRole("menuitem", { name: "Statements" }).click();
-    await dialog(page).waitFor({ state: "visible" });
+    await openRecord(page, "Visa");
+    await openFromDetail(page, "Statements", "Statements — Visa");
 
     // Wait for the statement row itself, not just the title: the title renders
     // while the query is still loading.
@@ -247,7 +242,7 @@ describe("card purchases and payments", () => {
 
   test("allocating a payment to a statement marks it paid", async () => {
     await page.goto(`${WEB_URL}/transaction`, { waitUntil: "networkidle" });
-    await page.getByRole("button", { name: "Pay card" }).click();
+    await openCreateDialog(page, "Pay card");
     await dialog(page).waitFor({ state: "visible" });
     await fillField(dialog(page), "Description", "Statement settled");
     await pickSelect(page, dialog(page), "Card", "Visa (BRL)");
@@ -266,11 +261,8 @@ describe("card purchases and payments", () => {
 
     await page.goto(`${WEB_URL}/credit-card`, { waitUntil: "networkidle" });
     await waitForRowCount(page, 1);
-    await page.getByRole("button", { name: "Actions for Visa" }).click();
-    await page.getByRole("menuitem", { name: "Statements" }).waitFor({
-      state: "visible",
-    });
-    await page.getByRole("menuitem", { name: "Statements" }).click();
+    await openRecord(page, "Visa");
+    await openFromDetail(page, "Statements", "Statements — Visa");
     await page
       .getByText("Showing 1–1 of 1 statements")
       .waitFor({ state: "visible", timeout: 15_000 });
@@ -314,7 +306,7 @@ describe("card purchases and payments", () => {
     // the one the earlier test opened has already been settled in full, and
     // the select only offers statements with something still owing.
     await page.goto(`${WEB_URL}/transaction`, { waitUntil: "networkidle" });
-    await page.getByRole("button", { name: "Card purchase" }).click();
+    await openCreateDialog(page, "Card purchase");
     await dialog(page).waitFor({ state: "visible" });
     await fillField(dialog(page), "Description", "Monitor");
     await pickSelect(page, dialog(page), "Card", "Visa (BRL)");
@@ -322,7 +314,7 @@ describe("card purchases and payments", () => {
     await page.getByRole("button", { name: "Record purchase" }).click();
     await dialog(page).waitFor({ state: "hidden", timeout: 10_000 });
 
-    await page.getByRole("button", { name: "Pay card" }).click();
+    await openCreateDialog(page, "Pay card");
     await dialog(page).waitFor({ state: "visible" });
 
     await pickSelect(page, dialog(page), "Card", "Visa (BRL)");

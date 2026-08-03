@@ -62,10 +62,10 @@ export default function SignInForm({
   }
 
   return (
-    <div className="w-full max-w-md border-2 border-border bg-card p-6 shadow-brutal">
+    <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 dark:border-transparent">
       <div className="mb-6 flex flex-col items-center gap-6">
         <KivoLockup className="h-12" />
-        <h1 className="text-center text-2xl font-bold tracking-wide uppercase">
+        <h1 className="text-center text-3xl font-bold tracking-[-0.03em]">
           {translate("auth.welcomeBack")}
         </h1>
       </div>
@@ -146,7 +146,7 @@ export default function SignInForm({
         <Button
           variant="link"
           onClick={onSwitchToSignUp}
-          className="text-primary hover:text-primary/75"
+          className="text-link"
         >
           {translate("auth.needAnAccount")}
         </Button>

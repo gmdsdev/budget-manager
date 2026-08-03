@@ -53,7 +53,7 @@ export function CreateCreditCardDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button>{t("creditCard.create.trigger")}</Button>} />
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("creditCard.create.title")}</DialogTitle>
           <DialogDescription>

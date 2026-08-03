@@ -8,11 +8,25 @@ import {
   CardTitle,
 } from "@budget-manager/ui/components/card";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
-import { Link } from "@tanstack/react-router";
+import { ClockIcon } from "@phosphor-icons/react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { buttonVariants } from "@budget-manager/ui/components/button";
-import { CategoryDot } from "@/modules/category/components/category-dot";
 import type { PendingItem } from "@budget-manager/client";
 
+import {
+  RecordGlyph,
+  RecordList,
+  RecordRow,
+  RecordTag,
+} from "@/components/record-row";
+import { categoryColorVarOrNeutral } from "@/modules/category/colors";
+
+/**
+ * A row here reads exactly as it does in the ledger, because it is the same
+ * record — but `PendingItem` is a projection of one, not a `TransactionRow`, so
+ * a row cannot open the transaction detail dialog without inventing fields the
+ * payload does not carry. It sends the reader to the ledger instead.
+ */
 export function PendingList({
   items,
   today,
@@ -22,6 +36,7 @@ export function PendingList({
 }) {
   const { t, formatDateString } = useI18n();
   const labels = useEnumLabels();
+  const navigate = useNavigate();
   const overdueCount = items.filter((item) => item.occurrenceDate < today)
     .length;
 
@@ -41,55 +56,44 @@ export function PendingList({
             {t("dashboard.pending.empty")}
           </p>
         ) : (
-          <ul className="divide-y divide-border/25">
+          <RecordList label={t("dashboard.pending.title")}>
             {items.map((item) => {
               const overdue = item.occurrenceDate < today;
 
               return (
-                <li
+                <RecordRow
                   key={item.id}
-                  className="flex flex-row items-center justify-between gap-4 py-2 first:pt-0 last:pb-0"
-                >
-                  <div className="min-w-0">
-                    {/* truncate belongs on the name, not the row: on the row it
-                        clips whichever child runs off the end, which on a phone
-                        is the Overdue flag. */}
-                    <p className="flex flex-row items-center gap-2 text-sm">
-                      <span
-                        aria-hidden
-                        className={`size-1.5 shrink-0 ${
-                          overdue ? "bg-destructive" : "bg-muted-foreground/40"
-                        }`}
-                      />
-                      <span className="truncate">{item.name}</span>
-                      {overdue && (
-                        <span className="shrink-0 text-xs font-medium text-destructive">
-                          {t("dashboard.pending.overdueFlag")}
-                        </span>
-                      )}
-                    </p>
-                    <p className="pl-3.5 text-xs text-muted-foreground">
-                      {formatDateString(item.occurrenceDate, "monthDay")} ·{" "}
-                      {item.walletName ??
-                        item.creditCardName ??
-                        t("common.none")}
-                      {item.categoryName ? (
-                        <>
-                          {" · "}
-                          <CategoryDot
-                            color={item.categoryColor}
-                            className="inline-block align-middle"
-                          />{" "}
-                          {item.categoryName}
-                        </>
-                      ) : (
-                        ""
-                      )}
-                    </p>
-                  </div>
-                  <div className="text-right">
+                  label={t("dashboard.pending.open", { name: item.name })}
+                  onSelect={() => void navigate({ to: "/transaction" })}
+                  glyph={
+                    <RecordGlyph
+                      color={
+                        overdue
+                          ? "var(--destructive)"
+                          : categoryColorVarOrNeutral(item.categoryColor)
+                      }
+                    >
+                      <ClockIcon className="size-5" />
+                    </RecordGlyph>
+                  }
+                  primary={item.name}
+                  meta={[
+                    formatDateString(item.occurrenceDate, "monthDay"),
+                    item.walletName ?? item.creditCardName ?? t("common.none"),
+                    item.categoryName ?? t("category.uncategorized"),
+                    labels.transactionKind(item.kind),
+                  ]}
+                  tag={
+                    overdue ? (
+                      <RecordTag tone="negative">
+                        {t("dashboard.pending.overdueFlag")}
+                      </RecordTag>
+                    ) : undefined
+                  }
+                  trailing={
                     <p
-                      className={`text-sm tabular-nums ${
+                      data-list-cell
+                      className={`text-lg font-bold tracking-[-0.025em] tabular-nums ${
                         overdue ? "text-destructive" : ""
                       }`}
                     >
@@ -98,14 +102,11 @@ export function PendingList({
                         item.walletCurrencyCode,
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {labels.transactionKind(item.kind)}
-                    </p>
-                  </div>
-                </li>
+                  }
+                />
               );
             })}
-          </ul>
+          </RecordList>
         )}
       </CardContent>
 

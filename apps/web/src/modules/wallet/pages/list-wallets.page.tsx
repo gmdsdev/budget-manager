@@ -1,4 +1,3 @@
-import { DataTable } from "@/components/data-table";
 import { Pagination } from "@/components/pagination";
 import { usePagedFilters } from "@budget-manager/client/react";
 import { getErrorMessage } from "@budget-manager/client";
@@ -13,18 +12,22 @@ import {
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { CreateWalletDialog } from "../components/create-wallet-dialog";
-import { useWalletColumns } from "../components/wallet-list/columns";
 import { WalletFilters } from "../components/wallet-list/wallet-filters";
 import { useWalletsQuery } from "@budget-manager/client/react";
 import {
   EMPTY_WALLET_FILTERS,
   isWalletFiltered,
   type WalletFiltersState,
+  type WalletRow,
 } from "@budget-manager/client";
+import { useState } from "react";
+import { PageHeader } from "@/components/page-header";
+import { WalletDetailDialog } from "../components/wallet-detail-dialog";
+import { WalletRows } from "../components/wallet-list/wallet-rows";
 
 export default function ListWalletsPage() {
   const t = useTranslate();
-  const columns = useWalletColumns();
+  const [selected, setSelected] = useState<WalletRow | null>(null);
   const { filters, page, setFilters, setPage } =
     usePagedFilters<WalletFiltersState>(EMPTY_WALLET_FILTERS);
 
@@ -35,12 +38,9 @@ export default function ListWalletsPage() {
 
   return (
     <div>
-      <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
-          {t("wallet.title")}
-        </h1>
+      <PageHeader title={t("wallet.title")}>
         <CreateWalletDialog />
-      </header>
+      </PageHeader>
 
       <WalletFilters filters={filters} onFiltersChange={setFilters} />
 
@@ -64,28 +64,24 @@ export default function ListWalletsPage() {
         </Empty>
       ) : (
         <>
-          <DataTable
-            columns={columns}
-            data={data.rows}
-            getRowId={(wallet) => wallet.id}
-            caption={t("wallet.caption")}
-            emptyState={
-              <Empty>
-                <EmptyHeader>
-                  <EmptyTitle>
-                    {isFiltered
-                      ? t("wallet.emptyFiltered.title")
-                      : t("wallet.empty.title")}
-                  </EmptyTitle>
-                  <EmptyDescription>
-                    {isFiltered
-                      ? t("wallet.emptyFiltered.description")
-                      : t("wallet.empty.description")}
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            }
-          />
+          {data.rows.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyTitle>
+                  {isFiltered
+                    ? t("wallet.emptyFiltered.title")
+                    : t("wallet.empty.title")}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {isFiltered
+                    ? t("wallet.emptyFiltered.description")
+                    : t("wallet.empty.description")}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <WalletRows wallets={data.rows} onSelect={setSelected} />
+          )}
           <Pagination
             page={page}
             total={data.total}
@@ -93,6 +89,14 @@ export default function ListWalletsPage() {
             isFetching={isFetching}
             resource="wallets"
           />
+
+          {selected && (
+            <WalletDetailDialog
+              key={selected.id}
+              wallet={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </>
       )}
     </div>

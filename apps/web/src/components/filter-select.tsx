@@ -23,8 +23,8 @@ function Swatch({ color }: { color: string | null }) {
   return (
     <span
       aria-hidden
-      className={`size-2 shrink-0 rounded-none ${
-        color ? "border border-border" : "border border-muted-foreground/60"
+      className={`size-2.5 shrink-0 rounded-full ${
+        color ? "" : "border border-muted-foreground/60"
       }`}
       style={color ? { backgroundColor: color } : undefined}
     />
@@ -52,6 +52,9 @@ export function FilterSelect({
   // One row carrying a swatch means every row reserves the space, so the labels
   // stay on one left edge.
   const swatched = items.some((item) => item.color !== undefined);
+  // An applied filter reads as filled rather than outlined, so the bar shows at
+  // a glance which columns are narrowing the list.
+  const isApplied = value !== FILTER_ALL;
 
   function selected(value: string) {
     return value === FILTER_ALL
@@ -66,7 +69,15 @@ export function FilterSelect({
       value={value}
       onValueChange={(next) => onValueChange(next as string)}
     >
-      <SelectTrigger aria-label={label} className="w-full sm:w-auto sm:min-w-32">
+      <SelectTrigger
+        size="sm"
+        aria-label={label}
+        className={`w-full rounded-full sm:w-auto sm:min-w-32 ${
+          isApplied
+            ? "border-transparent bg-secondary font-semibold text-secondary-foreground hover:bg-secondary"
+            : ""
+        }`}
+      >
         <SelectValue>
           {(value: string) => {
             const item = selected(value);
@@ -87,7 +98,7 @@ export function FilterSelect({
           <SelectItem key={item.value} value={item.value}>
             {swatched &&
               (item.color === undefined ? (
-                <span aria-hidden className="size-2 shrink-0" />
+                <span aria-hidden className="size-2.5 shrink-0" />
               ) : (
                 <Swatch color={item.color} />
               ))}

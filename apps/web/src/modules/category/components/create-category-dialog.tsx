@@ -55,7 +55,7 @@ export function CreateCategoryDialog() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger render={<Button>{t("category.create.trigger")}</Button>} />
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("category.create.title")}</DialogTitle>
           <DialogDescription>

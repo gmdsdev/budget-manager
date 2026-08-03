@@ -23,6 +23,7 @@ import { useI18n } from "@budget-manager/i18n/react";
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { PageHeader } from "@/components/page-header";
 import { CurrencySection } from "../components/currency-section";
 import { PendingList } from "../components/pending-list";
 import { StatementsDueList } from "../components/statements-due-list";
@@ -53,16 +54,12 @@ export default function DashboardPage() {
 
   return (
     <div className="pb-8">
-      <header className="flex flex-col gap-3 pt-6 pb-4 sm:pt-10 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
-        <h1 className="text-xl font-bold tracking-wide uppercase sm:text-2xl">
-          {t("dashboard.title")}
-        </h1>
-
+      <PageHeader title={t("dashboard.title")}>
         {/* One control row above everything it scopes: every figure, chart and
             list below reads the same month and the same currency. The month
             label takes the slack on a phone so the two arrows stay at the
             edges, where thumbs are. */}
-        <div className="flex flex-row items-center gap-2">
+        <div className="flex flex-1 flex-row items-center gap-2 sm:flex-none">
           {/* A single-currency account has nothing to pick, so the select only
               appears once there is a second one. */}
           {currencies.length > 1 && activeCurrency && (
@@ -94,7 +91,7 @@ export default function DashboardPage() {
           <div className="flex flex-1 flex-row items-center gap-1 sm:flex-none">
             <Button
               variant="outline"
-              size="icon"
+              size="icon-sm"
               aria-label={t("dashboard.previousMonth")}
               onClick={() => setMonth(shiftMonth(month, -1))}
             >
@@ -105,7 +102,7 @@ export default function DashboardPage() {
             </span>
             <Button
               variant="outline"
-              size="icon"
+              size="icon-sm"
               aria-label={t("dashboard.nextMonth")}
               disabled={isCurrentMonth}
               onClick={() => setMonth(shiftMonth(month, 1))}
@@ -114,7 +111,7 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
-      </header>
+      </PageHeader>
 
       {isPending ? (
         <div className="space-y-4" role="status" aria-label={t("dashboard.loading")}>

@@ -89,6 +89,12 @@ export const budget = {
   "budget.column.remaining": { en: "Remaining", "pt-BR": "Restante" },
   "budget.column.month": { en: "Month", "pt-BR": "Mês" },
 
+  "budget.detail.title": { en: "Budget", "pt-BR": "Orçamento" },
+  "budget.detail.open": {
+    en: "Open “{name}”",
+    "pt-BR": "Abrir “{name}”",
+  },
+
   "budget.repeats.everyMonth": { en: "Every month", "pt-BR": "Todo mês" },
   "budget.repeats.everyMonths": {
     en: "Every {count} months",
@@ -218,9 +224,18 @@ export const budget = {
       "Alterar um mês afeta somente esse mês. O restante da série mantém seu limite.",
   },
   "budget.period.edit.action": { en: "Edit this month", "pt-BR": "Editar este mês" },
+  // The web month card uses direct buttons now; `apps/native` still has a menu.
   "budget.period.actionsFor": {
     en: "Actions for {name} in {month}",
     "pt-BR": "Ações de {name} em {month}",
+  },
+  "budget.period.editFor": {
+    en: "Edit {name} in {month}",
+    "pt-BR": "Editar {name} em {month}",
+  },
+  "budget.period.resetFor": {
+    en: "Reset {name} in {month} to the series limit",
+    "pt-BR": "Redefinir {name} em {month} para o limite da série",
   },
   "budget.period.reset.action": {
     en: "Follow the series again",
