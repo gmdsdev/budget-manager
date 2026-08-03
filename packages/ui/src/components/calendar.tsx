@@ -136,8 +136,13 @@ function Calendar({
           "relative isolate z-0 rounded-r-(--cell-radius) bg-muted after:absolute after:inset-y-0 after:left-0 after:w-4 after:bg-muted",
           defaultClassNames.range_end
         ),
+        // Today's wash is only a hint at *where* today is, so it drops out the
+        // moment the day is selected — the day button's own pill is the signal,
+        // and leaving the wash on painted a square behind it. The range band is
+        // the day button's job too (`data-[range-middle=true]`), so a selected
+        // today inside a range needs nothing from here either.
         today: cn(
-          "rounded-(--cell-radius) bg-muted text-foreground data-[selected=true]:rounded-none",
+          "rounded-(--cell-radius) text-foreground not-data-[selected=true]:bg-muted",
           defaultClassNames.today
         ),
         outside: cn(
