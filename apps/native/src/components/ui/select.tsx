@@ -7,7 +7,12 @@ import { Sheet } from "@/components/ui/sheet";
 import { Swatch } from "@/components/ui/swatch";
 import { Text } from "@/components/ui/text";
 import { useColors } from "@/theme/theme-provider";
-import { BORDER_WIDTH, CONTROL_HEIGHT, SPACING } from "@/theme/tokens";
+import {
+  BORDER_WIDTH,
+  CONTROL_HEIGHT,
+  RADIUS,
+  SPACING,
+} from "@/theme/tokens";
 
 export type SelectItem = {
   label: string;
@@ -35,6 +40,8 @@ export function Select({
   disabled,
   invalid,
   label,
+  size = "default",
+  filled = false,
   style,
 }: {
   items: SelectItem[];
@@ -45,6 +52,10 @@ export function Select({
   invalid?: boolean;
   /** Names the control for assistive tech; the bar's selects carry no visible label. */
   label?: string;
+  /** `sm` is the 36pt chip the filter bar wears; `default` is the 48pt field. */
+  size?: "default" | "sm";
+  /** The pale-green filled state an applied filter takes. */
+  filled?: boolean;
   style?: ViewStyle;
 }) {
   const colors = useColors();
@@ -52,6 +63,7 @@ export function Select({
   const [open, setOpen] = useState(false);
 
   const selected = items.find((item) => item.value === value);
+  const isChip = size === "sm";
 
   useEffect(() => {
     if (value && items.length > 0 && !items.some((item) => item.value === value)) {
@@ -67,17 +79,27 @@ export function Select({
         accessibilityState={{ disabled: !!disabled, expanded: open }}
         disabled={disabled}
         onPress={() => setOpen(true)}
-        style={[
+        style={({ pressed }) => [
           {
-            minHeight: CONTROL_HEIGHT,
+            minHeight: isChip ? CONTROL_HEIGHT.sm : CONTROL_HEIGHT.default,
             flexDirection: "row",
             alignItems: "center",
             gap: SPACING.sm,
-            paddingHorizontal: SPACING.md,
+            paddingHorizontal: isChip ? SPACING.lg : SPACING.lg,
+            // A chip is a pill; a form field takes the input radius.
+            borderRadius: isChip ? RADIUS.full : RADIUS.md,
             borderWidth: BORDER_WIDTH,
-            borderColor: invalid ? colors.destructive : colors.input,
-            backgroundColor: colors.card,
-            opacity: disabled ? 0.5 : 1,
+            borderColor: invalid
+              ? colors.destructive
+              : filled
+                ? "transparent"
+                : colors.input,
+            backgroundColor: filled
+              ? colors.secondary
+              : pressed
+                ? colors.accent
+                : colors.card,
+            opacity: disabled ? 0.4 : 1,
           },
           style,
         ]}
@@ -86,14 +108,21 @@ export function Select({
           <Swatch color={selected.color} />
         ) : null}
         <Text
-          variant="body"
-          tone={selected ? "default" : "muted"}
+          variant={isChip ? "metaMedium" : "body"}
+          tone={selected ? (filled ? "default" : "default") : "muted"}
           numberOfLines={1}
-          style={{ flex: 1 }}
+          style={[
+            { flex: 1 },
+            filled ? { color: colors.secondaryForeground } : null,
+          ]}
         >
           {selected?.label ?? placeholder ?? ""}
         </Text>
-        <Feather name="chevron-down" size={16} color={colors.mutedForeground} />
+        <Feather
+          name="chevron-down"
+          size={16}
+          color={filled ? colors.secondaryForeground : colors.mutedForeground}
+        />
       </Pressable>
 
       <Sheet
@@ -101,7 +130,7 @@ export function Select({
         onClose={() => setOpen(false)}
         title={label ?? placeholder ?? t("common.actions")}
       >
-        <View>
+        <View style={{ gap: 2 }}>
           {items.map((item) => {
             const isSelected = item.value === value;
 
@@ -114,16 +143,19 @@ export function Select({
                   onValueChange(item.value);
                   setOpen(false);
                 }}
-                style={{
-                  minHeight: CONTROL_HEIGHT,
+                style={({ pressed }) => ({
+                  minHeight: CONTROL_HEIGHT.default,
                   flexDirection: "row",
                   alignItems: "center",
                   gap: SPACING.sm,
                   paddingHorizontal: SPACING.md,
-                  borderBottomWidth: BORDER_WIDTH,
-                  borderColor: colors.muted,
-                  backgroundColor: isSelected ? colors.accent : "transparent",
-                }}
+                  borderRadius: RADIUS.md,
+                  backgroundColor: isSelected
+                    ? colors.secondary
+                    : pressed
+                      ? colors.accent
+                      : "transparent",
+                })}
               >
                 {/* One row carrying a swatch means every row reserves the space,
                     so the labels stay on one left edge. */}
@@ -134,11 +166,21 @@ export function Select({
                     <Swatch color={item.color} />
                   )
                 ) : null}
-                <Text style={{ flex: 1 }} numberOfLines={2}>
+                <Text
+                  style={[
+                    { flex: 1 },
+                    isSelected ? { color: colors.secondaryForeground } : null,
+                  ]}
+                  numberOfLines={2}
+                >
                   {item.label}
                 </Text>
                 {isSelected ? (
-                  <Feather name="check" size={16} color={colors.foreground} />
+                  <Feather
+                    name="check"
+                    size={16}
+                    color={colors.secondaryForeground}
+                  />
                 ) : null}
               </Pressable>
             );

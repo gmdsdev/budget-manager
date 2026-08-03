@@ -1,21 +1,27 @@
 import type { PendingItem } from "@budget-manager/client";
-import { useEnumLabels } from "@budget-manager/client/react";
 import { useI18n } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/money";
-import { View } from "react-native";
+import { Feather } from "@expo/vector-icons";
 
+import {
+  RecordGlyph,
+  RecordList,
+  RecordRow,
+  RecordTag,
+} from "@/components/record-row";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
-import { Swatch } from "@/components/ui/swatch";
 import { Text } from "@/components/ui/text";
 import { categoryColorOrNeutral } from "@/modules/category/colors";
 import { useColors } from "@/theme/theme-provider";
-import { SPACING } from "@/theme/tokens";
 
-// `as const` keeps each value a literal key, so `t` can see that none of them takes a
-// placeholder.
-
-/** Everything awaiting payment, overdue included and oldest first. */
+/**
+ * Everything awaiting payment, overdue included and oldest first. A row here reads
+ * exactly as it does in the ledger, because it is the same record — but `PendingItem`
+ * is a projection of one, not a `TransactionRow`, so a row cannot open the transaction
+ * detail sheet without inventing fields the payload does not carry. It sends the
+ * reader to the ledger instead.
+ */
 export function PendingList({
   items,
   today,
@@ -26,7 +32,6 @@ export function PendingList({
   onOpenTransactions: () => void;
 }) {
   const { t, formatDateString } = useI18n();
-  const labels = useEnumLabels();
   const colors = useColors();
   const overdueCount = items.filter((item) => item.occurrenceDate < today).length;
 
@@ -42,86 +47,58 @@ export function PendingList({
       />
 
       {items.length === 0 ? (
-        <Text variant="tiny" tone="muted">
+        <Text variant="meta" tone="muted">
           {t("dashboard.pending.empty")}
         </Text>
       ) : (
-        <View style={{ gap: SPACING.md }}>
-          {items.map((item) => {
-            const overdue = item.occurrenceDate < today;
+        <>
+          <RecordList label={t("dashboard.pending.title")}>
+            {items.map((item) => {
+              const overdue = item.occurrenceDate < today;
+              const ink = overdue
+                ? colors.destructive
+                : categoryColorOrNeutral(colors, item.categoryColor);
 
-            return (
-              <View
-                key={item.id}
-                style={{ flexDirection: "row", gap: SPACING.sm, alignItems: "flex-start" }}
-              >
-                <View
-                  style={{
-                    width: 6,
-                    height: 6,
-                    marginTop: 6,
-                    backgroundColor: overdue
-                      ? colors.destructive
-                      : colors.mutedForeground,
-                  }}
-                />
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: SPACING.sm,
-                    }}
-                  >
-                    <Text variant="small" numberOfLines={1} style={{ flexShrink: 1 }}>
-                      {item.name}
-                    </Text>
-                    {overdue && (
-                      <Text variant="tiny" tone="destructive">
+              return (
+                <RecordRow
+                  key={item.id}
+                  label={t("dashboard.pending.open", { name: item.name })}
+                  onSelect={onOpenTransactions}
+                  glyph={
+                    <RecordGlyph color={ink}>
+                      <Feather name="clock" size={20} color={ink} />
+                    </RecordGlyph>
+                  }
+                  primary={item.name}
+                  // The kind is the one field the ledger's own rows carry that this
+                  // list drops: account names are long enough that a fourth entry
+                  // pushed the line past two rows, and the glyph plus the amount
+                  // opposite already say which direction this is.
+                  meta={[
+                    formatDateString(item.occurrenceDate, "monthDay"),
+                    item.walletName ?? item.creditCardName ?? t("common.none"),
+                    item.categoryName ?? t("category.uncategorized"),
+                  ]}
+                  tag={
+                    overdue ? (
+                      <RecordTag tone="negative">
                         {t("dashboard.pending.overdueFlag")}
-                      </Text>
-                    )}
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: SPACING.xs,
-                    }}
-                  >
-                    <Text variant="tiny" tone="muted">
-                      {formatDateString(item.occurrenceDate, "monthDay")}
-                      {" · "}
-                      {item.walletName ?? item.creditCardName ?? t("common.none")}
+                      </RecordTag>
+                    ) : undefined
+                  }
+                  trailing={
+                    <Text
+                      variant="figureRow"
+                      tone={overdue ? "destructive" : "default"}
+                      style={{ fontVariant: ["tabular-nums"] }}
+                    >
+                      {formatMinorUnits(item.amountCents, item.walletCurrencyCode)}
                     </Text>
-                    {item.categoryName ? (
-                      <>
-                        <Swatch
-                          color={categoryColorOrNeutral(colors, item.categoryColor)}
-                          size={8}
-                        />
-                        <Text variant="tiny" tone="muted" numberOfLines={1}>
-                          {item.categoryName}
-                        </Text>
-                      </>
-                    ) : null}
-                  </View>
-                </View>
-                <View style={{ alignItems: "flex-end" }}>
-                  <Text
-                    variant="small"
-                    tone={overdue ? "destructive" : "default"}
-                    style={{ fontVariant: ["tabular-nums"] }}
-                  >
-                    {formatMinorUnits(item.amountCents, item.walletCurrencyCode)}
-                  </Text>
-                  <Text variant="tiny" tone="muted">
-                    {labels.transactionKind(item.kind)}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
+                  }
+                />
+              );
+            })}
+          </RecordList>
 
           <Button
             variant="outline"
@@ -129,7 +106,7 @@ export function PendingList({
             label={t("dashboard.pending.action")}
             onPress={onOpenTransactions}
           />
-        </View>
+        </>
       )}
     </Card>
   );

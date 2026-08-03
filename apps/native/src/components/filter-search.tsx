@@ -2,6 +2,7 @@ import { useTranslate } from "@budget-manager/i18n/react";
 import { useEffect, useRef, useState } from "react";
 
 import { Input } from "@/components/ui/input";
+import { CONTROL_HEIGHT, RADIUS, SPACING } from "@/theme/tokens";
 
 export const FILTER_SEARCH_DELAY_MS = 300;
 
@@ -59,8 +60,15 @@ export function FilterSearch({
       autoCorrect={false}
       autoCapitalize="none"
       // A whole row: at half of one the placeholder — the only thing naming the
-      // column — gets clipped.
-      style={{ width: "100%" }}
+      // column — gets clipped. A pill like the selects beside it, and the 36pt
+      // chip height so the bar reads as one row of controls.
+      style={{
+        width: "100%",
+        minHeight: CONTROL_HEIGHT.sm,
+        paddingVertical: SPACING.sm,
+        borderRadius: RADIUS.full,
+        fontSize: 14,
+      }}
       placeholder={placeholder ?? t("common.filterBy", { column: label.toLowerCase() })}
       value={text}
       onChangeText={setText}

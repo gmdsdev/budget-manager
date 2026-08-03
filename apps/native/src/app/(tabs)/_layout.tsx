@@ -1,47 +1,44 @@
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Feather } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AppBar } from "@/components/app-bar";
 import { useColors } from "@/theme/theme-provider";
-import { FONTS, PLATE_BORDER_WIDTH } from "@/theme/tokens";
+import { BORDER_WIDTH, FONTS } from "@/theme/tokens";
 
 /**
- * The web's seven destinations do not fit a phone's tab bar, so the four the app
- * is used from every day get one each and the account-shaped ones (cards,
- * categories, settings) sit behind **More** — reachable in one extra tap rather
- * than crammed into a bar nobody can hit.
+ * **Three tabs, not five.** Dashboard, Transactions and Budgets are what the app is
+ * actually opened for; wallets, cards, categories and settings are things you visit to
+ * set something up, so they live behind the account mark in `AppBar`. The bar this
+ * replaced spent one of five slots on a **More** tab — a destination whose only
+ * content was a list of other destinations — and the remaining four were narrow enough
+ * that the labels were the only way to tell them apart.
+ *
+ * `AppBar` is the header rather than something each screen renders, so the account
+ * mark and the create action are fixed on every tab instead of scrolling away, and it
+ * is what pays the status-bar inset — `sceneStyle` must not pay it a second time.
  */
 export default function TabsLayout() {
   const t = useTranslate();
   const colors = useColors();
-  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,
-        // A tab screen draws its own title, so nothing is consuming the status bar
-        // and it read straight through the clock. The inset is applied here rather
-        // than in `Screen`, beside the `headerShown` that creates the need for it:
-        // the three screens pushed from More keep a native header, which already
-        // clears the status bar, and paying it twice leaves them a hole under it.
-        sceneStyle: {
-          backgroundColor: colors.background,
-          paddingTop: insets.top,
-        },
+        header: () => <AppBar />,
+        sceneStyle: { backgroundColor: colors.background },
         tabBarActiveTintColor: colors.foreground,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarStyle: {
-          backgroundColor: colors.card,
-          borderTopWidth: PLATE_BORDER_WIDTH,
+          backgroundColor: colors.background,
+          borderTopWidth: BORDER_WIDTH,
           borderTopColor: colors.border,
         },
+        // Sentence case, like everything else: the uppercase treatment survives
+        // only on the eyebrow over a figure.
         tabBarLabelStyle: {
-          fontFamily: FONTS.semibold,
-          fontSize: 10,
-          letterSpacing: 0.5,
-          textTransform: "uppercase",
+          fontFamily: FONTS.medium,
+          fontSize: 11,
         },
       }}
     >
@@ -69,24 +66,6 @@ export default function TabsLayout() {
           title: t("nav.budgets"),
           tabBarIcon: ({ color, size }) => (
             <Feather name="target" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="wallet"
-        options={{
-          title: t("nav.wallets"),
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="credit-card" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: t("common.menu"),
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="more-horizontal" size={size} color={color} />
           ),
         }}
       />

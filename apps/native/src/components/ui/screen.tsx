@@ -7,8 +7,7 @@ import { SPACING } from "@/theme/tokens";
 
 /**
  * The page shell. Horizontal padding is not optional: without it text sits flush
- * against the screen edge, and the 4px offset shadow every plate casts to its
- * right would be clipped away.
+ * against the screen edge on a phone.
  */
 export function Screen({
   children,
@@ -65,9 +64,9 @@ export function PageHeader({
   return (
     <View style={{ gap: SPACING.md, paddingTop: SPACING.lg }}>
       <View style={{ gap: 4 }}>
-        <Text variant="h1">{title}</Text>
+        <Text variant="pageTitle">{title}</Text>
         {description ? (
-          <Text variant="tiny" tone="muted">
+          <Text variant="meta" tone="muted">
             {description}
           </Text>
         ) : null}

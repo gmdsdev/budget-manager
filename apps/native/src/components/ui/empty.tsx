@@ -1,6 +1,6 @@
 import { View } from "react-native";
 
-import { Plate } from "@/components/ui/plate";
+import { Surface } from "@/components/ui/surface";
 import { Text } from "@/components/ui/text";
 import { SPACING } from "@/theme/tokens";
 
@@ -14,22 +14,22 @@ export function Empty({
   action?: React.ReactNode;
 }) {
   return (
-    <Plate
-      contentStyle={{
+    <Surface
+      style={{
         padding: SPACING.xl,
         gap: SPACING.md,
         alignItems: "center",
       }}
     >
-      <Text variant="h3" style={{ textAlign: "center" }}>
+      <Text variant="cardTitle" style={{ textAlign: "center" }}>
         {title}
       </Text>
       {description ? (
-        <Text variant="small" tone="muted" style={{ textAlign: "center" }}>
+        <Text variant="meta" tone="muted" style={{ textAlign: "center" }}>
           {description}
         </Text>
       ) : null}
       {action ? <View style={{ width: "100%" }}>{action}</View> : null}
-    </Plate>
+    </Surface>
   );
 }

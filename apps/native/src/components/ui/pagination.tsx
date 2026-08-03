@@ -44,7 +44,7 @@ export function Pagination({
 
   return (
     <View style={{ gap: SPACING.sm, paddingVertical: SPACING.md }}>
-      <Text variant="tiny" tone="muted" accessibilityLiveRegion="polite">
+      <Text variant="meta" tone="muted" accessibilityLiveRegion="polite">
         {total === 0
           ? t(`pagination.${resource}.empty`)
           : t(`pagination.${resource}.summary`, { from, to, total })}
@@ -60,7 +60,7 @@ export function Pagination({
             onPress={() => onPageChange(page - 1)}
             style={{ flex: 1 }}
           />
-          <Text variant="tiny" tone="muted" style={{ fontVariant: ["tabular-nums"] }}>
+          <Text variant="meta" tone="muted" style={{ fontVariant: ["tabular-nums"] }}>
             {t("pagination.pageOf", { page, pages })}
           </Text>
           <Button

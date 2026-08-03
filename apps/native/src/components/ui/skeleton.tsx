@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Animated, View } from "react-native";
 
 import { useColors } from "@/theme/theme-provider";
-import { SPACING } from "@/theme/tokens";
+import { RADIUS, SPACING } from "@/theme/tokens";
 
 export function Skeleton({ height = 40 }: { height?: number }) {
   const colors = useColors();
@@ -25,7 +25,13 @@ export function Skeleton({ height = 40 }: { height?: number }) {
 
   return (
     <Animated.View
-      style={{ height, opacity, backgroundColor: colors.muted, width: "100%" }}
+      style={{
+        height,
+        opacity,
+        borderRadius: RADIUS.lg,
+        backgroundColor: colors.muted,
+        width: "100%",
+      }}
     />
   );
 }

@@ -7,19 +7,23 @@ export type TextVariant = keyof typeof TYPE;
 
 export type TextTone =
   | "default"
+  | "secondary"
   | "muted"
   | "destructive"
   | "success"
   | "warning"
-  | "inverse";
+  | "link"
+  | "onPrimary";
 
 /**
- * Headings, buttons, labels and table headers are bold uppercase with tracking,
- * which is the design's own grammar — so the casing rides the variant rather
- * than being remembered at each call site.
+ * Type is sentence case now. The `uppercase` + wide-tracking treatment that used
+ * to ride every heading, button and label is gone; the one survivor is the
+ * **eyebrow** — a small label over a figure — which is why it is also the only
+ * variant that folds its own casing.
+ *
+ * `text-primary` is not a text colour: bright green on white is unreadable, so a
+ * link reads `link` and the softer body ink is `secondary`.
  */
-const UPPERCASE: readonly TextVariant[] = ["h1", "h2", "h3", "label"];
-
 export function Text({
   variant = "body",
   tone = "default",
@@ -30,20 +34,24 @@ export function Text({
   const colors = useColors();
 
   const color =
-    tone === "muted"
-      ? colors.mutedForeground
-      : tone === "destructive"
-        ? colors.destructive
-        : tone === "success"
-          ? colors.success
-          : tone === "warning"
-            ? colors.warning
-            : tone === "inverse"
-              ? colors.primaryForeground
-              : colors.foreground;
+    tone === "secondary"
+      ? colors.contentSecondary
+      : tone === "muted"
+        ? colors.mutedForeground
+        : tone === "destructive"
+          ? colors.destructive
+          : tone === "success"
+            ? colors.success
+            : tone === "warning"
+              ? colors.warning
+              : tone === "link"
+                ? colors.link
+                : tone === "onPrimary"
+                  ? colors.primaryForeground
+                  : colors.foreground;
 
   const content =
-    UPPERCASE.includes(variant) && typeof children === "string"
+    variant === "eyebrow" && typeof children === "string"
       ? children.toUpperCase()
       : children;
 

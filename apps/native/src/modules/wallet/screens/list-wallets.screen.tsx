@@ -2,6 +2,7 @@ import {
   EMPTY_WALLET_FILTERS,
   isWalletFiltered,
   type WalletFiltersState,
+  type WalletRow,
 } from "@budget-manager/client";
 import { usePagedFilters, useWalletsQuery } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
@@ -11,16 +12,17 @@ import { ListError, ListLoading } from "@/components/list-state";
 import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
 import { Pagination } from "@/components/ui/pagination";
-import { RowCardList } from "@/components/ui/row-card";
 import { PageHeader, Screen } from "@/components/ui/screen";
 
 import { CreateWalletSheet } from "../components/create-wallet-sheet";
+import { WalletDetailSheet } from "../components/wallet-detail-sheet";
 import { WalletFilters } from "../components/wallet-list/wallet-filters";
-import { WalletRowCard } from "../components/wallet-list/wallet-row-card";
+import { WalletRows } from "../components/wallet-list/wallet-rows";
 
 export function ListWalletsScreen() {
   const t = useTranslate();
   const [creating, setCreating] = useState(false);
+  const [selected, setSelected] = useState<WalletRow | null>(null);
   const { filters, page, setFilters, setPage } =
     usePagedFilters<WalletFiltersState>(EMPTY_WALLET_FILTERS);
 
@@ -32,7 +34,10 @@ export function ListWalletsScreen() {
   return (
     <Screen onRefresh={() => void refetch()} refreshing={isRefetching}>
       <PageHeader title={t("wallet.title")}>
-        <Button label={t("wallet.create.trigger")} onPress={() => setCreating(true)} />
+        <Button
+          label={t("wallet.create.trigger")}
+          onPress={() => setCreating(true)}
+        />
       </PageHeader>
 
       <WalletFilters filters={filters} onFiltersChange={setFilters} />
@@ -57,11 +62,7 @@ export function ListWalletsScreen() {
         />
       ) : (
         <>
-          <RowCardList>
-            {data.rows.map((wallet) => (
-              <WalletRowCard key={wallet.id} wallet={wallet} />
-            ))}
-          </RowCardList>
+          <WalletRows wallets={data.rows} onSelect={setSelected} />
           <Pagination
             page={page}
             total={data.total}
@@ -69,6 +70,14 @@ export function ListWalletsScreen() {
             isFetching={isFetching}
             resource="wallets"
           />
+
+          {selected && (
+            <WalletDetailSheet
+              key={selected.id}
+              wallet={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </>
       )}
 

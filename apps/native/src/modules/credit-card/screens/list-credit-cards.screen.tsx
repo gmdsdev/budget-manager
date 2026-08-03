@@ -1,5 +1,6 @@
 import {
   type CreditCardFiltersState,
+  type CreditCardRow,
   EMPTY_CREDIT_CARD_FILTERS,
   isCreditCardFiltered,
 } from "@budget-manager/client";
@@ -11,21 +12,24 @@ import { ListError, ListLoading } from "@/components/list-state";
 import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
 import { Pagination } from "@/components/ui/pagination";
-import { RowCardList } from "@/components/ui/row-card";
 import { PageHeader, Screen } from "@/components/ui/screen";
 import {
   CreateCreditCardSheet,
 } from "@/modules/credit-card/components/create-credit-card-sheet";
 import {
+  CreditCardDetailSheet,
+} from "@/modules/credit-card/components/credit-card-detail-sheet";
+import {
   CreditCardFilters,
 } from "@/modules/credit-card/components/credit-card-list/credit-card-filters";
 import {
-  CreditCardRowCard,
-} from "@/modules/credit-card/components/credit-card-list/credit-card-row-card";
+  CreditCardRows,
+} from "@/modules/credit-card/components/credit-card-list/credit-card-rows";
 
 export function ListCreditCardsScreen() {
   const t = useTranslate();
   const [creating, setCreating] = useState(false);
+  const [selected, setSelected] = useState<CreditCardRow | null>(null);
   const { filters, page, setFilters, setPage } =
     usePagedFilters<CreditCardFiltersState>(EMPTY_CREDIT_CARD_FILTERS);
 
@@ -69,11 +73,7 @@ export function ListCreditCardsScreen() {
         />
       ) : (
         <>
-          <RowCardList>
-            {data.rows.map((card) => (
-              <CreditCardRowCard key={card.id} card={card} />
-            ))}
-          </RowCardList>
+          <CreditCardRows cards={data.rows} onSelect={setSelected} />
           <Pagination
             page={page}
             total={data.total}
@@ -81,6 +81,14 @@ export function ListCreditCardsScreen() {
             isFetching={isFetching}
             resource="cards"
           />
+
+          {selected && (
+            <CreditCardDetailSheet
+              key={selected.id}
+              card={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </>
       )}
 

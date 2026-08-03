@@ -224,11 +224,6 @@ export const budget = {
       "Alterar um mês afeta somente esse mês. O restante da série mantém seu limite.",
   },
   "budget.period.edit.action": { en: "Edit this month", "pt-BR": "Editar este mês" },
-  // The web month card uses direct buttons now; `apps/native` still has a menu.
-  "budget.period.actionsFor": {
-    en: "Actions for {name} in {month}",
-    "pt-BR": "Ações de {name} em {month}",
-  },
   "budget.period.editFor": {
     en: "Edit {name} in {month}",
     "pt-BR": "Editar {name} em {month}",

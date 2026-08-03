@@ -1,17 +1,17 @@
 import { type BudgetProgressRow, type BudgetTotalsRow } from "@budget-manager/client";
 import { useResetBudgetPeriodMutation } from "@budget-manager/client/react";
 import { useI18n, useTranslate } from "@budget-manager/i18n/react";
+import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import { View } from "react-native";
 
 import { Amount } from "@/components/amount";
+import { IconButton } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
-import { RowMenu } from "@/components/ui/row-menu";
 import { Text } from "@/components/ui/text";
 import { BudgetMeter } from "@/modules/budget/components/budget-meter";
-import {
-  EditBudgetPeriodSheet,
-} from "@/modules/budget/components/edit-budget-period-sheet";
+import { EditBudgetPeriodSheet } from "@/modules/budget/components/edit-budget-period-sheet";
+import { useColors } from "@/theme/theme-provider";
 import { SPACING } from "@/theme/tokens";
 
 /**
@@ -60,7 +60,7 @@ export function BudgetMonthCard({
       )}
 
       {budgets.length === 0 ? (
-        <Text variant="tiny" tone="muted">
+        <Text variant="meta" tone="muted">
           {t("budget.month.empty")}
         </Text>
       ) : (
@@ -77,14 +77,14 @@ export function BudgetMonthCard({
 
       {budgets.length > 0 && (
         <View style={{ gap: 2 }}>
-          <Text variant="tiny" tone="muted">
+          <Text variant="meta" tone="muted">
             {totals && totals.exceededCount > 0
               ? totals.exceededCount === 1
                 ? t("budget.totals.oneExceeded")
                 : t("budget.totals.exceeded", { count: totals.exceededCount })
               : t("budget.totals.allWithin")}
           </Text>
-          <Text variant="tiny" tone="muted">
+          <Text variant="meta" tone="muted">
             {t("budget.month.note")}
           </Text>
         </View>
@@ -104,44 +104,56 @@ function Figure({
 }) {
   return (
     <View style={{ flex: 1, gap: 2 }}>
-      <Text variant="tiny" tone="muted">
-        {label.toUpperCase()}
+      <Text variant="eyebrow" tone="muted" numberOfLines={1}>
+        {label}
       </Text>
-      <Amount cents={cents} currencyCode={currencyCode} variant="bodyMedium" />
+      <Amount cents={cents} currencyCode={currencyCode} variant="cardTitle" />
     </View>
   );
 }
 
+/**
+ * Two direct affordances rather than a menu: there are at most two actions here, and
+ * a menu would put them one tap further away while reintroducing the per-row menu the
+ * listings deliberately dropped. Named by month as well as category — the same
+ * category also owns a row in the list below.
+ */
 function PeriodActions({ period }: { period: BudgetProgressRow }) {
   const { t, formatMonthString } = useI18n();
+  const colors = useColors();
   const [editing, setEditing] = useState(false);
   const resetMutation = useResetBudgetPeriodMutation();
 
+  const forMonth = {
+    name: period.categoryName,
+    month: formatMonthString(period.periodMonth, "monthYear"),
+  };
+
   return (
     <>
-      <RowMenu
-        // Named by month as well as category: the same category also owns a row in
-        // the list below, whose menu is a different one.
-        label={t("budget.period.actionsFor", {
-          name: period.categoryName,
-          month: formatMonthString(period.periodMonth, "monthYear"),
-        })}
-        actions={[
-          { label: t("budget.period.edit.action"), onPress: () => setEditing(true) },
-          ...(period.isOverride && period.budgetId
-            ? [
-                {
-                  label: t("budget.period.reset.action"),
-                  disabled: resetMutation.isPending,
-                  onPress: () => resetMutation.mutate({ id: period.periodId }),
-                },
-              ]
-            : []),
-        ]}
-      />
+      <IconButton
+        label={t("budget.period.editFor", forMonth)}
+        onPress={() => setEditing(true)}
+      >
+        <Feather name="edit-2" size={16} color={colors.foreground} />
+      </IconButton>
+      {period.isOverride && period.budgetId && (
+        <IconButton
+          label={t("budget.period.resetFor", forMonth)}
+          disabled={resetMutation.isPending}
+          onPress={() => resetMutation.mutate({ id: period.periodId })}
+        >
+          <Feather name="rotate-ccw" size={16} color={colors.foreground} />
+        </IconButton>
+      )}
 
       {editing && (
-        <EditBudgetPeriodSheet period={period} open onOpenChange={setEditing} />
+        <EditBudgetPeriodSheet
+          key={period.periodId}
+          period={period}
+          open
+          onOpenChange={setEditing}
+        />
       )}
     </>
   );

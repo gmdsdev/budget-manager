@@ -1,5 +1,6 @@
 import {
   type CategoryFiltersState,
+  type CategoryRow,
   EMPTY_CATEGORY_FILTERS,
   isCategoryFiltered,
 } from "@budget-manager/client";
@@ -11,16 +12,17 @@ import { ListError, ListLoading } from "@/components/list-state";
 import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
 import { Pagination } from "@/components/ui/pagination";
-import { RowCardList } from "@/components/ui/row-card";
 import { PageHeader, Screen } from "@/components/ui/screen";
 
+import { CategoryDetailSheet } from "../components/category-detail-sheet";
 import { CategoryFilters } from "../components/category-list/category-filters";
-import { CategoryRowCard } from "../components/category-list/category-row-card";
+import { CategoryRows } from "../components/category-list/category-rows";
 import { CreateCategorySheet } from "../components/create-category-sheet";
 
 export function ListCategoriesScreen() {
   const t = useTranslate();
   const [creating, setCreating] = useState(false);
+  const [selected, setSelected] = useState<CategoryRow | null>(null);
   const { filters, page, setFilters, setPage } =
     usePagedFilters<CategoryFiltersState>(EMPTY_CATEGORY_FILTERS);
 
@@ -59,11 +61,7 @@ export function ListCategoriesScreen() {
         />
       ) : (
         <>
-          <RowCardList>
-            {data.rows.map((category) => (
-              <CategoryRowCard key={category.id} category={category} />
-            ))}
-          </RowCardList>
+          <CategoryRows categories={data.rows} onSelect={setSelected} />
           <Pagination
             page={page}
             total={data.total}
@@ -71,6 +69,14 @@ export function ListCategoriesScreen() {
             isFetching={isFetching}
             resource="categories"
           />
+
+          {selected && (
+            <CategoryDetailSheet
+              key={selected.id}
+              category={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </>
       )}
 

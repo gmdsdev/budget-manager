@@ -37,16 +37,20 @@ export function Field({
   const message = errors?.find((error) => error?.message)?.message;
 
   return (
-    <View style={[{ gap: SPACING.xs, flexGrow: 1, flexBasis: 140 }, style]}>
-      {label ? <Text variant="label">{label}</Text> : null}
+    <View style={[{ gap: SPACING.sm, flexGrow: 1, flexBasis: 140 }, style]}>
+      {label ? (
+        <Text variant="metaMedium" tone="secondary">
+          {label}
+        </Text>
+      ) : null}
       {children}
       {description ? (
-        <Text variant="tiny" tone="muted">
+        <Text variant="meta" tone="muted">
           {description}
         </Text>
       ) : null}
       {message ? (
-        <Text variant="tiny" tone="destructive">
+        <Text variant="meta" tone="destructive">
           {message}
         </Text>
       ) : null}

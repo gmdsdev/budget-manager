@@ -3,7 +3,12 @@ import { Pressable, View } from "react-native";
 
 import { Text } from "@/components/ui/text";
 import { useColors } from "@/theme/theme-provider";
-import { BORDER_WIDTH, CONTROL_HEIGHT, SPACING } from "@/theme/tokens";
+import {
+  BORDER_WIDTH,
+  CONTROL_HEIGHT,
+  RADIUS,
+  SPACING,
+} from "@/theme/tokens";
 
 export function Checkbox({
   checked,
@@ -23,7 +28,7 @@ export function Checkbox({
       accessibilityLabel={label}
       onPress={() => onCheckedChange(!checked)}
       style={{
-        minHeight: CONTROL_HEIGHT,
+        minHeight: CONTROL_HEIGHT.default,
         flexDirection: "row",
         alignItems: "center",
         gap: SPACING.md,
@@ -35,8 +40,9 @@ export function Checkbox({
           height: 22,
           alignItems: "center",
           justifyContent: "center",
+          borderRadius: RADIUS.sm,
           borderWidth: BORDER_WIDTH,
-          borderColor: colors.border,
+          borderColor: checked ? "transparent" : colors.input,
           backgroundColor: checked ? colors.primary : colors.card,
         }}
       >
@@ -44,7 +50,7 @@ export function Checkbox({
           <Feather name="check" size={14} color={colors.primaryForeground} />
         ) : null}
       </View>
-      <Text variant="label" style={{ flex: 1 }}>
+      <Text variant="metaMedium" style={{ flex: 1 }}>
         {label}
       </Text>
     </Pressable>

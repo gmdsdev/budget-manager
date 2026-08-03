@@ -9,44 +9,21 @@ import {
   useTransactionsQuery,
   useTransactionSummaryQuery,
 } from "@budget-manager/client/react";
-import { useI18n } from "@budget-manager/i18n/react";
-import { Fragment, useState } from "react";
-import { View } from "react-native";
+import { useTranslate } from "@budget-manager/i18n/react";
+import { useState } from "react";
 
 import { ListError, ListLoading } from "@/components/list-state";
-import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
 import { Pagination } from "@/components/ui/pagination";
-import { RowCardList, RowGroupHeader } from "@/components/ui/row-card";
 import { PageHeader, Screen } from "@/components/ui/screen";
-import {
-  CreateCardPaymentSheet,
-} from "@/modules/transaction/components/create-card-payment-sheet";
-import {
-  CreateCardPurchaseSheet,
-} from "@/modules/transaction/components/create-card-purchase-sheet";
-import {
-  CreateTransactionSheet,
-} from "@/modules/transaction/components/create-transaction-sheet";
-import {
-  CreateTransferSheet,
-} from "@/modules/transaction/components/create-transfer-sheet";
-import {
-  TransactionFilters,
-} from "@/modules/transaction/components/transaction-list/transaction-filters";
-import {
-  TransactionRowCard,
-} from "@/modules/transaction/components/transaction-list/transaction-row-card";
-import {
-  TransactionSummary,
-} from "@/modules/transaction/components/transaction-list/transaction-summary";
-import { SPACING } from "@/theme/tokens";
-
-type CreateSheet = "plain" | "transfer" | "purchase" | "payment" | null;
+import { TransactionDetailSheet } from "@/modules/transaction/components/transaction-detail-sheet";
+import { TransactionFilters } from "@/modules/transaction/components/transaction-list/transaction-filters";
+import { TransactionRows } from "@/modules/transaction/components/transaction-list/transaction-rows";
+import { TransactionSummary } from "@/modules/transaction/components/transaction-list/transaction-summary";
 
 export function ListTransactionsScreen() {
-  const { t, formatDateString } = useI18n();
-  const [creating, setCreating] = useState<CreateSheet>(null);
+  const t = useTranslate();
+  const [selected, setSelected] = useState<TransactionRow | null>(null);
   const { filters, page, setFilters, setPage } =
     usePagedFilters<TransactionFiltersState>(defaultTransactionFilters());
 
@@ -59,41 +36,11 @@ export function ListTransactionsScreen() {
 
   const isFiltered = isTransactionFiltered(filters);
 
-  // Rows arrive sorted by date, so grouping never reorders — it only stops the
-  // date repeating on every card.
-  const groups = groupByDate(data?.rows ?? []);
-
   return (
     <Screen onRefresh={() => void refetch()} refreshing={isRefetching}>
-      <PageHeader title={t("transaction.title")}>
-        {/* Four ways to record something, two per row so every one keeps a full
-            tap target. */}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm }}>
-          <Button
-            variant="outline"
-            label={t("cardPurchase.create.trigger")}
-            onPress={() => setCreating("purchase")}
-            style={{ flexGrow: 1, flexBasis: 140 }}
-          />
-          <Button
-            variant="outline"
-            label={t("cardPayment.create.trigger")}
-            onPress={() => setCreating("payment")}
-            style={{ flexGrow: 1, flexBasis: 140 }}
-          />
-          <Button
-            variant="outline"
-            label={t("transfer.create.trigger")}
-            onPress={() => setCreating("transfer")}
-            style={{ flexGrow: 1, flexBasis: 140 }}
-          />
-          <Button
-            label={t("transaction.create.trigger")}
-            onPress={() => setCreating("plain")}
-            style={{ flexGrow: 1, flexBasis: 140 }}
-          />
-        </View>
-      </PageHeader>
+      {/* Recording something lives in the app bar, where it is reachable from every
+          tab — so the heading here carries nothing but the name of the screen. */}
+      <PageHeader title={t("transaction.title")} />
 
       <TransactionFilters filters={filters} onFiltersChange={setFilters} />
 
@@ -121,16 +68,7 @@ export function ListTransactionsScreen() {
         />
       ) : (
         <>
-          <RowCardList>
-            {groups.map((group) => (
-              <Fragment key={group.date}>
-                <RowGroupHeader label={formatDateString(group.date, "numeric")} />
-                {group.rows.map((row) => (
-                  <TransactionRowCard key={row.id} transaction={row} />
-                ))}
-              </Fragment>
-            ))}
-          </RowCardList>
+          <TransactionRows transactions={data.rows} onSelect={setSelected} />
 
           {summary.data ? (
             <TransactionSummary
@@ -147,41 +85,18 @@ export function ListTransactionsScreen() {
             isFetching={isFetching}
             resource="transactions"
           />
+
+          {/* Keyed on the row, so opening a different record rebuilds the sheet
+              rather than carrying the previous one's nested state over. */}
+          {selected && (
+            <TransactionDetailSheet
+              key={selected.id}
+              transaction={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </>
       )}
-
-      <CreateTransactionSheet
-        open={creating === "plain"}
-        onOpenChange={(next) => setCreating(next ? "plain" : null)}
-      />
-      <CreateTransferSheet
-        open={creating === "transfer"}
-        onOpenChange={(next) => setCreating(next ? "transfer" : null)}
-      />
-      <CreateCardPurchaseSheet
-        open={creating === "purchase"}
-        onOpenChange={(next) => setCreating(next ? "purchase" : null)}
-      />
-      <CreateCardPaymentSheet
-        open={creating === "payment"}
-        onOpenChange={(next) => setCreating(next ? "payment" : null)}
-      />
     </Screen>
   );
-}
-
-function groupByDate(rows: TransactionRow[]) {
-  const groups: { date: string; rows: TransactionRow[] }[] = [];
-
-  for (const row of rows) {
-    const last = groups.at(-1);
-
-    if (last && last.date === row.occurrenceDate) {
-      last.rows.push(row);
-    } else {
-      groups.push({ date: row.occurrenceDate, rows: [row] });
-    }
-  }
-
-  return groups;
 }

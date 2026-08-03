@@ -9,7 +9,7 @@ import { ListError } from "@/components/list-state";
 import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
 import { MonthStepper } from "@/components/ui/month-stepper";
-import { Fading, PageHeader, Screen } from "@/components/ui/screen";
+import { Fading, Screen } from "@/components/ui/screen";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CurrencySection } from "@/modules/dashboard/components/currency-section";
@@ -17,11 +17,18 @@ import { PendingList } from "@/modules/dashboard/components/pending-list";
 import { StatementsDueList } from "@/modules/dashboard/components/statements-due-list";
 import { SPACING } from "@/theme/tokens";
 
+/** Wide enough for a currency code and its chevron, so the chip never reflows. */
+const CURRENCY_CHIP_WIDTH = 96;
+
 /**
- * The dashboard reads top-down: figures, then charts, then the lists that need acting
- * on. Both controls sit above everything they scope, and a refetch holds the previous
- * render at reduced opacity instead of flashing skeletons, so changing month never
- * jumps the screen.
+ * The dashboard reads top-down: the balance, the month, what needs paying, then the
+ * analysis. Both controls sit above everything they scope, and a refetch holds the
+ * previous render at reduced opacity instead of flashing skeletons, so changing month
+ * never jumps the screen.
+ *
+ * It carries **no page title.** The tab bar already says which screen this is and the
+ * hero states `currency · accounts · month`, so a 32px "Dashboard" spent the top of a
+ * phone repeating two things the reader can already see.
  */
 export function DashboardScreen() {
   const { t, formatMonthString } = useI18n();
@@ -48,21 +55,36 @@ export function DashboardScreen() {
 
   return (
     <Screen onRefresh={() => void refetch()} refreshing={isRefetching}>
-      <PageHeader title={t("dashboard.title")}>
-        <View style={{ gap: SPACING.sm }}>
-          {/* A single-currency account has nothing to pick, so the select only
-              appears once there is a second one. */}
-          {currencies.length > 1 && activeCurrency && (
-            <Select
-              label={t("common.currency")}
-              items={currencies.map((entry) => ({
-                label: entry.currencyCode,
-                value: entry.currencyCode,
-              }))}
-              value={activeCurrency}
-              onValueChange={setCurrencyCode}
-            />
-          )}
+      {/* One row: both controls scope the same screen, so they read as one bar of
+          scope rather than as two decisions stacked on top of each other. The
+          currency is sized to its code and the stepper takes **all** the rest, which
+          is what lands its two arrows on the row's own edges — the justified look,
+          and the only version of it where the next arrow cannot be pushed past the
+          screen. Leaving the stepper to size itself did exactly that. */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: SPACING.sm,
+          paddingTop: SPACING.md,
+        }}
+      >
+        {/* A single-currency account has nothing to pick, so the select only
+            appears once there is a second one. */}
+        {currencies.length > 1 && activeCurrency && (
+          <Select
+            label={t("common.currency")}
+            size="sm"
+            items={currencies.map((entry) => ({
+              label: entry.currencyCode,
+              value: entry.currencyCode,
+            }))}
+            value={activeCurrency}
+            onValueChange={setCurrencyCode}
+            style={{ width: CURRENCY_CHIP_WIDTH }}
+          />
+        )}
+        <View style={{ flex: 1, minWidth: 0 }}>
           <MonthStepper
             label={monthLabel}
             onPrevious={() => setMonth(shiftMonth(month, -1))}
@@ -72,7 +94,7 @@ export function DashboardScreen() {
             nextDisabled={isCurrentMonth}
           />
         </View>
-      </PageHeader>
+      </View>
 
       {isPending ? (
         <View style={{ gap: SPACING.md }}>
@@ -100,30 +122,24 @@ export function DashboardScreen() {
         />
       ) : (
         <Fading isFetching={isFetching}>
-          <View style={{ gap: SPACING.lg }}>
-            {summary && (
-              <CurrencySection
-                summary={summary}
-                monthLabel={monthLabel}
-                onOpenBudgets={() => router.push("/budget")}
+          {summary && (
+            <CurrencySection summary={summary} monthLabel={monthLabel}>
+              <StatementsDueList
+                statements={data.statements.filter(
+                  (bill) => bill.currencyCode === activeCurrency,
+                )}
+                today={data.today}
+                onOpenCards={() => router.push("/credit-card")}
               />
-            )}
-
-            <StatementsDueList
-              statements={data.statements.filter(
-                (bill) => bill.currencyCode === activeCurrency,
-              )}
-              today={data.today}
-              onOpenTransactions={() => router.push("/transaction")}
-            />
-            <PendingList
-              items={data.pending.filter(
-                (item) => item.walletCurrencyCode === activeCurrency,
-              )}
-              today={data.today}
-              onOpenTransactions={() => router.push("/transaction")}
-            />
-          </View>
+              <PendingList
+                items={data.pending.filter(
+                  (item) => item.walletCurrencyCode === activeCurrency,
+                )}
+                today={data.today}
+                onOpenTransactions={() => router.push("/transaction")}
+              />
+            </CurrencySection>
+          )}
         </Fading>
       )}
     </Screen>

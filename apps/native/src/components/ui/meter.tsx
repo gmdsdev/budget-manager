@@ -1,15 +1,15 @@
 import { View } from "react-native";
 
 import { useColors } from "@/theme/theme-provider";
-import { BORDER_WIDTH } from "@/theme/tokens";
+import { RADIUS } from "@/theme/tokens";
 
 export type MeterSegment = { ratio: number; color: string; faded?: boolean };
 
 /**
  * Plain views rather than a chart mark: these bars carry long category names and
- * their own value labels, which an SVG bar would clip. The track is what carries
- * the reading — a pastel fill may never be the only way to read a value, so every
- * caller pairs the bar with a figure in words.
+ * their own value labels, which an SVG bar would clip. The track is a pill and
+ * carries no border — the fill is what reads, and every caller pairs the bar with
+ * a figure in words, because a colour may never be the only way to read a value.
  *
  * Segments are clamped to the track: an overspent budget fills it rather than
  * overflowing, and the figure beside it is what states by how much.
@@ -44,8 +44,7 @@ export function Meter({
       style={{
         height,
         flexDirection: "row",
-        borderWidth: BORDER_WIDTH,
-        borderColor: colors.border,
+        borderRadius: RADIUS.full,
         backgroundColor: colors.chartTrack,
         overflow: "hidden",
       }}

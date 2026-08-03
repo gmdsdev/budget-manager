@@ -3,7 +3,7 @@ import { CATEGORY_COLORS, type CategoryColor } from "@budget-manager/schemas";
 import { Pressable, View } from "react-native";
 
 import { useColors } from "@/theme/theme-provider";
-import { BORDER_WIDTH, SPACING } from "@/theme/tokens";
+import { RADIUS, SPACING } from "@/theme/tokens";
 
 /**
  * A grid of the palette rather than a picker sheet: the choice *is* the colour, so
@@ -11,7 +11,9 @@ import { BORDER_WIDTH, SPACING } from "@/theme/tokens";
  * they are picking between. Radios, because exactly one is chosen.
  *
  * Selection reads as a ring against the page rather than as a change of tint, so
- * it holds up on every hue in the palette.
+ * it holds up on every hue in the palette. The swatches are round and carry no ink
+ * outline: the ring re-saturated for the redesign clears 3:1 against a card on its
+ * own.
  */
 export function CategoryColorPicker({
   value,
@@ -39,21 +41,21 @@ export function CategoryColorPicker({
             accessibilityLabel={labels.categoryColor(color)}
             onPress={() => onValueChange(color)}
             style={{
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               alignItems: "center",
               justifyContent: "center",
+              borderRadius: RADIUS.full,
               borderWidth: selected ? 2 : 0,
               borderColor: colors.foreground,
-              padding: selected ? 3 : 5,
+              padding: selected ? 4 : 6,
             }}
           >
             <View
               style={{
                 flex: 1,
                 width: "100%",
-                borderWidth: BORDER_WIDTH,
-                borderColor: colors.border,
+                borderRadius: RADIUS.full,
                 backgroundColor: colors.category[color],
               }}
             />

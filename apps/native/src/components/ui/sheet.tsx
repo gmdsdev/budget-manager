@@ -10,18 +10,19 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { IconButton } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useColors } from "@/theme/theme-provider";
-import { PLATE_BORDER_WIDTH, SPACING } from "@/theme/tokens";
+import { BORDER_WIDTH, RADIUS, SPACING } from "@/theme/tokens";
 
 /**
- * The native stand-in for a dialog: a plate that rises from the bottom edge,
+ * The native stand-in for a dialog: a surface that rises from the bottom edge,
  * where a thumb is. Everything the web puts in a `Dialog` — a form, a picker, a
- * confirmation — comes through here, so the surface, the ink edge and the close
- * affordance are described once.
+ * confirmation, a detail view — comes through here, so the corner radius, the
+ * scrim and the close affordance are described once.
  *
- * `Modal` rather than an overlay inside the tree, so a sheet opened from a row
- * menu is not clipped by the list it came from.
+ * `Modal` rather than an overlay inside the tree, so a sheet opened from a row is
+ * not clipped by the list it came from.
  */
 export function Sheet({
   open,
@@ -60,15 +61,16 @@ export function Sheet({
         <Pressable
           accessibilityLabel={t("common.close")}
           onPress={onClose}
-          style={{ position: "absolute", inset: 0, backgroundColor: "#00000099" }}
+          style={{ position: "absolute", inset: 0, backgroundColor: "#00000080" }}
         />
 
         <View
           style={{
             maxHeight: "92%",
-            borderTopWidth: PLATE_BORDER_WIDTH,
-            borderColor: colors.border,
+            borderTopLeftRadius: RADIUS.xl,
+            borderTopRightRadius: RADIUS.xl,
             backgroundColor: colors.card,
+            overflow: "hidden",
           }}
         >
           <View
@@ -76,34 +78,27 @@ export function Sheet({
               flexDirection: "row",
               alignItems: "flex-start",
               gap: SPACING.sm,
-              borderBottomWidth: PLATE_BORDER_WIDTH,
-              borderColor: colors.border,
-              padding: SPACING.lg,
+              paddingHorizontal: SPACING.lg,
+              paddingTop: SPACING.lg,
             }}
           >
-            <View style={{ flex: 1, gap: 4 }}>
-              <Text variant="h2">{title}</Text>
+            <View style={{ flex: 1, gap: SPACING.xs }}>
+              <Text variant="sheetTitle">{title}</Text>
               {description ? (
-                <Text variant="tiny" tone="muted">
+                <Text variant="meta" tone="muted">
                   {description}
                 </Text>
               ) : null}
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("common.close")}
-              onPress={onClose}
-              hitSlop={12}
-            >
+            <IconButton label={t("common.close")} onPress={onClose}>
               <Feather name="x" size={20} color={colors.foreground} />
-            </Pressable>
+            </IconButton>
           </View>
 
           <ScrollView
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{
               padding: SPACING.lg,
-              paddingBottom: SPACING.lg,
               gap: SPACING.lg,
             }}
           >
@@ -116,7 +111,7 @@ export function Sheet({
                 flexDirection: "row",
                 justifyContent: "flex-end",
                 gap: SPACING.sm,
-                borderTopWidth: PLATE_BORDER_WIDTH,
+                borderTopWidth: BORDER_WIDTH,
                 borderColor: colors.border,
                 padding: SPACING.lg,
                 paddingBottom: SPACING.lg + insets.bottom,

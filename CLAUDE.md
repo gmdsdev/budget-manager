@@ -814,42 +814,68 @@ four peers, so they need no grid of their own.
 ### Native (apps/native)
 
 Expo SDK 57 + expo-router, with the same features as the web app and the same design language.
-Routes are file-based under `src/app/`: `login.tsx`, a `(tabs)` group, and three screens pushed
-from **More**; a route file is one line that re-exports a screen, so navigation config and
+Routes are file-based under `src/app/`: `login.tsx`, a `(tabs)` group, and four screens pushed
+from the account menu; a route file is one line that re-exports a screen, so navigation config and
 rendering never mix.
 
 **The module layout mirrors the web's, name for name**, with `screens/` where the web has
-`pages/`: `modules/<feature>/components/` holds the form fields, the create/edit/archive sheets
-and a `<feature>-list/` with the row card and the filter bar, and `modules/<feature>/screens/`
-holds the one screen that composes them. A developer who knows where
+`pages/`: `modules/<feature>/components/` holds the form fields, the create/edit/archive sheets,
+the detail sheet and a `<feature>-list/` with the rows and the filter bar, and
+`modules/<feature>/screens/` holds the one screen that composes them. A developer who knows where
 `modules/budget/components/budget-list/budget-filters.tsx` is on the web finds it in the same
 place here. There are no `queries.ts` or `mutations.ts` under a native module — that layer is
 `packages/client`.
 
-**Four tabs and a More, not seven tabs.** Dashboard, Transactions, Budgets and Wallets earn one
-each; credit cards, categories and settings sit behind More and keep a native header, because a
-pushed screen needs the back affordance the system already draws. Cramming seven destinations
-into a tab bar makes every one of them unhittable.
+**Three tabs and an app bar, not seven tabs.** Dashboard, Transactions and Budgets are what the app
+is opened for and earn one each. Wallets, credit cards, categories and settings are things you visit
+to set something up, so they are pushed from the **account menu** and keep a native header, because
+a pushed screen needs the back affordance the system already draws.
+
+`components/app-bar.tsx` is the tab group's `header`, not something a screen renders: the account
+mark on the left opens `account-menu-sheet.tsx`, and `CreateTransactionMenu` sits on the right. Both
+are therefore fixed on every tab rather than scrolling away with the page — the primary action of a
+finance app should not be a scroll position — and it is `AppBar` that pays the status-bar inset, so
+`sceneStyle` must not pay it again. The bar deliberately carries **no title**: the tab bar already
+says which screen this is.
+
+Two things that used to be in the bar are gone for the same reason — a tab is for a destination you
+return to, not for reaching other destinations. A **More** tab spent a fifth of the bar on
+navigation about navigation, and five tabs left each one too narrow to tell apart by its icon.
+
+`AccountAvatar` is a **neutral** disc (`muted` fill, `contentSecondary` initials), not a branded one:
+it sits a thumb's width from the bright-green create action, and two saturated greens that close
+together read as two peers when only one of them is the action. On native the dashboard hero is
+therefore the only branded surface. The web's own avatar in `user-menu.tsx` is still bright blue —
+the two apps disagree here, and if that is settled it should be settled in both.
 
 **The tokens are mirrored, not imported.** `src/theme/tokens.ts` carries the same palette,
-spacing, radius and shadow steps as `packages/ui/src/styles/globals.css`, as the sRGB hex those
-`oklch()` values resolve to — React Native reads neither CSS custom properties nor `oklch()`.
-Change a token there and change it here; that duplication is the price of one design language
-across two renderers, and it is the *only* duplication of the design that is accepted.
+spacing, radius, control and type steps as `packages/ui/src/styles/globals.css` — React Native
+reads neither CSS custom properties nor `oklch()`, and since the web file is plain sRGB hex this
+is now a transcription rather than a conversion. Change a token there and change it here; that
+duplication is the price of one design language across two renderers, and it is the *only*
+duplication of the design that is accepted. `BRAND` is Wise's own palette, which does **not** flip
+with the mode: bright green with forest-green ink is the brand, not a light-mode reading of it.
+Inter is loaded through `@expo-google-fonts/inter` and nothing renders until it is in hand.
 
-Elevation is the one thing that could not be translated directly: the web casts
-`4px 4px 0 0 var(--shadow-hard)` and React Native has no cross-platform zero-blur box shadow, so
-`components/ui/plate.tsx` draws the offset as a plate of ink *behind* the surface. Every card,
-sheet, picker popup and list goes through `Plate`, which is what keeps the offsets from drifting
-per screen. `Button` inlines the same geometry so it can also do the press effect — the surface
-slides into its own shadow, exactly as `buttonVariants` does with `active:translate-*`.
+Elevation reads the same as on the web: **nothing casts a hard shadow.** `components/ui/surface.tsx`
+is the plane every card, sheet, popup and listing sits on — a hairline border in light mode, and in
+dark mode it **drops that border** and is separated by its lighter `card` fill instead, which is
+the native reading of `dark:border-transparent`. `floating` is the only elevation left, for things
+that genuinely sit over the page (a picker popup, a toast). `Button` presses with a plain
+background wash rather than sliding into its own ink.
+
+**One control scale, and it does not change with the viewport.** `CONTROL_HEIGHT` is Wise's:
+**48pt** for the everyday control (input, select, button), `sm` 36 for the chips the filter bar,
+the month steppers and the row actions wear, `xs` 28, and `lg` 56 for a form's own primary action.
+Button variants match the web's, `destructive` outlined rather than a filled red block, plus
+`onBrand`/`ghostOnBrand` for the dashboard hero where the page's own primary is the background.
 
 **A dialog is a sheet.** Everything the web puts in a `Dialog` — a create form, a picker, a
-confirmation, a row menu — rises from the bottom edge, where a thumb is, through `ui/sheet.tsx`.
-`FormSheet` and `ConfirmSheet` are the two shapes above it, so a form's submit/cancel pair and a
-destructive action's confirmation are described once. **Every destructive row action is still
-confirmed**, series included; pause/resume stays unconfirmed because it is reversible from the
-same menu.
+confirmation, a detail view — rises from the bottom edge, where a thumb is, through `ui/sheet.tsx`.
+`FormSheet` and `ConfirmSheet` are the two shapes above it, and `components/detail-sheet.tsx` is
+the third, so a form's submit/cancel pair, a destructive action's confirmation and a record's
+detail layout are each described once. **Every destructive action is still confirmed**, series
+included; pause/resume stays unconfirmed because it is reversible from the same place.
 
 The primitives keep the invariants their web counterparts have:
 
@@ -864,15 +890,69 @@ The primitives keep the invariants their web counterparts have:
   — the date is today, the wallet is the first one, the currency is the account's preference, and
   all three can move while the sheet is shut.
 - `CurrencyInput` reads and writes **minor units**, digits shifting in from the right.
-- A listing is one card per row (`ui/row-card.tsx`), which is the shape the web's `DataTable`
-  falls back to below `md`, and it takes the same filter bar with the same `aria-label`-shaped
-  accessible names.
 
-**Charts are plain views plus `react-native-svg` for the one polyline.** Recharts is a DOM
-library, so the cash-flow chart is a pair of bars per month with the figures restated underneath
-(the web's `ChartDataTable` twin, in words), and the sparkline is a `Polyline`. Every chart rule
+**A listing is a list of records, and no listing carries a row menu.** `components/record-row.tsx`
+is the native twin of the web's own — `RecordList` / `RecordRow` / `RecordGlyph` / `RecordTag` — a
+rounded, borderless item that only shows its edges on press: a leading glyph, the name over a
+dot-separated meta line, an optional status tag, the figure opposite. **The row opens the record
+and every action lives in its detail sheet**, because a menu in a list of hundreds of rows puts an
+irreversible action one mis-tap from a reversible one. The one adaptation to a phone is that the
+tag sits *under* the figure rather than beside it, where there is room for it.
+
+Two things about a detail sheet are load-bearing, and missing either costs a debugging pass:
+
+- **Its `open` is derived** (`open={nested === null}`), never a prop the screen owns. The screen
+  renders `{selected && <XDetailSheet key={selected.id} … />}`, and when an action opens a nested
+  sheet the detail component must **stay mounted** — a screen that drops `selected` at that moment
+  unmounts the component holding the nested sheet, and the nested sheet never appears.
+- **A nested sheet replaces the detail view rather than stacking on it.** Two modals deep, the back
+  gesture becomes ambiguous and the scrim doubles up.
+
+The exception is the budget month card, which carries two direct icon affordances per meter rather
+than a menu: there are at most two actions, and a menu would put them one tap further away while
+reintroducing the thing the listings dropped.
+
+**Recording something is one primary action.** `create-transaction-menu.tsx` is that button plus a
+second one opening card purchase / pay card / transfer as a sheet — on a phone a dropdown anchored
+to the top edge has nowhere to go — and `layout="stacked"` is the same wiring on the dashboard hero,
+where the actions get their own buttons on the brand plane. Its sheets are controlled from there and
+**stay mounted**, which is what keeps their reset-on-open behaviour.
+
+**The native dashboard is not the web one made narrow — it answers four questions and stops.** How
+much have I got, what did this month do, what needs paying, and where did it go, in that order: the
+two that can be *acted* on come before the two that can only be read. `currency-section.tsx` is
+where that order lives, and the two lists arrive as its `children` because the screen owns them (the
+payload carries them at the top level, filtered to the currency in view).
+
+- `balance-hero.tsx` — the bright-green plane: the balance, a `currency · accounts · month` line,
+  the settled-or-projected line, and **two** card splits (`Net position`, `On cards`). Splits take an
+  even share of the row rather than a `flexBasis`, which is what made a third one wrap to a line of
+  its own; `Credit available` was that third one and is a reading of the two beside it.
+- `month-summary.tsx` — Income / Expenses / Net as **rows in one card**, label left and figure right,
+  under the month as the card's title. Three full-width stat tiles spent most of the first scroll on
+  three numbers, and three tiles *across* is worse: at ~110pt `R$ 121.293,98` has nowhere to go but
+  a second line. A label-and-figure row never runs out of room, in any currency or language.
+- Then the statements and awaiting-payment lists, then spending, then the cash-flow chart.
+
+**Four sections were cut rather than shrunk**, each because it was a *second* place to read
+something the phone already has a first place for: the budget widget (the Budgets tab is one tap
+below it), wallet balances and card utilisation (a meter per account, behind their own screens, for a
+figure the hero already states), and the stat tiles. The screen went from about eight scrolls to a
+screen and a half. **There is no page title either** — the tab bar names the screen and the hero
+states the currency and month.
+
+**Charts are plain views, and `react-native-svg` is only there for the logo.** Recharts is a DOM
+library, so the cash-flow chart is a pair of bars per month. Every chart rule
 holds: one series one colour, a legend when there are two, income always on the left, a hairline
-solid baseline, and no number reachable only by looking at a bar.
+solid baseline, and no number reachable only by looking at a bar — **each month's column reads its
+own figures out** through `dashboard.cashFlow.monthSummary`, which is what the web's `sr-only`
+`ChartDataTable` does there. Those figures used to be a *visible* table of four money columns under
+the bars; at phone width every row wrapped, so the one part of the chart that existed to make the
+numbers legible was the least legible thing on the screen. The pair is Wise's own —
+`chartIncome`/`chartExpense`, bright green against forest green in light and against bright blue in
+dark, since forest green disappears on the dark plane. A budget meter's fill states the **reading**
+(green on track, yellow close, red overspent) while the category's own ink stays in the swatch
+beside its name.
 
 **Auth is cookie-based, through `@better-auth/expo`.** The plugin keeps better-auth's cookie in
 the OS keychain and replays it, and identifies the app with an `expo-origin` header — which is why
@@ -1079,9 +1159,8 @@ dashboard hero and the account avatar. Reach for a semantic token first; these a
 
 New components should speak this grammar rather than invent a parallel one.
 
-**`apps/native` has not been migrated yet.** `src/theme/tokens.ts` still mirrors the old
-neobrutalist palette, so the two apps are knowingly out of sync until it is ported — the
-"change a token there and change it here" rule below is a debt, not a description.
+`apps/native` speaks the same grammar, mirrored by hand into `src/theme/tokens.ts` — so the
+"change a token there and change it here" rule under **Native** is a live obligation, not a debt.
 
 **The app is Kivo, and the logo is a pair of files per shape, not a `currentColor` SVG.**
 `apps/web/src/assets/logos/` holds the light and dark artwork for the mark and the lockup

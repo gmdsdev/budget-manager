@@ -93,12 +93,13 @@ export function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void 
 
       <View style={{ gap: SPACING.sm }}>
         <Button
+          size="lg"
           label={isSubmitting ? t("auth.submitting") : t("auth.signUp")}
           loading={isSubmitting}
           onPress={() => void form.handleSubmit()}
         />
         <Button
-          variant="ghost"
+          variant="link"
           label={t("auth.alreadyHaveAnAccount")}
           onPress={onSwitchToSignIn}
         />

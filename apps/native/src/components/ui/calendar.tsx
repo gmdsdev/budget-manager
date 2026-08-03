@@ -6,14 +6,17 @@ import { Pressable, View } from "react-native";
 
 import { Text } from "@/components/ui/text";
 import { useColors } from "@/theme/theme-provider";
-import { BORDER_WIDTH, SPACING } from "@/theme/tokens";
+import { RADIUS, SPACING } from "@/theme/tokens";
 
 const WEEK_DAYS = 7;
 
+/** The web's `--cell-size`, which is what makes the grid a comfortable tap. */
+const CELL_SIZE = 40;
+
 /**
  * A month grid built from plain views. The web composes react-day-picker; here
- * the grid is small enough to own, and owning it is what keeps the squares square
- * and the edges ink.
+ * the grid is small enough to own, and owning it is what keeps the day pills
+ * round and the fills the app's own.
  *
  * Month **and** year are steppable, because react-day-picker's default caption
  * stopping at the end of the current year is exactly what put every future-dated
@@ -86,7 +89,7 @@ export function Calendar({
       <View style={{ flexDirection: "row" }}>
         {weekdayNames.map((name, index) => (
           <View key={index} style={{ flex: 1, alignItems: "center" }}>
-            <Text variant="tiny" tone="muted">
+            <Text variant="meta" tone="muted">
               {name}
             </Text>
           </View>
@@ -96,7 +99,7 @@ export function Calendar({
       <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
         {cells.map((day, index) => {
           if (day === null) {
-            return <View key={index} style={{ width: `${100 / WEEK_DAYS}%`, height: 40 }} />;
+            return <View key={index} style={{ width: `${100 / WEEK_DAYS}%`, height: CELL_SIZE }} />;
           }
 
           const value = formatIsoDate(
@@ -116,30 +119,34 @@ export function Calendar({
               onPress={() => onSelect(value)}
               style={{
                 width: `${100 / WEEK_DAYS}%`,
-                height: 40,
+                height: CELL_SIZE,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
               <View
                 style={{
-                  width: 34,
-                  height: 34,
+                  width: 36,
+                  height: 36,
                   alignItems: "center",
                   justifyContent: "center",
-                  borderWidth: isSelected || isEdge ? BORDER_WIDTH : 0,
-                  borderColor: colors.border,
+                  borderRadius: RADIUS.full,
                   backgroundColor:
                     isSelected || isEdge
                       ? colors.primary
                       : inRange
-                        ? colors.accent
+                        ? colors.secondary
                         : "transparent",
                 }}
               >
                 <Text
-                  variant="small"
-                  tone={isSelected || isEdge ? "inverse" : "default"}
+                  variant="meta"
+                  tone={isSelected || isEdge ? "onPrimary" : "default"}
+                  style={
+                    inRange && !isSelected && !isEdge
+                      ? { color: colors.secondaryForeground }
+                      : undefined
+                  }
                 >
                   {`${day}`}
                 </Text>
@@ -174,7 +181,7 @@ function Stepper({
       >
         <Feather name="chevron-left" size={18} color={colors.foreground} />
       </Pressable>
-      <Text variant="label" style={{ flex: 1, textAlign: "center" }}>
+      <Text variant="metaMedium" style={{ flex: 1, textAlign: "center" }}>
         {label}
       </Text>
       <Pressable

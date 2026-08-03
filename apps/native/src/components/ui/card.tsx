@@ -1,6 +1,6 @@
 import { View, type ViewStyle } from "react-native";
 
-import { Plate } from "@/components/ui/plate";
+import { Surface } from "@/components/ui/surface";
 import { Text } from "@/components/ui/text";
 import { SPACING } from "@/theme/tokens";
 
@@ -12,9 +12,9 @@ export function Card({
   style?: ViewStyle;
 }) {
   return (
-    <Plate style={style} contentStyle={{ padding: SPACING.lg, gap: SPACING.md }}>
+    <Surface style={[{ padding: SPACING.lg, gap: SPACING.md }, style]}>
       {children}
-    </Plate>
+    </Surface>
   );
 }
 
@@ -28,11 +28,13 @@ export function CardHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "flex-start", gap: SPACING.sm }}>
+    <View
+      style={{ flexDirection: "row", alignItems: "flex-start", gap: SPACING.sm }}
+    >
       <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="h3">{title}</Text>
+        <Text variant="cardTitle">{title}</Text>
         {description ? (
-          <Text variant="tiny" tone="muted">
+          <Text variant="meta" tone="muted">
             {description}
           </Text>
         ) : null}

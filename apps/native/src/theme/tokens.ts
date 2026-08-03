@@ -3,13 +3,30 @@ import type { CategoryColor } from "@budget-manager/schemas";
 /**
  * The one place the design language is written down for native. It mirrors
  * `packages/ui/src/styles/globals.css` token for token — React Native cannot
- * read CSS custom properties, and it cannot parse `oklch()` either, so the
- * achromatic and chromatic steps are carried here as the sRGB hex they resolve
- * to. Change a token there and change it here; the hues are the same design.
+ * read CSS custom properties, and it cannot parse `oklch()` either, so every
+ * step is carried here as the sRGB hex the web file now states directly.
+ * Change a token there and change it here; the hues are the same design.
  */
 export type ThemeMode = "light" | "dark";
 
 export const THEME_MODES: readonly ThemeMode[] = ["light", "dark"];
+
+/**
+ * Wise's own palette, for surfaces that are deliberately branded rather than
+ * themed — the dashboard hero, and the ink on the buttons that sit on it. It does
+ * not flip with the mode: bright green with forest-green ink is the brand, not a
+ * light-mode reading of it. Reach for a semantic token first; these are the
+ * exception, and the account mark is deliberately *not* one of them — a second
+ * green beside the create action would read as a peer of it.
+ */
+export const BRAND = {
+  brightGreen: "#9fe870",
+  forestGreen: "#163300",
+  brightBlue: "#a0e1e1",
+  brightYellow: "#ffeb69",
+  brightOrange: "#ffc091",
+  brightPink: "#ffd7ef",
+} as const;
 
 type Palette = {
   background: string;
@@ -20,6 +37,7 @@ type Palette = {
   popoverForeground: string;
   primary: string;
   primaryForeground: string;
+  primaryHover: string;
   secondary: string;
   secondaryForeground: string;
   muted: string;
@@ -27,124 +45,147 @@ type Palette = {
   accent: string;
   accentForeground: string;
   destructive: string;
+  destructiveMuted: string;
   border: string;
   input: string;
   ring: string;
-  shadowHard: string;
+  link: string;
+  contentSecondary: string;
   success: string;
+  successMuted: string;
   warning: string;
+  warningMuted: string;
+  warningMark: string;
   chart: readonly string[];
   chartIncome: string;
   chartExpense: string;
   chartTrack: string;
+  /** How strongly a record glyph tints its own hue behind the icon. */
+  glyphTint: number;
   category: Record<CategoryColor, string>;
 };
 
 const LIGHT_CHART = [
-  "#689bdb",
-  "#de8e69",
-  "#009595",
-  "#c7b05a",
-  "#b7698f",
-  "#6cb17b",
-  "#7a6fb4",
-  "#d2736c",
+  "#2f7ed8",
+  "#e8722c",
+  "#00918f",
+  "#a4841c",
+  "#c94f86",
+  "#3aa957",
+  "#6f57d9",
+  "#e0463c",
 ] as const;
 
 const DARK_CHART = [
-  "#5788c7",
-  "#ca7b57",
-  "#008e9d",
-  "#aa943d",
-  "#a4587d",
-  "#5a9e6a",
-  "#6c5fa7",
-  "#bd615b",
+  "#4d9ae8",
+  "#f0894a",
+  "#17a8a4",
+  "#d9b53c",
+  "#e0699b",
+  "#4dbf6d",
+  "#8a75e8",
+  "#f0645a",
 ] as const;
 
 const light: Palette = {
-  background: "#ebebeb",
-  foreground: "#181818",
-  card: "#fcfcfc",
-  cardForeground: "#181818",
-  popover: "#fcfcfc",
-  popoverForeground: "#181818",
-  primary: "#181818",
-  primaryForeground: "#fcfcfc",
-  secondary: "#c0ddc5",
-  secondaryForeground: "#181818",
-  muted: "#dedede",
-  mutedForeground: "#525252",
-  accent: "#dedede",
-  accentForeground: "#181818",
-  destructive: "#a83630",
-  border: "#262626",
-  input: "#262626",
-  ring: "#181818",
-  shadowHard: "#262626",
-  success: "#31693f",
-  warning: "#876114",
+  background: "#ffffff",
+  foreground: "#0e0f0c",
+  card: "#ffffff",
+  cardForeground: "#0e0f0c",
+  popover: "#ffffff",
+  popoverForeground: "#0e0f0c",
+  primary: BRAND.brightGreen,
+  primaryForeground: BRAND.forestGreen,
+  primaryHover: "#80e142",
+  secondary: "#e2f6d5",
+  secondaryForeground: BRAND.forestGreen,
+  muted: "#f1f4ef",
+  mutedForeground: "#6a6c6a",
+  accent: "#f1f4ef",
+  accentForeground: "#0e0f0c",
+  destructive: "#cb272f",
+  destructiveMuted: "#fbeaea",
+  border: "#e3e4e1",
+  input: "#c9cbc7",
+  ring: "#0e0f0c",
+  link: BRAND.forestGreen,
+  contentSecondary: "#454745",
+  success: "#054d28",
+  successMuted: "#e2f6d5",
+  warning: "#4a3b1c",
+  warningMuted: "#fff7d7",
+  warningMark: "#ffd11a",
   chart: LIGHT_CHART,
-  chartIncome: LIGHT_CHART[5],
-  chartExpense: LIGHT_CHART[7],
-  chartTrack: "#d0dcec",
+  // Wise's own pair: bright green income against forest green spending.
+  chartIncome: BRAND.brightGreen,
+  chartExpense: BRAND.forestGreen,
+  chartTrack: "#e3e7e0",
+  glyphTint: 0.16,
   // Eight slots alias the chart ring so a category bar and a chart series of
   // the same hue cannot drift apart; four fill the gaps the ring leaves.
   category: {
     blue: LIGHT_CHART[0],
-    cyan: "#60bbde",
+    cyan: "#0b87b5",
     teal: LIGHT_CHART[2],
     green: LIGHT_CHART[5],
-    lime: "#80a03e",
+    lime: "#6b9420",
     yellow: LIGHT_CHART[3],
     orange: LIGHT_CHART[1],
     red: LIGHT_CHART[7],
     pink: LIGHT_CHART[4],
-    purple: "#955599",
+    purple: "#9333ac",
     violet: LIGHT_CHART[6],
-    slate: "#748192",
+    slate: "#5c7089",
   },
 };
 
 const dark: Palette = {
-  background: "#191919",
-  foreground: "#e8e8e8",
-  card: "#1e1e1e",
-  cardForeground: "#e8e8e8",
-  popover: "#1e1e1e",
-  popoverForeground: "#e8e8e8",
-  primary: "#e8e8e8",
-  primaryForeground: "#181818",
-  secondary: "#37563d",
-  secondaryForeground: "#e8e8e8",
-  muted: "#292929",
-  mutedForeground: "#a8a8a8",
-  accent: "#2e2e2e",
-  accentForeground: "#e8e8e8",
-  destructive: "#dd7570",
-  border: "#989898",
-  input: "#989898",
-  ring: "#e8e8e8",
-  shadowHard: "#000000",
-  success: "#75b683",
-  warning: "#cea856",
+  background: "#121511",
+  foreground: "#f3f5f1",
+  card: "#1e211d",
+  cardForeground: "#f3f5f1",
+  popover: "#1e211d",
+  popoverForeground: "#f3f5f1",
+  primary: BRAND.brightGreen,
+  primaryForeground: BRAND.forestGreen,
+  primaryHover: "#cdffad",
+  secondary: "#1d3f06",
+  secondaryForeground: "#cdffad",
+  muted: "#262a24",
+  mutedForeground: "#a8ada4",
+  accent: "#262a24",
+  accentForeground: "#f3f5f1",
+  destructive: "#ffa8ad",
+  destructiveMuted: "#410b0d",
+  border: "#33372f",
+  input: "#4b5046",
+  ring: "#f3f5f1",
+  link: BRAND.brightGreen,
+  contentSecondary: "#cacfc7",
+  success: "#bae5a0",
+  successMuted: "#252c20",
+  warning: "#fadc65",
+  warningMuted: "#3a3523",
+  warningMark: "#fadc65",
   chart: DARK_CHART,
-  chartIncome: DARK_CHART[5],
-  chartExpense: DARK_CHART[7],
-  chartTrack: "#2d3e55",
+  // Forest green disappears on the dark plane, so spending takes bright blue.
+  chartIncome: BRAND.brightGreen,
+  chartExpense: BRAND.brightBlue,
+  chartTrack: "#33372f",
+  glyphTint: 0.26,
   category: {
     blue: DARK_CHART[0],
-    cyan: "#459ec2",
+    cyan: "#33b8e0",
     teal: DARK_CHART[2],
     green: DARK_CHART[5],
-    lime: "#6a862d",
+    lime: "#8fbf33",
     yellow: DARK_CHART[3],
     orange: DARK_CHART[1],
     red: DARK_CHART[7],
     pink: DARK_CHART[4],
-    purple: "#854888",
+    purple: "#b055c4",
     violet: DARK_CHART[6],
-    slate: "#7a8798",
+    slate: "#7488a1",
   },
 };
 
@@ -153,11 +194,17 @@ export const PALETTES: Record<ThemeMode, Palette> = { light, dark };
 export type ThemeColors = Palette;
 
 /**
- * `--radius` is `0rem` and every step is pinned to it, so nothing in this app is
- * ever rounded. Kept as a named token rather than a literal `0` so a component
- * reads as speaking the design language rather than as having forgotten it.
+ * Wise's radius scale: nothing in this app is square any more, and the things a
+ * thumb presses are `full` — buttons, chips, pills, swatches, glyphs and meters.
  */
-export const RADIUS = 0;
+export const RADIUS = {
+  sm: 8,
+  md: 10,
+  lg: 16,
+  xl: 24,
+  "2xl": 32,
+  full: 9999,
+} as const;
 
 export const SPACING = {
   xs: 4,
@@ -169,53 +216,82 @@ export const SPACING = {
 } as const;
 
 /**
- * Elevation is a hard offset, never a blur — the web casts
- * `Npx Npx 0 0 var(--shadow-hard)`. React Native has no zero-blur box shadow
- * that renders the same on both platforms, so the offset is drawn as a plate
- * behind the element (`Plate` in `components/ui/plate.tsx`) at these offsets.
+ * One control scale, and it does not change with the viewport. The everyday
+ * control is **48pt** — `13px 24px` around 16px/1.2 text in Wise's reference —
+ * which already clears the touch minimum, so there is no dense variant to
+ * shrink to. `sm` is the chip the filter bar, the month steppers and the row
+ * actions wear; `lg` is a form's own primary action.
  */
-export const SHADOW_OFFSET = {
-  xs: 2,
-  sm: 3,
-  default: 4,
-  lg: 6,
+export const CONTROL_HEIGHT = {
+  xs: 28,
+  sm: 36,
+  default: 48,
+  lg: 56,
 } as const;
 
-export type ShadowSize = keyof typeof SHADOW_OFFSET;
+export type ControlSize = keyof typeof CONTROL_HEIGHT;
 
 /**
- * One mono face everywhere: `JetBrains Mono` is both `--font-sans` and
- * `--font-heading`. The weights are the ones `_layout.tsx` loads.
+ * Elevation is a soft shadow on things that float over the page, and nothing at
+ * all on a card — which reads as raised by its hairline border alone. In dark
+ * mode a card drops that border and is separated by its lighter fill instead,
+ * exactly as `dark:border-transparent` does on the web.
  */
+export const SHADOW = {
+  menu: {
+    light: {
+      shadowColor: "#0e0f0c",
+      shadowOpacity: 0.12,
+      shadowRadius: 24,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 8,
+    },
+    dark: {
+      shadowColor: "#000000",
+      shadowOpacity: 0.5,
+      shadowRadius: 32,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 12,
+    },
+  },
+} as const;
+
+/** The weights `_layout.tsx` loads. Inter is both body and heading face. */
 export const FONTS = {
-  regular: "JetBrainsMono_400Regular",
-  medium: "JetBrainsMono_500Medium",
-  semibold: "JetBrainsMono_600SemiBold",
-  bold: "JetBrainsMono_700Bold",
+  regular: "Inter_400Regular",
+  medium: "Inter_500Medium",
+  semibold: "Inter_600SemiBold",
+  bold: "Inter_700Bold",
 } as const;
 
 /**
- * Headings, buttons, labels and table headers are bold uppercase with tracking.
- * Native has no `text-transform` shorthand per size, so the tracking lives here
- * and the casing is applied by the `Text` variants that carry it.
+ * Sentence case on Wise's own scale. Headings take negative tracking rather
+ * than extra weight, and figures get their own steps. React Native measures
+ * `letterSpacing` in points, so each em value from the reference is resolved
+ * against its own size here rather than at the call site.
  */
 export const TYPE = {
-  h1: { fontSize: 20, fontFamily: FONTS.bold, letterSpacing: 1 },
-  h2: { fontSize: 14, fontFamily: FONTS.bold, letterSpacing: 0.8 },
-  h3: { fontSize: 13, fontFamily: FONTS.bold, letterSpacing: 0.6 },
-  body: { fontSize: 14, fontFamily: FONTS.regular },
-  bodyMedium: { fontSize: 14, fontFamily: FONTS.medium },
-  small: { fontSize: 12, fontFamily: FONTS.regular },
-  tiny: { fontSize: 11, fontFamily: FONTS.regular },
-  label: { fontSize: 12, fontFamily: FONTS.semibold, letterSpacing: 0.6 },
-  figure: { fontSize: 22, fontFamily: FONTS.semibold },
-  figureLead: { fontSize: 26, fontFamily: FONTS.bold },
+  pageTitle: { fontSize: 32, fontFamily: FONTS.bold, letterSpacing: -1.28 },
+  sheetTitle: { fontSize: 24, fontFamily: FONTS.bold, letterSpacing: -0.72 },
+  cardTitle: { fontSize: 18, fontFamily: FONTS.semibold, letterSpacing: -0.27 },
+  body: { fontSize: 16, fontFamily: FONTS.regular },
+  bodyMedium: { fontSize: 16, fontFamily: FONTS.medium },
+  bodySemibold: {
+    fontSize: 16,
+    fontFamily: FONTS.semibold,
+    letterSpacing: -0.24,
+  },
+  meta: { fontSize: 14, fontFamily: FONTS.regular },
+  metaMedium: { fontSize: 14, fontFamily: FONTS.medium },
+  /**
+   * The one survivor of the old uppercase treatment, and only for a small label
+   * over a figure — stat tiles, hero splits, nav group headings.
+   */
+  eyebrow: { fontSize: 12, fontFamily: FONTS.semibold, letterSpacing: 0.24 },
+  tag: { fontSize: 12, fontFamily: FONTS.semibold },
+  figureHero: { fontSize: 60, fontFamily: FONTS.bold, letterSpacing: -2.7 },
+  figureTile: { fontSize: 32, fontFamily: FONTS.bold, letterSpacing: -1.28 },
+  figureRow: { fontSize: 18, fontFamily: FONTS.bold, letterSpacing: -0.45 },
 } as const;
 
-/** 44pt is the tap target every control on this app meets or exceeds. */
-export const CONTROL_HEIGHT = 44;
-
 export const BORDER_WIDTH = 1;
-
-/** Cards, tables, dialogs and popovers are plated with a doubled edge. */
-export const PLATE_BORDER_WIDTH = 2;

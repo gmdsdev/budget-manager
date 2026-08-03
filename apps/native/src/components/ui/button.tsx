@@ -6,23 +6,64 @@ import {
   type ViewStyle,
 } from "react-native";
 
-import { Text } from "@/components/ui/text";
+import { Text, type TextVariant } from "@/components/ui/text";
+import { withAlpha } from "@/theme/color";
 import { useColors } from "@/theme/theme-provider";
-import { BORDER_WIDTH, CONTROL_HEIGHT, SHADOW_OFFSET, SPACING } from "@/theme/tokens";
+import {
+  BORDER_WIDTH,
+  BRAND,
+  CONTROL_HEIGHT,
+  RADIUS,
+  SPACING,
+} from "@/theme/tokens";
 
 export type ButtonVariant =
   | "default"
   | "outline"
   | "secondary"
   | "ghost"
-  | "destructive";
+  | "destructive"
+  | "link"
+  | "onBrand"
+  | "ghostOnBrand";
 
-export type ButtonSize = "default" | "sm" | "icon";
+export type ButtonSize = "default" | "sm" | "xs" | "lg" | "icon" | "icon-sm";
+
+const PADDING: Record<ButtonSize, number> = {
+  default: SPACING.xl,
+  sm: SPACING.lg,
+  xs: SPACING.md,
+  lg: SPACING["2xl"],
+  icon: 0,
+  "icon-sm": 0,
+};
+
+const LABEL_VARIANT: Record<ButtonSize, TextVariant> = {
+  default: "bodySemibold",
+  sm: "metaMedium",
+  xs: "tag",
+  lg: "bodySemibold",
+  icon: "bodySemibold",
+  "icon-sm": "metaMedium",
+};
+
+function heightFor(size: ButtonSize) {
+  if (size === "lg") return CONTROL_HEIGHT.lg;
+  if (size === "sm" || size === "icon-sm") return CONTROL_HEIGHT.sm;
+  if (size === "xs") return CONTROL_HEIGHT.xs;
+
+  return CONTROL_HEIGHT.default;
+}
 
 /**
- * A pressable plate. The press effect is the web's own — the surface shifts by
- * its shadow offset and the shadow disappears, so the button reads as being
- * pushed into the page. `ghost` opts out, exactly as `buttonVariants` does.
+ * A pill. Nothing casts a hard shadow any more, so the press effect is a plain
+ * wash rather than the surface sliding into its own ink — and `rounded-full` is
+ * not a choice a caller makes, it is what a button is in this design.
+ *
+ * `default` is the brand surface, not a themed one: bright green with forest
+ * green ink in **both** modes. `destructive` is outlined rather than a filled red
+ * block, and `onBrand`/`ghostOnBrand` are for the dashboard hero, where the
+ * page's own primary is the background and would vanish.
  */
 export function Button({
   variant = "default",
@@ -43,26 +84,68 @@ export function Button({
   style?: ViewStyle;
 }) {
   const colors = useColors();
-  const offset = variant === "ghost" ? 0 : SHADOW_OFFSET.xs;
   const isDisabled = disabled || loading;
+  const height = heightFor(size);
+  const isIcon = size === "icon" || size === "icon-sm";
 
   const background =
     variant === "default"
       ? colors.primary
       : variant === "secondary"
         ? colors.secondary
-        : variant === "destructive"
-          ? colors.destructive
-          : variant === "ghost"
-            ? "transparent"
-            : colors.card;
+        : variant === "onBrand"
+          ? BRAND.forestGreen
+          : variant === "ghostOnBrand"
+            ? withAlpha(BRAND.forestGreen, 0.08)
+            : "transparent";
+
+  const pressedBackground =
+    variant === "default"
+      ? colors.primaryHover
+      : variant === "secondary"
+        ? withAlpha(colors.secondary, 0.7)
+        : variant === "onBrand"
+          ? withAlpha(BRAND.forestGreen, 0.85)
+          : variant === "ghostOnBrand"
+            ? withAlpha(BRAND.forestGreen, 0.14)
+            : variant === "destructive"
+              ? withAlpha(colors.destructive, 0.1)
+              : variant === "link"
+                ? "transparent"
+                : colors.accent;
+
+  const borderColor =
+    variant === "outline"
+      ? colors.input
+      : variant === "destructive"
+        ? withAlpha(colors.destructive, 0.4)
+        : variant === "ghostOnBrand"
+          ? withAlpha(BRAND.forestGreen, 0.25)
+          : "transparent";
 
   const tone =
-    variant === "default" || variant === "destructive" ? "inverse" : "default";
+    variant === "default"
+      ? ("onPrimary" as const)
+      : variant === "destructive"
+        ? ("destructive" as const)
+        : variant === "link"
+          ? ("link" as const)
+          : ("default" as const);
 
-  const height = size === "sm" ? 36 : CONTROL_HEIGHT;
-  const paddingHorizontal =
-    size === "icon" ? 0 : size === "sm" ? SPACING.md : SPACING.lg;
+  const inkColor =
+    variant === "default"
+      ? colors.primaryForeground
+      : variant === "secondary"
+        ? colors.secondaryForeground
+        : variant === "destructive"
+          ? colors.destructive
+          : variant === "link"
+            ? colors.link
+            : variant === "onBrand"
+              ? BRAND.brightGreen
+              : variant === "ghostOnBrand"
+                ? BRAND.forestGreen
+                : colors.foreground;
 
   return (
     <Pressable
@@ -73,60 +156,91 @@ export function Button({
       style={({ pressed }) => [
         {
           minHeight: height,
-          opacity: isDisabled ? 0.5 : 1,
+          flexDirection: "row",
+          alignItems: "center",
           justifyContent: "center",
+          gap: SPACING.sm,
+          paddingHorizontal: PADDING[size],
+          borderRadius: RADIUS.full,
+          borderWidth: BORDER_WIDTH,
+          borderColor,
+          backgroundColor: pressed ? pressedBackground : background,
+          opacity: isDisabled ? 0.4 : 1,
         },
-        size === "icon" && { width: height },
+        isIcon && { width: height, paddingHorizontal: 0 },
         style,
-        // The plate slides into its own shadow rather than fading.
-        pressed && offset > 0 ? { transform: [{ translateX: offset }, { translateY: offset }] } : null,
       ]}
       {...props}
     >
-      {({ pressed }) => (
-        <View style={{ flex: 1, justifyContent: "center" }}>
-          {offset > 0 && !pressed && (
-            <View
-              pointerEvents="none"
-              style={{
-                position: "absolute",
-                left: offset,
-                top: offset,
-                right: -offset,
-                bottom: -offset,
-                backgroundColor: colors.shadowHard,
-              }}
-            />
-          )}
-          <View
-            style={{
-              flex: 1,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: SPACING.sm,
-              paddingHorizontal,
-              borderWidth: variant === "ghost" ? 0 : BORDER_WIDTH,
-              borderColor: colors.border,
-              backgroundColor: background,
-            }}
-          >
-            {loading ? (
-              <ActivityIndicator
-                size="small"
-                color={tone === "inverse" ? colors.primaryForeground : colors.foreground}
-              />
-            ) : (
-              leading
-            )}
-            {label ? (
-              <Text variant="label" tone={tone} numberOfLines={1}>
-                {label}
-              </Text>
-            ) : null}
-          </View>
-        </View>
+      {loading ? (
+        <ActivityIndicator size="small" color={inkColor} />
+      ) : (
+        leading
       )}
+      {label ? (
+        <Text
+          variant={LABEL_VARIANT[size]}
+          tone={tone}
+          numberOfLines={1}
+          // The two branded variants ink themselves rather than adding two tones
+          // to `Text` that only this file would ever pass.
+          style={
+            variant === "onBrand" || variant === "ghostOnBrand"
+              ? { color: inkColor }
+              : undefined
+          }
+        >
+          {label}
+        </Text>
+      ) : null}
+    </Pressable>
+  );
+}
+
+/**
+ * A row of icon-only affordances needs the tap target without the pill: the
+ * sheet close button, a stepper arrow. Same geometry, no fill.
+ */
+export function IconButton({
+  label,
+  onPress,
+  disabled,
+  children,
+  size = "sm",
+  style,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+  size?: "sm" | "default";
+  style?: ViewStyle;
+}) {
+  const colors = useColors();
+  const height = size === "sm" ? CONTROL_HEIGHT.sm : CONTROL_HEIGHT.default;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      hitSlop={8}
+      style={({ pressed }) => [
+        {
+          width: height,
+          height,
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: RADIUS.full,
+          backgroundColor: pressed ? colors.accent : "transparent",
+          opacity: disabled ? 0.4 : 1,
+        },
+        style,
+      ]}
+    >
+      <View>{children}</View>
     </Pressable>
   );
 }

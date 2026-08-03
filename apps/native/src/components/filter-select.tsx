@@ -8,6 +8,9 @@ export type FilterItem = SelectItem;
  * The trigger reads as the column name until the column is actually filtered,
  * which is what lets the bar drop its labels. The list keeps its explicit
  * "All …" row, so resetting one column stays a visible choice.
+ *
+ * A chip whose column *is* narrowing the list switches from outlined to the pale
+ * green filled state, so the bar shows at a glance which columns are in play.
  */
 export function FilterSelect({
   label,
@@ -29,6 +32,8 @@ export function FilterSelect({
     <Select
       label={label}
       items={items}
+      size="sm"
+      filled={!!selected}
       // Unset shows the column name through the placeholder rather than the
       // "All …" row's label, which is what keeps the bar readable at a glance.
       value={selected ?? ""}

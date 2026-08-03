@@ -104,6 +104,7 @@ export function TransactionFilters({
     >
       <DateRangePicker
         label={t("transaction.filter.dateRange")}
+        size="sm"
         value={{ from: filters.dateFrom, to: filters.dateTo }}
         onValueChange={({ from, to }) => patch({ dateFrom: from, dateTo: to })}
         style={{ width: "100%" }}

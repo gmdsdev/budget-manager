@@ -4,7 +4,6 @@ import { useI18n } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/money";
 import { View } from "react-native";
 
-import { Plate } from "@/components/ui/plate";
 import { Sheet } from "@/components/ui/sheet";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
@@ -39,11 +38,11 @@ export function BudgetPeriodsSheet({
       ) : isError ? (
         <Text tone="destructive">{getErrorMessage(error)}</Text>
       ) : data.rows.length === 0 ? (
-        <Text variant="small" tone="muted">
+        <Text variant="meta" tone="muted">
           {t("budget.periods.empty")}
         </Text>
       ) : (
-        <Plate shadow="none">
+        <View>
           {data.rows.map((period, index) => (
             <View
               key={period.periodId}
@@ -51,7 +50,7 @@ export function BudgetPeriodsSheet({
                 padding: SPACING.md,
                 gap: 2,
                 borderTopWidth: index > 0 ? BORDER_WIDTH : 0,
-                borderColor: colors.muted,
+                borderColor: colors.border,
               }}
             >
               <View
@@ -75,11 +74,11 @@ export function BudgetPeriodsSheet({
                   gap: SPACING.sm,
                 }}
               >
-                <Text variant="tiny" tone="muted">
+                <Text variant="meta" tone="muted">
                   {t("budget.column.spent")}{" "}
                   {formatMinorUnits(period.projectedSpentCents, period.currencyCode)}
                 </Text>
-                <Text variant="tiny" tone="muted">
+                <Text variant="meta" tone="muted">
                   {period.isOverride
                     ? t("budget.periods.custom")
                     : t("budget.periods.inherited")}
@@ -87,7 +86,7 @@ export function BudgetPeriodsSheet({
               </View>
             </View>
           ))}
-        </Plate>
+        </View>
       )}
     </Sheet>
   );

@@ -12,7 +12,6 @@ import { View } from "react-native";
 
 import { Amount } from "@/components/amount";
 import { Pagination } from "@/components/ui/pagination";
-import { Plate } from "@/components/ui/plate";
 import { Sheet } from "@/components/ui/sheet";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/text";
@@ -62,12 +61,12 @@ export function CreditCardBillsSheet({
       ) : isError ? (
         <Text tone="destructive">{getErrorMessage(error)}</Text>
       ) : data.rows.length === 0 ? (
-        <Text variant="small" tone="muted">
+        <Text variant="meta" tone="muted">
           {t("creditCard.bills.empty")}
         </Text>
       ) : (
         <>
-          <Plate shadow="none">
+          <View>
             {data.rows.map((bill, index) => (
               <View
                 key={bill.id}
@@ -75,7 +74,7 @@ export function CreditCardBillsSheet({
                   padding: SPACING.md,
                   gap: SPACING.xs,
                   borderTopWidth: index > 0 ? BORDER_WIDTH : 0,
-                  borderColor: colors.muted,
+                  borderColor: colors.border,
                 }}
               >
                 <View
@@ -102,11 +101,11 @@ export function CreditCardBillsSheet({
                     gap: SPACING.sm,
                   }}
                 >
-                  <Text variant="tiny" tone="muted">
+                  <Text variant="meta" tone="muted">
                     {t("creditCard.bills.due")}{" "}
                     {formatDateString(bill.dueAt, "day")}
                   </Text>
-                  <Text variant="tiny" tone={STATUS_TONE[bill.status]}>
+                  <Text variant="meta" tone={STATUS_TONE[bill.status]}>
                     {t(BILL_STATUS_KEYS[bill.status])}
                   </Text>
                 </View>
@@ -117,18 +116,18 @@ export function CreditCardBillsSheet({
                     gap: SPACING.sm,
                   }}
                 >
-                  <Text variant="tiny" tone="muted">
+                  <Text variant="meta" tone="muted">
                     {t("creditCard.bills.statement")}{" "}
                     {formatMinorUnits(bill.statementTotalCents, data.currencyCode)}
                   </Text>
-                  <Text variant="tiny" tone="muted">
+                  <Text variant="meta" tone="muted">
                     {t("creditCard.bills.paid")}{" "}
                     {formatMinorUnits(bill.paidCents, data.currencyCode)}
                   </Text>
                 </View>
               </View>
             ))}
-          </Plate>
+          </View>
 
           <Pagination
             page={page}

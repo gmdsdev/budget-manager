@@ -62,10 +62,12 @@ export const dashboard = {
     en: "Income minus spending, pending rows included",
     "pt-BR": "Receitas menos gastos, incluindo pendentes",
   },
-  // The web dashboard dropped its sparkline; `apps/native` still draws one.
-  "dashboard.stat.net.sparkline": {
-    en: "Monthly net in {currency} over the last {months} months",
-    "pt-BR": "Saldo mensal em {currency} nos últimos {months} meses",
+  // `apps/native` reads its cash-flow figures out as one sentence per month rather
+  // than drawing the web's table twin: four columns of money do not fit a phone, and
+  // a screen reader wants the month named beside its figures either way.
+  "dashboard.cashFlow.monthSummary": {
+    en: "{month}: {income} in, {expenses} out, net {net}",
+    "pt-BR": "{month}: {income} de entrada, {expenses} de saída, saldo {net}",
   },
   "dashboard.stat.onCards": { en: "On cards", "pt-BR": "Nos cartões" },
   "dashboard.stat.onCards.hint": {

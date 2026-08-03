@@ -1,11 +1,11 @@
 import { useTranslate } from "@budget-manager/i18n/react";
 import {
-  JetBrainsMono_400Regular,
-  JetBrainsMono_500Medium,
-  JetBrainsMono_600SemiBold,
-  JetBrainsMono_700Bold,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
   useFonts,
-} from "@expo-google-fonts/jetbrains-mono";
+} from "@expo-google-fonts/inter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -21,13 +21,13 @@ import { FONTS } from "@/theme/tokens";
 import { queryClient } from "@/utils/trpc";
 
 export default function RootLayout() {
-  // One mono face everywhere — `JetBrains Mono` is both the body and the heading
-  // face, so nothing renders until it is in hand.
+  // Inter is both `--font-sans` and `--font-heading` on the web, so it is the one
+  // face here too — and nothing renders until it is in hand.
   const [fontsLoaded] = useFonts({
-    JetBrainsMono_400Regular,
-    JetBrainsMono_500Medium,
-    JetBrainsMono_600SemiBold,
-    JetBrainsMono_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
 
   return (
@@ -80,9 +80,9 @@ function AuthGate() {
 }
 
 /**
- * The tabs and the login screen own their whole surface; the three screens pushed from
- * **More** keep a native header, because a pushed screen needs a back affordance the
- * system already knows how to draw.
+ * The tabs and the login screen own their whole surface; the four screens pushed from
+ * the account menu keep a native header, because a pushed screen needs a back
+ * affordance the system already knows how to draw.
  */
 function AppStack() {
   const t = useTranslate();
@@ -92,19 +92,20 @@ function AppStack() {
     headerShown: true,
     // Without this the back button reads `(tabs)`: the label falls back to the
     // previous route's title, and the previous route is the tab group, whose
-    // `Stack.Screen` has no title to give. All three of these are pushed from
-    // **More**, so that is where back goes and what it should say.
+    // `Stack.Screen` has no title to give. All four of these are pushed from the
+    // account menu, so that is where back goes and what it should say.
     headerBackTitle: t("common.menu"),
-    headerStyle: { backgroundColor: colors.card },
+    headerStyle: { backgroundColor: colors.background },
+    headerShadowVisible: false,
     headerTintColor: colors.foreground,
     headerTitleStyle: {
-      fontFamily: FONTS.bold,
-      fontSize: 14,
-      letterSpacing: 0.8,
+      fontFamily: FONTS.semibold,
+      fontSize: 18,
+      letterSpacing: -0.27,
     },
     headerBackTitleStyle: {
       fontFamily: FONTS.regular,
-      fontSize: 14,
+      fontSize: 16,
     },
   };
 
@@ -119,16 +120,20 @@ function AppStack() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="login" />
       <Stack.Screen
+        name="wallet"
+        options={{ ...pushedOptions, title: t("nav.wallets") }}
+      />
+      <Stack.Screen
         name="credit-card"
-        options={{ ...pushedOptions, title: t("nav.creditCards").toUpperCase() }}
+        options={{ ...pushedOptions, title: t("nav.creditCards") }}
       />
       <Stack.Screen
         name="category"
-        options={{ ...pushedOptions, title: t("nav.categories").toUpperCase() }}
+        options={{ ...pushedOptions, title: t("nav.categories") }}
       />
       <Stack.Screen
         name="settings"
-        options={{ ...pushedOptions, title: t("nav.settings").toUpperCase() }}
+        options={{ ...pushedOptions, title: t("nav.settings") }}
       />
     </Stack>
   );

@@ -41,7 +41,7 @@ export function SpendingBreakdown({
       />
 
       {categories.length === 0 ? (
-        <Text variant="tiny" tone="muted">
+        <Text variant="meta" tone="muted">
           {t("dashboard.spending.empty")}
         </Text>
       ) : (
@@ -74,13 +74,13 @@ export function SpendingBreakdown({
                           ? category.name
                           : t("category.uncategorized")
                       }
-                      variant="small"
+                      variant="meta"
                     />
                   </View>
-                  <Text variant="small" style={{ fontVariant: ["tabular-nums"] }}>
+                  <Text variant="meta" style={{ fontVariant: ["tabular-nums"] }}>
                     {formatMinorUnits(category.amountCents, currencyCode)}
                   </Text>
-                  <Text variant="tiny" tone="muted">
+                  <Text variant="meta" tone="muted">
                     {`${share}%`}
                   </Text>
                 </View>
@@ -102,7 +102,7 @@ export function SpendingBreakdown({
       )}
 
       {rest > 0 && (
-        <Text variant="tiny" tone="muted">
+        <Text variant="meta" tone="muted">
           {t("dashboard.spending.rest", {
             amount: formatMinorUnits(rest, currencyCode),
           })}

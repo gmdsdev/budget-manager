@@ -3,10 +3,10 @@ import { useI18n } from "@budget-manager/i18n/react";
 import { View } from "react-native";
 
 import { Amount } from "@/components/amount";
-import { Plate } from "@/components/ui/plate";
+import { Surface } from "@/components/ui/surface";
 import { Text } from "@/components/ui/text";
 import { useColors } from "@/theme/theme-provider";
-import { BORDER_WIDTH, PLATE_BORDER_WIDTH, SPACING } from "@/theme/tokens";
+import { BORDER_WIDTH, SPACING } from "@/theme/tokens";
 
 /**
  * Narrower than `MessageKey`: none of the four takes a placeholder, so `t` can be
@@ -80,30 +80,28 @@ export function TransactionSummary({
   }
 
   return (
-    <Plate
+    <Surface
       // Held at reduced opacity on a refetch rather than swapped for a skeleton,
       // so changing a filter never jumps the screen.
       style={{ opacity: isFetching ? 0.6 : 1 }}
     >
       <View
         style={{
-          borderBottomWidth: PLATE_BORDER_WIDTH,
-          borderColor: colors.border,
-          paddingHorizontal: SPACING.md,
-          paddingVertical: SPACING.sm,
+          paddingHorizontal: SPACING.lg,
+          paddingTop: SPACING.lg,
         }}
       >
-        <Text variant="h3">{t("transaction.summary.heading")}</Text>
+        <Text variant="cardTitle">{t("transaction.summary.heading")}</Text>
       </View>
 
       {currencies.map((row, index) => (
         <View
           key={row.currencyCode}
           style={{
-            padding: SPACING.md,
+            padding: SPACING.lg,
             gap: SPACING.sm,
             borderTopWidth: index > 0 ? BORDER_WIDTH : 0,
-            borderColor: colors.muted,
+            borderColor: colors.border,
           }}
         >
           <View
@@ -113,12 +111,12 @@ export function TransactionSummary({
               gap: SPACING.sm,
             }}
           >
-            <Text variant="h3">{row.currencyCode}</Text>
+            <Text variant="cardTitle">{row.currencyCode}</Text>
             <View style={{ flexDirection: "row", gap: SPACING.lg }}>
-              <Text variant="tiny" tone="muted">
+              <Text variant="meta" tone="muted">
                 {t("transaction.summary.effective")}
               </Text>
-              <Text variant="tiny" tone="muted">
+              <Text variant="meta" tone="muted">
                 {t("transaction.summary.projected")}
               </Text>
             </View>
@@ -133,21 +131,21 @@ export function TransactionSummary({
                 gap: SPACING.sm,
               }}
             >
-              <Text variant="small" tone="muted" style={{ flex: 1 }}>
+              <Text variant="meta" tone="muted" style={{ flex: 1 }}>
                 {t(metric.label)}
               </Text>
               <View style={{ width: "30%", alignItems: "flex-end" }}>
                 <Amount
                   cents={metric.effective(row)}
                   currencyCode={row.currencyCode}
-                  variant="small"
+                  variant="meta"
                 />
               </View>
               <View style={{ width: "30%", alignItems: "flex-end" }}>
                 <Amount
                   cents={metric.projected(row)}
                   currencyCode={row.currencyCode}
-                  variant="small"
+                  variant="meta"
                 />
               </View>
             </View>
@@ -158,16 +156,16 @@ export function TransactionSummary({
       <View
         style={{
           borderTopWidth: BORDER_WIDTH,
-          borderColor: colors.muted,
-          padding: SPACING.md,
+          borderColor: colors.border,
+          padding: SPACING.lg,
         }}
       >
-        <Text variant="tiny" tone="muted">
+        <Text variant="meta" tone="muted">
           {t("transaction.summary.note", {
             date: formatDateString(rangeTo, "numeric"),
           })}
         </Text>
       </View>
-    </Plate>
+    </Surface>
   );
 }

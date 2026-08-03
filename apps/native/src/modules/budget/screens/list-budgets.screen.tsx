@@ -1,6 +1,7 @@
 import {
   type BudgetFiltersState,
   type BudgetProgressRow,
+  type BudgetRow,
   currentMonth,
   EMPTY_BUDGET_FILTERS,
   isBudgetFiltered,
@@ -21,12 +22,12 @@ import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
 import { MonthStepper } from "@/components/ui/month-stepper";
 import { Pagination } from "@/components/ui/pagination";
-import { RowCardList } from "@/components/ui/row-card";
 import { Fading, PageHeader, Screen } from "@/components/ui/screen";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BudgetDetailSheet } from "@/modules/budget/components/budget-detail-sheet";
 import { BudgetFilters } from "@/modules/budget/components/budget-list/budget-filters";
-import { BudgetRowCard } from "@/modules/budget/components/budget-list/budget-row-card";
+import { BudgetRows } from "@/modules/budget/components/budget-list/budget-rows";
 import { BudgetMonthCard } from "@/modules/budget/components/budget-month-card";
 import { CreateBudgetSheet } from "@/modules/budget/components/create-budget-sheet";
 import { SPACING } from "@/theme/tokens";
@@ -34,6 +35,7 @@ import { SPACING } from "@/theme/tokens";
 export function ListBudgetsScreen() {
   const { t, formatMonthString } = useI18n();
   const [creating, setCreating] = useState(false);
+  const [selected, setSelected] = useState<BudgetRow | null>(null);
   const [month, setMonth] = useState(currentMonth());
   const [currencyCode, setCurrencyCode] = useState<string | null>(null);
   const preferredCurrency: string = usePreferredCurrency();
@@ -124,11 +126,7 @@ export function ListBudgetsScreen() {
         />
       ) : (
         <>
-          <RowCardList>
-            {data.rows.map((budget) => (
-              <BudgetRowCard key={budget.id} budget={budget} />
-            ))}
-          </RowCardList>
+          <BudgetRows budgets={data.rows} onSelect={setSelected} />
           <Pagination
             page={page}
             total={data.total}
@@ -136,6 +134,14 @@ export function ListBudgetsScreen() {
             isFetching={isFetching}
             resource="budgets"
           />
+
+          {selected && (
+            <BudgetDetailSheet
+              key={selected.id}
+              budget={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </>
       )}
 

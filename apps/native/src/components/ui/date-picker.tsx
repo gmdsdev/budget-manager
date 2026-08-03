@@ -9,13 +9,22 @@ import { Calendar } from "@/components/ui/calendar";
 import { Sheet } from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
 import { useColors } from "@/theme/theme-provider";
-import { BORDER_WIDTH, CONTROL_HEIGHT, SPACING } from "@/theme/tokens";
+import {
+  BORDER_WIDTH,
+  CONTROL_HEIGHT,
+  RADIUS,
+  SPACING,
+} from "@/theme/tokens";
+
+/** `sm` is the filter bar's chip; `default` is the 48pt form field. */
+export type DatePickerSize = "default" | "sm";
 
 function Trigger({
   text,
   placeholder,
   label,
   invalid,
+  size = "default",
   style,
   onPress,
 }: {
@@ -23,32 +32,40 @@ function Trigger({
   placeholder: string;
   label?: string;
   invalid?: boolean;
+  size?: DatePickerSize;
   style?: ViewStyle;
   onPress: () => void;
 }) {
   const colors = useColors();
+  const isChip = size === "sm";
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={[
+      style={({ pressed }) => [
         {
-          minHeight: CONTROL_HEIGHT,
+          minHeight: isChip ? CONTROL_HEIGHT.sm : CONTROL_HEIGHT.default,
           flexDirection: "row",
           alignItems: "center",
           gap: SPACING.sm,
-          paddingHorizontal: SPACING.md,
+          paddingHorizontal: SPACING.lg,
+          borderRadius: isChip ? RADIUS.full : RADIUS.md,
           borderWidth: BORDER_WIDTH,
           borderColor: invalid ? colors.destructive : colors.input,
-          backgroundColor: colors.card,
+          backgroundColor: pressed ? colors.accent : colors.card,
         },
         style,
       ]}
     >
       <Feather name="calendar" size={16} color={colors.mutedForeground} />
-      <Text tone={text ? "default" : "muted"} numberOfLines={1} style={{ flex: 1 }}>
+      <Text
+        variant={isChip ? "metaMedium" : "body"}
+        tone={text ? "default" : "muted"}
+        numberOfLines={1}
+        style={{ flex: 1 }}
+      >
         {text ?? placeholder}
       </Text>
     </Pressable>
@@ -116,11 +133,13 @@ export function DateRangePicker({
   value,
   onValueChange,
   label,
+  size,
   style,
 }: {
   value: DateRangeValue;
   onValueChange: (value: DateRangeValue) => void;
   label: string;
+  size?: DatePickerSize;
   style?: ViewStyle;
 }) {
   const { t, formatDateString } = useI18n();
@@ -152,6 +171,7 @@ export function DateRangePicker({
         text={text}
         placeholder={t("common.pickADateRange")}
         label={label}
+        size={size}
         style={style}
         onPress={() => {
           setDraftStart(null);

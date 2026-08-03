@@ -72,7 +72,7 @@
         "@budget-manager/i18n": "workspace:*",
         "@budget-manager/money": "workspace:*",
         "@budget-manager/schemas": "workspace:*",
-        "@expo-google-fonts/jetbrains-mono": "^0.4.1",
+        "@expo-google-fonts/inter": "^0.4.2",
         "@expo/vector-icons": "^15.0.2",
         "@react-native-async-storage/async-storage": "2.2.0",
         "@tanstack/react-form": "^1.33.0",
@@ -659,7 +659,7 @@
 
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.4.1", "", { "dependencies": { "@eslint/core": "^0.17.0", "levn": "^0.4.1" } }, "sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA=="],
 
-    "@expo-google-fonts/jetbrains-mono": ["@expo-google-fonts/jetbrains-mono@0.4.1", "", {}, "sha512-CslACrtMOcRwoWXCO7OMEI+9w3fukWSoBtvNz46OqPoogEuuoY0tkDY1O8sFumk8t0pC6Cx0Xr95O0TOQhpkug=="],
+    "@expo-google-fonts/inter": ["@expo-google-fonts/inter@0.4.2", "", {}, "sha512-syfiImMaDmq7cFi0of+waE2M4uSCyd16zgyWxdPOY7fN2VBmSLKEzkfbZgeOjJq61kSqPBNNtXjggiQiSD6gMQ=="],
 
     "@expo-google-fonts/material-symbols": ["@expo-google-fonts/material-symbols@0.4.42", "", {}, "sha512-KZmHZRcthJ3KFZZlpzHjopA9guZgWR9fb3uVZlTR0BNlvG2pw1bnYBCpkze2PB0vRllwGhAM7lWXsfmcWCbXYg=="],
 
