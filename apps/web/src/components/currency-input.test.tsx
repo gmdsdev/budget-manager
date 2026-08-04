@@ -29,6 +29,42 @@ function amountInput() {
   return screen.getByLabelText<HTMLInputElement>("amount");
 }
 
+/** A fresh focus, which the browser arrives at with the whole value selected. */
+function tabInto(element: HTMLInputElement) {
+  element.setSelectionRange(0, element.value.length);
+  fireEvent.focus(element);
+}
+
+/** Where the caret sits once a keystroke has landed: past the last character. */
+function caretAtEnd(element: HTMLInputElement) {
+  element.setSelectionRange(element.value.length, element.value.length);
+}
+
+function press(element: HTMLInputElement, character: string) {
+  const start = element.selectionStart ?? element.value.length;
+  const end = element.selectionEnd ?? element.value.length;
+  const next = element.value.slice(0, start) + character + element.value.slice(end);
+
+  fireEvent.change(element, {
+    target: { value: next, selectionStart: start + 1, selectionEnd: start + 1 },
+  });
+}
+
+function backspace(element: HTMLInputElement) {
+  const start = element.selectionStart ?? element.value.length;
+  const end = element.selectionEnd ?? element.value.length;
+  const from = start === end ? Math.max(0, start - 1) : start;
+  const next = element.value.slice(0, from) + element.value.slice(end);
+
+  fireEvent.change(element, {
+    target: { value: next, selectionStart: from, selectionEnd: from },
+  });
+}
+
+function flat(element: HTMLInputElement) {
+  return element.value.replace(/\s/g, " ");
+}
+
 describe("CurrencyInput", () => {
   test("reads typed digits as minor units", () => {
     render(<Harness />);
@@ -65,42 +101,143 @@ describe("CurrencyInput", () => {
     expect(amountInput().value).not.toContain("10.50");
   });
 
-  test("keeps the caret in place when editing mid-string", () => {
+  test("shifts digits in from the right, one keystroke at a time", () => {
+    render(<Harness />);
+    const input = amountInput();
+
+    tabInto(input);
+
+    const reading = ["R$ 0,01", "R$ 0,12", "R$ 1,23", "R$ 12,34", "R$ 123,45"];
+
+    for (const [index, digit] of ["1", "2", "3", "4", "5"].entries()) {
+      press(input, digit);
+
+      expect(flat(input)).toBe(reading[index]!);
+      expect(input.selectionStart).toBe(input.value.length);
+    }
+
+    expect(screen.getByTestId("value").textContent).toBe("12345");
+  });
+
+  test("leaves the select-all a fresh focus brings, so a fill still replaces", () => {
     render(<Harness initial={150000} />);
     const input = amountInput();
 
-    const beforeDigits = 3;
-    let offset = 0;
-    let seen = 0;
+    tabInto(input);
 
-    for (let index = 0; index < input.value.length; index++) {
-      const character = input.value[index]!;
-      if (character >= "0" && character <= "9" && ++seen === beforeDigits) {
-        offset = index + 1;
-        break;
-      }
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe(input.value.length);
+  });
+
+  test("drops the rightmost digit on backspace", () => {
+    render(<Harness initial={12345} />);
+    const input = amountInput();
+
+    caretAtEnd(input);
+    backspace(input);
+
+    expect(flat(input)).toBe("R$ 12,34");
+
+    backspace(input);
+
+    expect(flat(input)).toBe("R$ 1,23");
+    expect(screen.getByTestId("value").textContent).toBe("123");
+  });
+
+  test("refuses to move the caret off the end", () => {
+    render(<Harness initial={12345} />);
+    const input = amountInput();
+
+    input.setSelectionRange(3, 3);
+
+    for (const key of ["ArrowLeft", "ArrowRight", "Home", "End", "ArrowUp"]) {
+      const moved = fireEvent.keyDown(input, { key });
+
+      expect(moved).toBe(false);
+      expect(input.selectionStart).toBe(input.value.length);
     }
+  });
 
-    const next = input.value.slice(0, offset) + "9" + input.value.slice(offset);
+  test("leaves a shifted key alone so a selection can still be made", () => {
+    render(<Harness initial={12345} />);
+    const input = amountInput();
 
-    fireEvent.change(input, {
-      target: {
-        value: next,
-        selectionStart: offset + 1,
-        selectionEnd: offset + 1,
-      },
-    });
+    tabInto(input);
 
-    const caret = input.selectionStart ?? -1;
-    let digitsBeforeCaret = 0;
+    expect(fireEvent.keyDown(input, { key: "ArrowLeft", shiftKey: true })).toBe(
+      true,
+    );
+    expect(fireEvent.keyDown(input, { key: "Backspace" })).toBe(true);
+  });
 
-    for (let index = 0; index < caret; index++) {
-      const character = input.value[index]!;
-      if (character >= "0" && character <= "9") digitsBeforeCaret++;
-    }
+  test("keeps the caret at the end when a digit is typed mid-string", () => {
+    render(<Harness initial={1234} />);
+    const input = amountInput();
 
-    expect(digitsBeforeCaret).toBe(4);
-    expect(caret).toBeLessThan(input.value.length);
+    input.setSelectionRange(4, 4);
+    press(input, "9");
+
+    expect(input.selectionStart).toBe(input.value.length);
+    expect(screen.getByTestId("value").textContent).toBe("19234");
+  });
+
+  test("replaces the whole value when the selection covers it", () => {
+    render(<Harness initial={12345} />);
+    const input = amountInput();
+
+    tabInto(input);
+    input.setSelectionRange(0, input.value.length);
+    press(input, "7");
+
+    expect(flat(input)).toBe("R$ 0,07");
+    expect(screen.getByTestId("value").textContent).toBe("7");
+  });
+
+  test("ignores a keystroke that is not a digit", () => {
+    render(<Harness initial={1234} />);
+    const input = amountInput();
+
+    caretAtEnd(input);
+    press(input, "a");
+
+    expect(flat(input)).toBe("R$ 12,34");
+    expect(screen.getByTestId("value").textContent).toBe("1234");
+  });
+
+  test("takes a whole-string replacement at its word", () => {
+    render(<Harness initial={200000} />);
+    const input = amountInput();
+
+    expect(flat(input)).toBe("R$ 2.000,00");
+
+    fireEvent.change(input, { target: { value: "250000" } });
+
+    expect(screen.getByTestId("value").textContent).toBe("250000");
+    expect(flat(input)).toBe("R$ 2.500,00");
+  });
+
+  test("drops a digit when a separator is cut out of the middle", () => {
+    render(<Harness initial={12345} />);
+    const input = amountInput();
+
+    const without = input.value.replace(",", "");
+
+    fireEvent.change(input, { target: { value: without } });
+
+    expect(screen.getByTestId("value").textContent).toBe("1234");
+  });
+
+  test("drops a digit when backspace lands on the currency symbol", () => {
+    render(<Harness initial={123456} currencyCode="EUR" />);
+    const input = amountInput();
+
+    caretAtEnd(input);
+
+    expect(flat(input).endsWith("€")).toBe(true);
+
+    backspace(input);
+
+    expect(screen.getByTestId("value").textContent).toBe("12345");
   });
 
   test("rejects amounts beyond the int4 column ceiling without emitting", () => {

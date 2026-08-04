@@ -1,45 +1,49 @@
 import * as React from "react";
 
-import {
-  formatMinorUnits,
-  MONEY_MAX_MINOR_UNITS,
-  parseMinorUnits,
-} from "@budget-manager/money";
+import { formatMinorUnits, MONEY_MAX_MINOR_UNITS } from "@budget-manager/money";
 import { Input } from "./input";
 
-function isDigit(character: string | undefined) {
-  return character !== undefined && character >= "0" && character <= "9";
+function digitsOf(text: string) {
+  return text.replace(/\D/g, "");
 }
 
-function digitsBefore(text: string, caret: number) {
-  let count = 0;
-
-  for (let index = 0; index < caret && index < text.length; index++) {
-    if (isDigit(text[index])) {
-      count++;
-    }
+function isDeletion(typed: string, display: string) {
+  if (typed.length >= display.length) {
+    return false;
   }
 
-  return count;
+  let prefix = 0;
+
+  while (prefix < typed.length && typed[prefix] === display[prefix]) {
+    prefix++;
+  }
+
+  let suffix = 0;
+
+  while (
+    suffix < typed.length - prefix &&
+    typed[typed.length - 1 - suffix] === display[display.length - 1 - suffix]
+  ) {
+    suffix++;
+  }
+
+  return prefix + suffix === typed.length;
 }
 
-function offsetAfterDigit(text: string, n: number) {
-  if (n <= 0) {
-    const first = text.search(/\d/);
+function caretToEnd(element: HTMLInputElement) {
+  const end = element.value.length;
 
-    return first === -1 ? text.length : first;
-  }
-
-  let seen = 0;
-
-  for (let index = 0; index < text.length; index++) {
-    if (isDigit(text[index]) && ++seen === n) {
-      return index + 1;
-    }
-  }
-
-  return text.length;
+  element.setSelectionRange(end, end);
 }
+
+const CARET_KEYS = new Set([
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+  "Home",
+  "End",
+]);
 
 export type CurrencyInputProps = Omit<
   React.ComponentProps<typeof Input>,
@@ -58,6 +62,8 @@ export function CurrencyInput({
   currencyCode,
   allowNegative = false,
   maxValue = MONEY_MAX_MINOR_UNITS,
+  onMouseUp,
+  onKeyDown,
   ...props
 }: CurrencyInputProps) {
   const display = formatMinorUnits(value, currencyCode);
@@ -65,25 +71,51 @@ export function CurrencyInput({
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const element = event.currentTarget;
     const typed = element.value;
-    const caret = element.selectionEnd ?? typed.length;
-    const targetDigits = digitsBefore(typed, caret);
 
-    const parsed = parseMinorUnits(typed, { allowNegative });
-    const rejected =
-      Math.abs(parsed) > maxValue || !Number.isSafeInteger(parsed);
+    const before = digitsOf(display);
+    const after = digitsOf(typed);
+    const signChanged =
+      allowNegative && typed.includes("-") !== display.includes("-");
+
+    const trimmedSeparator =
+      !signChanged &&
+      after.length === before.length &&
+      isDeletion(typed, display);
+
+    const magnitude = trimmedSeparator
+      ? Math.trunc(Number(before || "0") / 10)
+      : Number(after || "0");
+
+    const negative = allowNegative && typed.includes("-") && magnitude !== 0;
+    const parsed = negative ? -magnitude : magnitude;
+    const rejected = magnitude > maxValue || !Number.isSafeInteger(parsed);
     const next = rejected ? value : parsed;
-    const nextDisplay = formatMinorUnits(next, currencyCode);
 
-    element.value = nextDisplay;
-
-    const position = /\d/.test(typed)
-      ? offsetAfterDigit(nextDisplay, rejected ? targetDigits - 1 : targetDigits)
-      : nextDisplay.length;
-    element.setSelectionRange(position, position);
+    element.value = formatMinorUnits(next, currencyCode);
+    caretToEnd(element);
 
     if (next !== value) {
       onValueChange(next);
     }
+  }
+
+  function handleMouseUp(event: React.MouseEvent<HTMLInputElement>) {
+    const element = event.currentTarget;
+
+    if (element.selectionStart === element.selectionEnd) {
+      caretToEnd(element);
+    }
+
+    onMouseUp?.(event);
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (CARET_KEYS.has(event.key) && !event.shiftKey) {
+      event.preventDefault();
+      caretToEnd(event.currentTarget);
+    }
+
+    onKeyDown?.(event);
   }
 
   return (
@@ -91,6 +123,8 @@ export function CurrencyInput({
       {...props}
       value={display}
       onChange={handleChange}
+      onMouseUp={handleMouseUp}
+      onKeyDown={handleKeyDown}
       inputMode={allowNegative ? "text" : "numeric"}
       autoComplete="off"
     />
