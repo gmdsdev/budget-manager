@@ -12,6 +12,7 @@ import {
 } from "@budget-manager/ui/components/empty";
 import { Skeleton } from "@budget-manager/ui/components/skeleton";
 import { CreateTransactionMenu } from "../components/create-transaction-menu";
+import { TransactionPeriodFilter } from "../components/transaction-period-filter";
 import { TransactionFilters } from "../components/transaction-list/transaction-filters";
 import { TransactionRows } from "../components/transaction-list/transaction-rows";
 import { TransactionSummary } from "../components/transaction-list/transaction-summary";
@@ -45,6 +46,7 @@ export default function ListTransactionsPage() {
   return (
     <div>
       <PageHeader title={t("transaction.title")}>
+        <TransactionPeriodFilter filters={filters} onFiltersChange={setFilters} />
         <CreateTransactionMenu />
       </PageHeader>
 

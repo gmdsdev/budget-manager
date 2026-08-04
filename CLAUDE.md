@@ -643,9 +643,15 @@ highlight whole). Mutations on transactions, series and wallets all invalidate
 
 **Every field a listing shows gets a filter for it.** All five list pages follow this: wallets
 (name, type, currency), categories (name, type), cards (name, currency, billing wallet),
-budgets (category, currency, status) and transactions (date range, description, account,
-category, kind, repeats, status) — the transaction ledger has no columns any more, but the rule
-is about what a row *states*, not how it is laid out. The controls
+budgets (category, currency, status) and transactions (description, account, category, kind,
+repeats, status, plus the date range) — the transaction ledger has no columns any more, but the
+rule is about what a row *states*, not how it is laid out. The date range is the one filter that
+does **not** live in the bar: on the web it sits in the `PageHeader` beside the create action, the
+same slot the budget month occupies, because a control that scopes the summary and the pagination
+as well as the rows belongs above all three rather than inside the row-narrowing bar. It is still
+part of `TransactionFiltersState`, so `Clear filters` resets the period to the current month along
+with everything else — which is why that button can appear while every chip in the bar still reads
+as its own column name. The controls
 are ordered to match the row, and the bar is **left-aligned** — `FilterBar`
 (`src/components/filter-bar.tsx`) owns that alignment and the `Clear filters` button, so no
 page positions its own. `FilterSelect` and `FilterSearch` are the two control shapes, both
@@ -824,10 +830,13 @@ compositions. `lg` is 56px, for a form's own primary action. A caller passing
 `className="h-8"` still silently defeats the variant, so reach for a size rather than a class.
 
 Above the lists: page headers stack (`flex-col sm:flex-row`) and `FilterBar` lays its controls
-out two per column on a phone — seven stacked full-width controls would push the list itself off
-the first screen. `FilterSearch` takes a whole row anyway, since its placeholder is the only
-thing naming the column. The transaction page's create actions are one split button rather than
-four peers, so they need no grid of their own.
+out two per column on a phone — half a dozen stacked full-width controls would push the list
+itself off the first screen. `FilterSearch` takes a whole row anyway, since its placeholder is the
+only thing naming the column. The transaction page's create actions are one split button rather
+than four peers, so they need no grid of their own. A stepper group in a page header takes
+`flex-1 sm:flex-none`, so on a phone it owns its row and the create action wraps below it rather
+than the two of them squeezing together — the budget month and the transaction period both do
+this.
 
 ### Native (apps/native)
 
@@ -1412,7 +1421,8 @@ a range covering whole calendar months moves by that many months, and everything
 length in days — so a month never drifts by the 28-to-31 days it happens to have, a week moves a
 week, `Today` moves a day, and a hand-drawn 13-day range advances 13 days. Nothing has to be
 stored for that, which is why the filter state gained no field and the arrows are plain buttons
-in each app's transaction filter bar rather than a mode inside the picker. Neither arrow is ever
+flanking the picker rather than a mode inside it — in the web's page header
+(`transaction-period-filter.tsx`) and still in the native filter bar. Neither arrow is ever
 disabled: the ledger reaches into the future a series has already been written into, which since
 the long presets went away is how that future is reached.
 
