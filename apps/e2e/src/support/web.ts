@@ -304,21 +304,29 @@ export async function rowTexts(page: Page) {
 }
 
 /**
- * The figures under the transaction list, keyed by their row label — each value
- * is one cell per column, so a single currency reads
- * `{ Expenses: [effective, projected] }`. The key comes from `textContent`, not
- * `innerText`: table headers are uppercased in CSS, which `innerText` reports.
+ * The figures under the transaction list, keyed by figure rather than by label —
+ * `{ expenses: [effective, projected] }`. The panel states what is still waiting
+ * rather than a projected column, so both figures are read off `data-summary-*`:
+ * an assertion about a number has no business breaking when a subline is
+ * reworded.
+ *
+ * Only the currency in view is in the DOM — the panel opens on the account's
+ * preferred currency and switches client-side.
  */
 export async function summaryFigures(page: Page) {
-  return page.$$eval("section[aria-label='Totals'] tbody tr", (trs) =>
-    Object.fromEntries(
-      trs.map((tr) => [
-        (tr.querySelector("th")?.textContent ?? "").trim(),
-        Array.from(tr.querySelectorAll("td")).map((td) =>
-          (td as HTMLElement).innerText.replace(/[\u00a0\u202f]/g, " ").trim(),
-        ),
-      ]),
-    ),
+  return page.$$eval(
+    "section[aria-label='Totals'] [data-summary-figure]",
+    (nodes) =>
+      Object.fromEntries(
+        nodes.map((node) => [
+          node.getAttribute("data-summary-figure") ?? "",
+          ["data-summary-effective", "data-summary-projected"].map((name) =>
+            (node.getAttribute(name) ?? "")
+              .replace(/[\u00a0\u202f]/g, " ")
+              .trim(),
+          ),
+        ]),
+      ),
   );
 }
 

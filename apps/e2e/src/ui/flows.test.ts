@@ -195,28 +195,28 @@ describe("transaction page", () => {
     await waitForRowCount(page, 3);
   }, 60_000);
 
-  test("totals the rows under the list, effective beside projected", async () => {
+  test("totals the rows under the list, settled beside projected", async () => {
     const figures = await summaryFigures(page);
 
     // Both legs of the transfer land in wallets the user owns, so the position
     // is still the opening balance whatever the transfer's status.
-    expect(figures["In wallets"]?.[0]).toBe("R$ 10,00");
+    expect(figures.wallets?.[0]).toBe("R$ 10,00");
     // The pending expense counts toward projected only, and a transfer is never
     // spending.
-    expect(figures.Expenses).toEqual(["R$ 0,00", "R$ 250,00"]);
-    expect(figures.Income).toEqual(["R$ 0,00", "R$ 0,00"]);
+    expect(figures.expenses).toEqual(["R$ 0,00", "R$ 250,00"]);
+    expect(figures.income).toEqual(["R$ 0,00", "R$ 0,00"]);
   }, 60_000);
 
   test("scopes the totals to the filters, without counting as list rows", async () => {
     await pickSelect(page, page, "Kind", "Transfer out");
-    // The three summary rows must stay out of the row count.
+    // The totals panel carries no list rows, so it cannot inflate the count.
     await waitForRowCount(page, 1);
 
     const filtered = await summaryFigures(page);
 
-    expect(filtered.Expenses).toEqual(["R$ 0,00", "R$ 0,00"]);
+    expect(filtered.expenses).toEqual(["R$ 0,00", "R$ 0,00"]);
     // A balance covers every wallet, so a row filter cannot narrow it.
-    expect(filtered["In wallets"]?.[0]).toBe("R$ 10,00");
+    expect(filtered.wallets?.[0]).toBe("R$ 10,00");
 
     await page.getByRole("button", { name: "Clear filters" }).click();
     await waitForRowCount(page, 3);

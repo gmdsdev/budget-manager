@@ -18,6 +18,7 @@ import { TransactionRows } from "../components/transaction-list/transaction-rows
 import { TransactionSummary } from "../components/transaction-list/transaction-summary";
 import { useTransactionSummaryQuery } from "@budget-manager/client/react";
 import { useTransactionsQuery } from "@budget-manager/client/react";
+import { usePreferredCurrency } from "@budget-manager/client/react";
 import {
   defaultTransactionFilters,
   isTransactionFiltered,
@@ -31,6 +32,7 @@ import { TransactionDetailDialog } from "../components/transaction-detail-dialog
 export default function ListTransactionsPage() {
   const t = useTranslate();
   const [selected, setSelected] = useState<TransactionRow | null>(null);
+  const preferredCurrency: string = usePreferredCurrency();
   const { filters, page, setFilters, setPage } =
     usePagedFilters<TransactionFiltersState>(defaultTransactionFilters());
 
@@ -98,6 +100,8 @@ export default function ListTransactionsPage() {
             <TransactionSummary
               currencies={summary.data.currencies}
               rangeTo={filters.dateTo}
+              total={data.total}
+              preferredCurrency={preferredCurrency}
               isFetching={summary.isFetching}
             />
           ) : null}

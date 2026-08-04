@@ -312,6 +312,38 @@ export const transaction = {
     "pt-BR": "Valores efetivos e projetados por moeda",
   },
   "transaction.summary.figure": { en: "Figure", "pt-BR": "Valor" },
+  "transaction.summary.context": {
+    en: "{count} transactions · through {date}",
+    "pt-BR": "{count} transações · até {date}",
+  },
+  "transaction.summary.contextOne": {
+    en: "1 transaction · through {date}",
+    "pt-BR": "1 transação · até {date}",
+  },
+  "transaction.summary.walletsPending": {
+    en: "{projected} projected · {waiting} still waiting",
+    "pt-BR": "{projected} projetado · {waiting} ainda aguardando",
+  },
+  "transaction.summary.settled": {
+    en: "Fully settled",
+    "pt-BR": "Tudo liquidado",
+  },
+  "transaction.summary.waiting": {
+    en: "{amount} waiting",
+    "pt-BR": "{amount} aguardando",
+  },
+  "transaction.summary.netProjected": {
+    en: "{amount} projected",
+    "pt-BR": "{amount} projetado",
+  },
+  "transaction.summary.flowBar": {
+    en: "Settled income against settled expenses this period",
+    "pt-BR": "Receitas e despesas liquidadas neste período",
+  },
+  "transaction.summary.explain": {
+    en: "How these are calculated",
+    "pt-BR": "Como estes valores são calculados",
+  },
   "transaction.summary.effective": { en: "Effective", "pt-BR": "Efetivo" },
   "transaction.summary.projected": { en: "Projected", "pt-BR": "Projetado" },
   "transaction.summary.inWallets": {
