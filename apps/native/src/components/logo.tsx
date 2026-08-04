@@ -4,8 +4,8 @@ import MarkLight from "@/assets/logo/svg/kivo-mark-forest.svg";
 import MarkDark from "@/assets/logo/svg/kivo-mark-green.svg";
 import { useTheme } from "@/theme/theme-provider";
 
-const LOGO_RATIO = 432 / 176;
-const MARK_RATIO = 248 / 352;
+const LOGO_RATIO = 432 / 192;
+const MARK_RATIO = 266 / 384;
 
 /**
  * The app is Kivo, and the logo is a pair of files per shape rather than a
