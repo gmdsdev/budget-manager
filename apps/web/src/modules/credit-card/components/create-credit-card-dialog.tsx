@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
+import { PlusIcon } from "@phosphor-icons/react";
 import { useId, useState } from "react";
 import { useCreditCardForm } from "@budget-manager/client/react";
 import { useCreateCreditCardMutation } from "@budget-manager/client/react";
@@ -52,7 +53,14 @@ export function CreateCreditCardDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button>{t("creditCard.create.trigger")}</Button>} />
+      <DialogTrigger
+        render={
+          <Button>
+            <PlusIcon aria-hidden />
+            {t("creditCard.create.trigger")}
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("creditCard.create.title")}</DialogTitle>

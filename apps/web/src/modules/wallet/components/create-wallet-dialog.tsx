@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@budget-manager/ui/components/dialog";
+import { PlusIcon } from "@phosphor-icons/react";
 import { useId, useState } from "react";
 import { useWalletForm } from "@budget-manager/client/react";
 import { useCreateWalletMutation } from "@budget-manager/client/react";
@@ -51,7 +52,14 @@ export function CreateWalletDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button>{t("wallet.create.trigger")}</Button>} />
+      <DialogTrigger
+        render={
+          <Button>
+            <PlusIcon aria-hidden />
+            {t("wallet.create.trigger")}
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("wallet.create.title")}</DialogTitle>
