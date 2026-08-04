@@ -1,4 +1,9 @@
-import { RecordGlyph, RecordList, RecordRow } from "@/components/record-row";
+import {
+  RecordFigure,
+  RecordGlyph,
+  RecordList,
+  RecordRow,
+} from "@/components/record-row";
 import type { CreditCardRow } from "@budget-manager/client";
 import { useI18n } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
@@ -15,12 +20,8 @@ export function CreditCardRows({
 
   return (
     <RecordList label={t("creditCard.caption")}>
-      {cards.map((card) => {
-        const hasPending =
-          card.projectedOutstandingCents !== card.outstandingCents;
-
-        return (
-          <RecordRow
+      {cards.map((card) => (
+        <RecordRow
             key={card.id}
             label={t("creditCard.detail.open", { name: card.name })}
             onSelect={() => onSelect(card)}
@@ -30,63 +31,32 @@ export function CreditCardRows({
               </RecordGlyph>
             }
             primary={card.name}
+            // What is owed only means something against what is left, so
+            // `available` stays — but on the meta line, not opposite the name:
+            // "R$ 11.769,11 available" is wider than "Nubank Mastercard", and
+            // the trailing rail wins every argument about width. The cycle and
+            // the billing wallet follow it because the filter bar narrows by
+            // them; the limit and the projected balance are in the detail dialog.
             meta={[
               card.currencyCode,
+              t("creditCard.column.availableValue", {
+                amount: formatMinorUnits(card.availableCents, card.currencyCode),
+              }),
               t("creditCard.column.cycleValue", {
                 closeDay: card.closeDay,
                 dueDay: card.dueDay,
               }),
               card.defaultBillingWalletName ?? t("common.none"),
-              // What is owed only means something against what may be: the
-              // trailing figure is the outstanding, so the limit rides here.
-              t("creditCard.column.limitValue", {
-                amount: formatMinorUnits(card.limitCents, card.currencyCode),
-              }),
             ]}
             trailing={
-              <>
-                <p
-                  data-list-cell
-                  className={`text-lg font-bold tracking-[-0.025em] tabular-nums ${
-                    card.outstandingCents > 0 ? "text-destructive" : ""
-                  }`}
-                >
-                  {formatMinorUnits(card.outstandingCents, card.currencyCode)}
-                </p>
-                {/* What is owed only means something against what is left. */}
-                <p
-                  data-list-cell
-                  className={`text-xs tabular-nums ${
-                    card.availableCents < 0
-                      ? "text-destructive"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {t("creditCard.column.availableValue", {
-                    amount: formatMinorUnits(
-                      card.availableCents,
-                      card.currencyCode,
-                    ),
-                  })}
-                </p>
-                {hasPending ? (
-                  <p
-                    data-list-cell
-                    className="text-xs text-muted-foreground tabular-nums"
-                  >
-                    {t("creditCard.projected", {
-                      amount: formatMinorUnits(
-                        card.projectedOutstandingCents,
-                        card.currencyCode,
-                      ),
-                    })}
-                  </p>
-                ) : null}
-              </>
+              <RecordFigure
+                tone={card.outstandingCents > 0 ? "negative" : "default"}
+              >
+                {formatMinorUnits(card.outstandingCents, card.currencyCode)}
+              </RecordFigure>
             }
-          />
-        );
-      })}
+        />
+      ))}
     </RecordList>
   );
 }

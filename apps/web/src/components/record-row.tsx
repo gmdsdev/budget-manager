@@ -49,9 +49,14 @@ export function RecordRow({
   glyph?: ReactNode;
   /** The record's name. Always the first cell an assertion reads. */
   primary: ReactNode;
-  /** Dot-separated; falsy entries drop out, so a screen can omit a field. */
+  /**
+   * Dot-separated; falsy entries drop out, so a screen can omit a field. It is
+   * one line at every width and clips rather than wrapping, so a row is always
+   * two lines tall: order the parts most-telling first, since a phone shows only
+   * the first few and the detail dialog restates them all.
+   */
   meta?: readonly ReactNode[];
-  /** A status pill, hidden below sm where the row has no width for it. */
+  /** A status pill. Sits under the figure, where every width has room for it. */
   tag?: ReactNode;
   trailing?: ReactNode;
   label: string;
@@ -80,7 +85,7 @@ export function RecordRow({
     <li data-list-row="">
       <div
         {...interactive}
-        className={`flex flex-row items-center gap-4 rounded-lg px-4 py-3 ${
+        className={`flex flex-row items-center gap-3 rounded-lg px-3 py-3 sm:gap-4 sm:px-4 ${
           onSelect
             ? "cursor-pointer transition-colors outline-none hover:bg-accent focus-visible:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
             : ""
@@ -96,14 +101,14 @@ export function RecordRow({
             {primary}
           </div>
           {parts.length > 0 ? (
-            <p className="flex flex-row flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
+            <p className="truncate text-sm text-muted-foreground">
               {parts.map((part, index) => (
                 // Index keys: these are positional slots on one row, not a
                 // reorderable collection.
-                <span key={index} className="flex flex-row items-center gap-1.5">
+                <span key={index}>
                   {index > 0 ? (
                     <span aria-hidden className="opacity-50">
-                      ·
+                      {" · "}
                     </span>
                   ) : null}
                   <span data-list-cell>{part}</span>
@@ -113,10 +118,45 @@ export function RecordRow({
           ) : null}
         </div>
 
-        {tag ? <div className="hidden shrink-0 sm:block">{tag}</div> : null}
-        {trailing ? <div className="shrink-0 text-right">{trailing}</div> : null}
+        {/* Capped. The rail sizes to its content and would otherwise win every
+            argument with the name beside it — a labelled figure like
+            "R$ 11.769,11 available" is wider than most record names. Past half
+            the row it wraps instead, which is the right thing to lose. */}
+        {trailing || tag ? (
+          <div className="flex max-w-[45%] shrink-0 flex-col items-end gap-0.5 text-right">
+            {trailing}
+            {tag}
+          </div>
+        ) : null}
       </div>
     </li>
+  );
+}
+
+const FIGURE_TONES = {
+  default: "",
+  positive: "text-success",
+  negative: "text-destructive",
+} as const;
+
+/**
+ * The figure a row is scanned for: 16px on a phone, 18px from `sm`, since the
+ * rail is capped and a bigger number only squeezes the name.
+ */
+export function RecordFigure({
+  tone = "default",
+  children,
+}: {
+  tone?: keyof typeof FIGURE_TONES;
+  children: ReactNode;
+}) {
+  return (
+    <p
+      data-list-cell
+      className={`text-base font-bold tracking-[-0.025em] tabular-nums sm:text-lg ${FIGURE_TONES[tone]}`}
+    >
+      {children}
+    </p>
   );
 }
 
@@ -134,7 +174,7 @@ export function RecordGlyph({
   return (
     <span
       aria-hidden
-      className="flex size-11 shrink-0 items-center justify-center rounded-full"
+      className="flex size-10 shrink-0 items-center justify-center rounded-full sm:size-11"
       style={{
         // A hue at full strength behind a dark glyph is unreadable in light mode
         // and shouty in dark, so the fill is a tint of it.

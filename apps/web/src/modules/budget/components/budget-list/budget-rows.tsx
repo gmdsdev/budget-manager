@@ -1,4 +1,5 @@
 import {
+  RecordFigure,
   RecordGlyph,
   RecordList,
   RecordRow,
@@ -33,9 +34,9 @@ export function BudgetRows({
           }
           primary={budget.categoryName}
           meta={[
-            budget.currencyCode,
             repeatsLabel(t, budget),
             formatMonthString(budget.startsOn, "monthYear"),
+            budget.currencyCode,
           ]}
           tag={
             <RecordTag tone={budget.isActive ? "neutral" : "warning"}>
@@ -45,12 +46,9 @@ export function BudgetRows({
             </RecordTag>
           }
           trailing={
-            <p
-              data-list-cell
-              className="text-lg font-bold tracking-[-0.025em] tabular-nums"
-            >
+            <RecordFigure>
               {formatMinorUnits(budget.amountCents, budget.currencyCode)}
-            </p>
+            </RecordFigure>
           }
         />
       ))}

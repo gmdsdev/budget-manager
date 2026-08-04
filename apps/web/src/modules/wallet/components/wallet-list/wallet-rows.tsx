@@ -1,4 +1,9 @@
-import { RecordGlyph, RecordList, RecordRow } from "@/components/record-row";
+import {
+  RecordFigure,
+  RecordGlyph,
+  RecordList,
+  RecordRow,
+} from "@/components/record-row";
 import type { WalletRow } from "@budget-manager/client";
 import { useEnumLabels } from "@budget-manager/client/react";
 import { useI18n } from "@budget-manager/i18n/react";
@@ -32,40 +37,31 @@ export function WalletRows({
               </RecordGlyph>
             }
             primary={wallet.name}
+            // The bare code, not `labels.currency` — that resolves to "BRL -
+            // Brazilian Real", which on its own is most of a phone's row. The
+            // projected balance rides here rather than under the figure: a
+            // labelled figure is wider than most wallet names, and anything in
+            // the trailing rail is measured against the name and wins. The
+            // opening balance is the least-read figure a wallet has and lives in
+            // the detail dialog.
             meta={[
               labels.walletType(wallet.type),
-              labels.currency(wallet.currencyCode),
-              t("wallet.column.openingBalanceValue", {
-                amount: formatMinorUnits(
-                  wallet.openingBalanceCents,
-                  wallet.currencyCode,
-                ),
-              }),
+              wallet.currencyCode,
+              hasPending
+                ? t("wallet.projected", {
+                    amount: formatMinorUnits(
+                      wallet.projectedBalanceCents,
+                      wallet.currencyCode,
+                    ),
+                  })
+                : null,
             ]}
             trailing={
-              <>
-                <p
-                  data-list-cell
-                  className={`text-lg font-bold tracking-[-0.025em] tabular-nums ${
-                    wallet.balanceCents < 0 ? "text-destructive" : ""
-                  }`}
-                >
-                  {formatMinorUnits(wallet.balanceCents, wallet.currencyCode)}
-                </p>
-                {hasPending ? (
-                  <p
-                    data-list-cell
-                    className="text-xs text-muted-foreground tabular-nums"
-                  >
-                    {t("wallet.projected", {
-                      amount: formatMinorUnits(
-                        wallet.projectedBalanceCents,
-                        wallet.currencyCode,
-                      ),
-                    })}
-                  </p>
-                ) : null}
-              </>
+              <RecordFigure
+                tone={wallet.balanceCents < 0 ? "negative" : "default"}
+              >
+                {formatMinorUnits(wallet.balanceCents, wallet.currencyCode)}
+              </RecordFigure>
             }
           />
         );

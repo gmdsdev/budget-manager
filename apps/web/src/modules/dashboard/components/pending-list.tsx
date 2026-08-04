@@ -14,6 +14,7 @@ import { buttonVariants } from "@budget-manager/ui/components/button";
 import type { PendingItem } from "@budget-manager/client";
 
 import {
+  RecordFigure,
   RecordGlyph,
   RecordList,
   RecordRow,
@@ -91,17 +92,12 @@ export function PendingList({
                     ) : undefined
                   }
                   trailing={
-                    <p
-                      data-list-cell
-                      className={`text-lg font-bold tracking-[-0.025em] tabular-nums ${
-                        overdue ? "text-destructive" : ""
-                      }`}
-                    >
+                    <RecordFigure tone={overdue ? "negative" : "default"}>
                       {formatMinorUnits(
                         item.amountCents,
                         item.walletCurrencyCode,
                       )}
-                    </p>
+                    </RecordFigure>
                   }
                 />
               );

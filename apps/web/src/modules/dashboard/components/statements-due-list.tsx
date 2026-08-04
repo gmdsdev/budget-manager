@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
+  RecordFigure,
   RecordGlyph,
   RecordList,
   RecordRow,
@@ -110,14 +111,9 @@ export function StatementsDueList({
                     ) : null
                   }
                   trailing={
-                    <p
-                      data-list-cell
-                      className={`text-lg font-bold tracking-[-0.025em] tabular-nums ${
-                        overdue ? "text-destructive" : ""
-                      }`}
-                    >
+                    <RecordFigure tone={overdue ? "negative" : "default"}>
                       {formatMinorUnits(bill.remainingCents, bill.currencyCode)}
-                    </p>
+                    </RecordFigure>
                   }
                 />
               );

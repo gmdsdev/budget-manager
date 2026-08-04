@@ -22,6 +22,9 @@ export function CreditCardDetailDialog({
   const { t } = useI18n();
   const [dialog, setDialog] = useState<NestedDialog>(null);
 
+  const hasPending =
+    card.projectedOutstandingCents !== card.outstandingCents;
+
   /** Dismissing a nested dialog ends the whole interaction, as the old row menu did. */
   function closeNested(next: boolean) {
     if (!next) onClose();
@@ -70,6 +73,16 @@ export function CreditCardDetailDialog({
             {formatMinorUnits(card.availableCents, card.currencyCode)}
           </span>
         </DetailRow>
+        {hasPending ? (
+          <DetailRow label={t("creditCard.column.outstanding")}>
+            {t("creditCard.projected", {
+              amount: formatMinorUnits(
+                card.projectedOutstandingCents,
+                card.currencyCode,
+              ),
+            })}
+          </DetailRow>
+        ) : null}
       </DetailSheet>
 
       {dialog === "bills" && (

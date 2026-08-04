@@ -1,4 +1,9 @@
-import { RecordGlyph, RecordRow, RecordTag } from "@/components/record-row";
+import {
+  RecordFigure,
+  RecordGlyph,
+  RecordRow,
+  RecordTag,
+} from "@/components/record-row";
 import {
   transactionRepeatsLabel,
   type TransactionRow,
@@ -130,18 +135,13 @@ export function TransactionRows({
                     </RecordTag>
                   }
                   trailing={
-                    <p
-                      data-list-cell
-                      className={`text-lg font-bold tracking-[-0.025em] tabular-nums ${
-                        isCredit ? "text-success" : ""
-                      }`}
-                    >
+                    <RecordFigure tone={isCredit ? "positive" : "default"}>
                       {isCredit ? "+" : "−"}
                       {formatMinorUnits(
                         transaction.amountCents,
                         transaction.walletCurrencyCode ?? "BRL",
                       )}
-                    </p>
+                    </RecordFigure>
                   }
                 />
               );

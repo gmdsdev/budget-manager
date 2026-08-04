@@ -27,7 +27,7 @@ export function BalanceHero({
   action?: ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-6 rounded-2xl bg-wise-bright-green p-6 text-wise-forest-green sm:flex-row sm:items-start sm:justify-between sm:p-8">
+    <section className="flex flex-col gap-6 rounded-2xl bg-wise-bright-green p-6 text-wise-forest-green sm:flex-row sm:items-center sm:justify-between sm:p-8">
       <div className="min-w-0">
         <p className="text-xs font-semibold tracking-[0.02em] uppercase opacity-60">
           {label}
