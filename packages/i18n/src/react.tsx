@@ -5,6 +5,7 @@ import {
   type DateStyle,
   formatDate,
   formatDateString,
+  formatDateStringRange,
   formatMonthString,
 } from "./format";
 import { DEFAULT_LOCALE, type Locale } from "./locale";
@@ -20,6 +21,7 @@ export type I18nValue = {
   t: Translate;
   formatDate: (date: Date, style: DateStyle) => string;
   formatDateString: (value: string, style: DateStyle) => string;
+  formatDateStringRange: (from: string, to: string, style: DateStyle) => string;
   formatMonthString: (value: string, style: DateStyle) => string;
 };
 
@@ -30,6 +32,8 @@ function valueFor(locale: Locale): I18nValue {
       translate(locale, key, ...args),
     formatDate: (date, style) => formatDate(locale, date, style),
     formatDateString: (value, style) => formatDateString(locale, value, style),
+    formatDateStringRange: (from, to, style) =>
+      formatDateStringRange(locale, from, to, style),
     formatMonthString: (value, style) =>
       formatMonthString(locale, value, style),
   };

@@ -6,8 +6,10 @@ import { useI18n } from "@budget-manager/i18n/react"
 import { cn } from "@budget-manager/ui/lib/utils"
 import {
   captionMonthRange,
+  DATE_RANGE_CUSTOM_KEY,
   DATE_RANGE_PRESETS,
   formatIsoDate,
+  isWholeMonthRange,
   parseIsoDate,
   type DateRangePreset,
   type DateRangeValue,
@@ -113,6 +115,10 @@ function DatePicker({
  * first click sets the start, the second the end — and only a complete range
  * reaches the caller, so one that requires a range is never handed half of it.
  * An abandoned first click is discarded when the popup closes.
+ *
+ * The trigger names the period rather than reciting its ends: a whole month reads
+ * as `August 2026` and a single day as itself, which is both what a reader calls
+ * that range and what leaves room for the stepper arrows beside it.
  */
 function DateRangePicker({
   value,
@@ -140,9 +146,13 @@ function DateRangePicker({
   "aria-describedby"?: string
   "aria-label"?: string
 }) {
-  const { t, formatDate } = useI18n()
+  const { t, formatDateStringRange, formatMonthString } = useI18n()
   const [open, setOpen] = React.useState(false)
   const [anchor, setAnchor] = React.useState<Date | undefined>(undefined)
+  // `Custom` sets no range, so being on it is the one thing about this control
+  // that cannot be read back off the value. It lasts as long as the popup: a
+  // reopened picker reads its state from the range again.
+  const [custom, setCustom] = React.useState(false)
   const from = parseIsoDate(value.from)
   const to = parseIsoDate(value.to)
   // Two months side by side is wider than a phone, and a popup that scrolls
@@ -150,15 +160,11 @@ function DateRangePicker({
   const isCompact = useIsCompact()
   const months = isCompact ? 1 : numberOfMonths
 
-  // A range in one year drops the repeated year from its start.
-  function formatRange(start: Date, end: Date) {
-    const head =
-      start.getFullYear() === end.getFullYear()
-        ? formatDate(start, "dayShort")
-        : formatDate(start, "day")
-
-    return `${head} – ${formatDate(end, "day")}`
-  }
+  // `Intl` states whatever the two ends share once (`Aug 2 – 8, 2026`) and
+  // collapses a range of one day to that day, so neither needs a branch here.
+  const label = isWholeMonthRange(value)
+    ? formatMonthString(value.from.slice(0, 7), "monthYear")
+    : formatDateStringRange(value.from, value.to, "day")
 
   const selected: DateRange | undefined = anchor
     ? { from: anchor, to: anchor }
@@ -166,8 +172,15 @@ function DateRangePicker({
       ? { from, to }
       : undefined
 
+  const activePreset = presets.find((preset) => {
+    const range = preset.getRange()
+
+    return range.from === value.from && range.to === value.to
+  })
+
   function commit(next: DateRangeValue) {
     setAnchor(undefined)
+    setCustom(false)
     onValueChange(next)
     setOpen(false)
   }
@@ -177,6 +190,7 @@ function DateRangePicker({
       open={open}
       onOpenChange={(next) => {
         setAnchor(undefined)
+        setCustom(false)
         setOpen(next)
       }}
     >
@@ -196,7 +210,7 @@ function DateRangePicker({
           />
         }
       >
-        {from && to ? formatRange(from, to) : (placeholder ?? t("common.pickADateRange"))}
+        {from && to ? label : (placeholder ?? t("common.pickADateRange"))}
         <RiCalendar2Line className="text-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent
@@ -205,22 +219,31 @@ function DateRangePicker({
       >
         {presets.length > 0 ? (
           <div className="flex shrink-0 flex-row flex-wrap gap-1 border-b border-border p-2 sm:w-36 sm:flex-col sm:border-b-0 sm:border-r">
-            {presets.map((preset) => {
-              const range = preset.getRange()
-              const active = range.from === value.from && range.to === value.to
+            {presets.map((preset) => (
+              <Button
+                key={preset.labelKey}
+                variant={
+                  !custom && preset === activePreset ? "secondary" : "ghost"
+                }
+                size="sm"
+                className="justify-start font-normal"
+                onClick={() => commit(preset.getRange())}
+              >
+                {t(preset.labelKey)}
+              </Button>
+            ))}
 
-              return (
-                <Button
-                  key={preset.labelKey}
-                  variant={active ? "secondary" : "ghost"}
-                  size="sm"
-                  className="justify-start font-normal"
-                  onClick={() => commit(range)}
-                >
-                  {t(preset.labelKey)}
-                </Button>
-              )
-            })}
+            {/* The one option that applies nothing: it marks a range no preset can
+                express, and clicking it leaves the popup open on the calendar
+                rather than committing anything. */}
+            <Button
+              variant={custom || !activePreset ? "secondary" : "ghost"}
+              size="sm"
+              className="justify-start font-normal"
+              onClick={() => setCustom(true)}
+            >
+              {t(DATE_RANGE_CUSTOM_KEY)}
+            </Button>
           </div>
         ) : null}
         <Calendar

@@ -73,6 +73,13 @@ export const common = {
     en: "Pick a date range",
     "pt-BR": "Escolha um período",
   },
+  // Not `dateRange.*`: that namespace is exactly the set of preset labels, which
+  // is what makes `DateRangePresetKey` derivable from the catalog.
+  "common.previousPeriod": {
+    en: "Previous period",
+    "pt-BR": "Período anterior",
+  },
+  "common.nextPeriod": { en: "Next period", "pt-BR": "Próximo período" },
   "common.clear": { en: "Clear", "pt-BR": "Limpar" },
   "common.close": { en: "Close", "pt-BR": "Fechar" },
 } as const satisfies MessageTable;

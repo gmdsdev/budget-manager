@@ -248,6 +248,12 @@ while the dialog is shut. Every transaction create dialog defaults `occurrenceDa
 same — and the plain one preselects the first wallet, which a wallet created in the meantime
 should win.
 
+**All four create dialogs default `status` to `paid`.** Recording something is nearly always
+recording something that already happened, so `waiting_payment` is what a reader opts *into* for
+a bill still ahead of them. Generated occurrences are the deliberate exception and are still
+written as `waiting_payment` even in the past (see the demo-seed notes above), because a series
+lays down rows nobody has confirmed yet.
+
 Every mutation on that screen goes through `runAuthAction` (`@budget-manager/client`),
 which turns better-auth's `{ data, error }` into a thrown `AuthActionError` so the shared
 `MutationCache` toast fires; `getErrorMessage` special-cases it to surface the library's own
@@ -654,8 +660,15 @@ clear action. `transactionsQueryInput` sends `dateFrom`/`dateTo` on **every** re
 back to the current month if the state somehow carries none, which is what keeps the bare loader
 call and the page's first query on the same key. Create dialogs default `occurrenceDate` to
 today (`todayAsDateString`), so anything just recorded lands inside the default view. Anything
-outside it — a series materialized months ahead, a seeded past row — needs the range widened
-first, which is why the e2e suites reach for `pickDateRangePreset` and `dayThisMonth`.
+outside it — a series materialized months ahead, a seeded past row — needs the range **moved**
+rather than widened, which is what the stepper arrows are for and why the e2e suites reach for
+`pickDateRangePreset`, the `Previous period` / `Next period` labels, and `dayThisMonth`.
+
+**Rows are listed oldest first**, and the day grouping in `transaction-rows.tsx` is a sequential
+sweep that never reorders, so the order is the repository's `orderBy` alone (`asc(occurrenceDate)`
+with `asc(id)` breaking ties, which is what keeps a page boundary from repeating or dropping a
+row). The consequence worth knowing: in a month with more than `PAGE_SIZE` rows, what was just
+recorded is on the *last* page, not the first.
 
 **The bar has no visible labels; each control names its own column.** A `FilterSelect` trigger
 reads as the column name (`Category`) while that column is unfiltered and switches to the
@@ -1157,8 +1170,9 @@ land on the Brazilian catalog. Unlike the theme, this one is server state, so
 the settings form goes through `runAuthAction` like the rest of that screen.
 
 **Dates are formatted by the app's locale; money is formatted by its currency.**
-`packages/i18n` owns `formatDate`/`formatDateString`/`formatMonthString` over a
-closed set of named `DATE_STYLES` — a `{ month: "short" }` written out four
+`packages/i18n` owns
+`formatDate`/`formatDateString`/`formatDateRange`/`formatDateStringRange`/`formatMonthString`
+over a closed set of named `DATE_STYLES` — a `{ month: "short" }` written out four
 times drifts into four slightly different dates on screen. `toLocaleDateString(undefined, …)`
 is gone: it read the *browser's* language, not the app's. Money deliberately did
 **not** change: `formatMinorUnits` keys its locale off the currency, so BRL
@@ -1167,9 +1181,11 @@ recognisable and every money assertion in the suites stable.
 
 Two layout traps a second language exposes, both already fixed and both worth
 remembering: a control sized to English clips (the transaction date-range
-trigger is `sm:w-auto sm:min-w-56`, not a fixed width, because *1 de jul. – 31 de
-jul. de 2026* is far longer than *Jul 1 – Jul 31, 2026*), and a chart's axis
-gutter has to hold the longest tick across locales, not the English one.
+trigger is `sm:w-auto sm:min-w-44`, not a fixed width, and it leans on
+`formatDateStringRange` to state a range's shared parts once — spelling both ends
+out gave *1 de jul. – 31 de jul. de 2026*, which does not fit beside the stepper
+arrows on a phone), and a chart's axis gutter has to hold the longest tick across
+locales, not the English one.
 
 The language selector lives on `/settings/user`, and its options are the one
 thing on that screen that is **not** translated: each language names itself
@@ -1369,14 +1385,38 @@ every future-dated row out of reach.
 
 **A start-and-end pair is one `DateRangePicker`, not two `DatePicker`s.** It lives in the same
 file and takes `{ from, to }` as the same ISO strings, with the presets (`This month`,
-`Last month`, `Last 3 months`, `This year`, `Next 12 months`) in
+`Last month`, `This week`, `Last week`, `Today`) in
 `@budget-manager/client` next to `currentMonthRange` — the transaction module reads
 that same helper for its default filters, so the picker and the list cannot disagree about what
 "this month" means. Two rules are load-bearing: every pick **starts a fresh range** (first click
 the start, second the end, ordered if the second lands earlier), and only a *complete* range is
 handed to `onValueChange`, so a caller that requires a range is never left holding half of one —
 which is what lets the transaction filters treat it as mandatory. `date-range-picker.test.tsx`
-pins both, plus the preset arithmetic across a leap February.
+pins both; the arithmetic itself is pinned in `packages/client/src/date-range.test.ts`, across a
+leap February.
+
+`Custom` is a sixth option that **applies no range**: it marks a range the presets cannot
+express, and clicking it leaves the popup open on the calendar instead of committing anything.
+It is the only part of the control that needs state — which preset is active is otherwise
+*derived* by comparing the value, so a range arrived at any other way lights `Custom` up on its
+own. That state lasts as long as the popup.
+
+**A range is navigated as well as picked: `shiftDateRange` is one click of the arrows beside
+it.** What counts as one step comes from the range itself rather than from a remembered preset —
+a range covering whole calendar months moves by that many months, and everything else by its own
+length in days — so a month never drifts by the 28-to-31 days it happens to have, a week moves a
+week, `Today` moves a day, and a hand-drawn 13-day range advances 13 days. Nothing has to be
+stored for that, which is why the filter state gained no field and the arrows are plain buttons
+in each app's transaction filter bar rather than a mode inside the picker. Neither arrow is ever
+disabled: the ledger reaches into the future a series has already been written into, which since
+the long presets went away is how that future is reached.
+
+Because the arrows have to fit beside it, the trigger **names the period instead of reciting
+it**: a whole calendar month reads `August 2026` (`isWholeMonthRange` decides), and anything else
+goes through `formatDateStringRange`, which is `Intl`'s own `formatRange` and states what the two
+ends share only once — `Aug 2 – 8, 2026`, `2 – 8 de ago. de 2026`, and a single day as just that
+day. Two `formatDate` calls joined by a dash cannot do that in two languages, since the day sits
+before the month in one and after it in the other.
 
 ## Conventions
 

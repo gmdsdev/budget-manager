@@ -85,6 +85,52 @@ export function formatDateString(
   return date ? formatDate(locale, date, style) : value;
 }
 
+const dateRangeFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function getDateRangeFormatter(locale: Locale, style: DateStyle) {
+  const key = `${locale}|${style}`;
+  let formatter = dateRangeFormatterCache.get(key);
+
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, DATE_STYLES[style]);
+    dateRangeFormatterCache.set(key, formatter);
+  }
+
+  return formatter;
+}
+
+/**
+ * A pair of dates as one phrase, with whatever the two ends share stated once:
+ * `Aug 2 – 8, 2026`, `2 – 8 de ago. de 2026`. Two `formatDate` calls joined by a
+ * dash cannot do that in two languages — the day sits before the month in one and
+ * after it in the other — and the collapsed form is what keeps a range legible in
+ * a control narrow enough to hold the stepper arrows beside it. Two ends on the
+ * same day come back as that one day.
+ */
+export function formatDateRange(
+  locale: Locale,
+  from: Date,
+  to: Date,
+  style: DateStyle,
+): string {
+  return getDateRangeFormatter(locale, style).formatRange(from, to);
+}
+
+/** Formats a pair of `yyyy-MM-dd` strings, echoing anything that is not one. */
+export function formatDateStringRange(
+  locale: Locale,
+  from: string,
+  to: string,
+  style: DateStyle,
+): string {
+  const start = parseDateString(from);
+  const end = parseDateString(to);
+
+  return start && end
+    ? formatDateRange(locale, start, end, style)
+    : `${from} – ${to}`;
+}
+
 /** Formats a `yyyy-MM` month key, echoing anything that is not one. */
 export function formatMonthString(
   locale: Locale,

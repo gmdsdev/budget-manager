@@ -1,6 +1,7 @@
 import {
   cardAccountValue,
   defaultTransactionFilters,
+  shiftDateRange,
   TRANSACTION_FILTER_ALL,
   type TransactionFiltersState,
   walletAccountValue,
@@ -18,6 +19,7 @@ import {
   TransactionRepeats,
   TransactionStatus,
 } from "@budget-manager/schemas";
+import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import { View } from "react-native";
 
@@ -99,6 +101,15 @@ export function TransactionFilters({
     onFiltersChange({ ...filters, ...next });
   }
 
+  function step(direction: 1 | -1) {
+    const { from, to } = shiftDateRange(
+      { from: filters.dateFrom, to: filters.dateTo },
+      direction,
+    );
+
+    patch({ dateFrom: from, dateTo: to });
+  }
+
   // Everything except the range. The date is the ledger's scope and is always set, so
   // it is the one control worth a permanent row; these are the narrowing ones, and how
   // many are on is what the trigger reports.
@@ -125,12 +136,49 @@ export function TransactionFilters({
           paddingTop: SPACING.md,
         }}
       >
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <DateRangePicker
-            label={t("transaction.filter.dateRange")}
-            size="sm"
-            value={{ from: filters.dateFrom, to: filters.dateTo }}
-            onValueChange={({ from, to }) => patch({ dateFrom: from, dateTo: to })}
+        {/* The arrows flank the range because they move it: one tap is the same
+            period again, forward or back — a month for a month, a week for a week,
+            and its own length in days for anything drawn by hand. `xs` gaps inside
+            the group and `sm` outside it are what make the three read as one
+            control rather than three peers beside the filters button. */}
+        <View
+          style={{
+            flex: 1,
+            minWidth: 0,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: SPACING.xs,
+          }}
+        >
+          <Button
+            variant="outline"
+            size="icon-sm"
+            accessibilityLabel={t("common.previousPeriod")}
+            leading={
+              <Feather name="chevron-left" size={18} color={colors.foreground} />
+            }
+            onPress={() => step(-1)}
+          />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <DateRangePicker
+              label={t("transaction.filter.dateRange")}
+              size="sm"
+              value={{ from: filters.dateFrom, to: filters.dateTo }}
+              onValueChange={({ from, to }) => patch({ dateFrom: from, dateTo: to })}
+            />
+          </View>
+          <Button
+            variant="outline"
+            size="icon-sm"
+            accessibilityLabel={t("common.nextPeriod")}
+            leading={
+              <Feather
+                name="chevron-right"
+                size={18}
+                color={colors.foreground}
+              />
+            }
+            onPress={() => step(1)}
           />
         </View>
         <Button

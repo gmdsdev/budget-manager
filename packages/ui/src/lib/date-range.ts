@@ -6,12 +6,15 @@
  */
 export {
   currentMonthRange,
+  DATE_RANGE_CUSTOM_KEY,
   DATE_RANGE_PRESETS,
   type DateRangePreset,
   type DateRangePresetKey,
   type DateRangeValue,
   formatIsoDate,
+  isWholeMonthRange,
   parseIsoDate,
+  shiftDateRange,
 } from "@budget-manager/client"
 
 const CAPTION_YEARS = 10

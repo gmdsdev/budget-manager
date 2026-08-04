@@ -171,6 +171,20 @@ describe("transaction filters", () => {
     await waitForRowCount(page, 2);
   }, 60_000);
 
+  test("steps a whole month at a time, and back again", async () => {
+    // The range in view is a whole month, so one click of the arrow beside it is
+    // one month — not the 28 to 31 days that month happens to have.
+    await page.getByLabel("Previous period", { exact: true }).click();
+    await waitForRowCount(page, 1);
+
+    expect((await rowTexts(page)).flat()).toContain("Old Subscription");
+
+    await page.getByLabel("Next period", { exact: true }).click();
+    await waitForRowCount(page, 2);
+
+    expect((await rowTexts(page)).flat()).not.toContain("Old Subscription");
+  }, 60_000);
+
   test("narrows by description", async () => {
     await fillField(page, "Description", "zebra");
     await waitForRowCount(page, 1);

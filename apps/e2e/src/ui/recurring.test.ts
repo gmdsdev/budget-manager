@@ -9,7 +9,6 @@ import {
   openApp,
   openFromDetail,
   openTransaction,
-  pickDateRangePreset,
   pickSelect,
   rowFor,
   rowTexts,
@@ -130,16 +129,27 @@ describe("recurrence lives on the transaction form", () => {
     await page.getByRole("button", { name: "Create series" }).click();
     await dialog(page).waitFor({ state: "hidden", timeout: 10_000 });
 
-    // The list opens on the current month; the series runs past it.
-    await pickDateRangePreset(page, "Next 12 months");
-
-    // Six scheduled rows plus the earlier one-off, all in one list.
-    await waitForRowCount(page, 7);
+    // The list opens on the current month, which holds the first installment
+    // beside the one-off recorded earlier.
+    await waitForRowCount(page, 2);
 
     const cells = (await rowTexts(page)).flat();
 
     expect(cells).toContain("6× monthly");
     expect(cells).toContain("One-off");
+  }, 60_000);
+
+  test("stepping forward reaches the months the series was written into", async () => {
+    // The list is never all-time, so a series materialized months ahead is reached
+    // by moving the range rather than by widening it. One click of the arrow beside
+    // the range is one more month, because the range in view is a whole month.
+    await page.getByLabel("Next period", { exact: true }).click();
+    await waitForRowCount(page, 1);
+
+    expect((await rowTexts(page)).flat()).toContain("6× monthly");
+
+    await page.getByLabel("Previous period", { exact: true }).click();
+    await waitForRowCount(page, 2);
   }, 60_000);
 
   test("recurring and one-off rows sit side by side in the ledger", async () => {
@@ -148,7 +158,7 @@ describe("recurrence lives on the transaction form", () => {
     const series = rows.filter((cells) => cells.includes("6× monthly")).length;
 
     expect(oneOff).toBe(1);
-    expect(series).toBe(6);
+    expect(series).toBe(1);
   }, 60_000);
 
   test("a series row offers series actions; a one-off does not", async () => {
@@ -179,8 +189,7 @@ describe("recurrence lives on the transaction form", () => {
     await dialog(page).waitFor({ state: "hidden", timeout: 10_000 });
 
     await page.reload({ waitUntil: "networkidle" });
-    await pickDateRangePreset(page, "Next 12 months");
-    await waitForRowCount(page, 7);
+    await waitForRowCount(page, 2);
 
     const cells = (await rowTexts(page)).flat();
 

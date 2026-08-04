@@ -7,7 +7,9 @@ export {
   DATE_STYLES,
   type DateStyle,
   formatDate,
+  formatDateRange,
   formatDateString,
+  formatDateStringRange,
   formatMonthString,
   parseDateString,
 } from "./format";

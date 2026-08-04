@@ -1,4 +1,9 @@
-import { DATE_RANGE_PRESETS, type DateRangeValue } from "@budget-manager/client";
+import {
+  DATE_RANGE_CUSTOM_KEY,
+  DATE_RANGE_PRESETS,
+  isWholeMonthRange,
+  type DateRangeValue,
+} from "@budget-manager/client";
 import { useI18n } from "@budget-manager/i18n/react";
 import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
@@ -128,6 +133,11 @@ export function DatePicker({
  * the end, ordered if the second lands earlier), and only a *complete* range is
  * handed to `onValueChange` — so a caller that requires a range is never left
  * holding half of one.
+ *
+ * The trigger names the period rather than reciting its ends: a whole month reads
+ * as `August 2026` and a single day as itself. On a phone that is not only how a
+ * reader refers to the range, it is what leaves room for the stepper arrows beside
+ * it — `1 de ago. – 31 de ago. de 2026` does not fit next to two chips.
  */
 export function DateRangePicker({
   value,
@@ -142,13 +152,26 @@ export function DateRangePicker({
   size?: DatePickerSize;
   style?: ViewStyle;
 }) {
-  const { t, formatDateString } = useI18n();
+  const { t, formatDateStringRange, formatMonthString } = useI18n();
   const [open, setOpen] = useState(false);
   const [draftStart, setDraftStart] = useState<string | null>(null);
+  // `Custom` sets no range, so being on it is the one thing about this control that
+  // cannot be read back off the value. It lasts as long as the sheet.
+  const [custom, setCustom] = useState(false);
 
+  const activePreset = DATE_RANGE_PRESETS.find((preset) => {
+    const range = preset.getRange();
+
+    return range.from === value.from && range.to === value.to;
+  });
+
+  // `Intl` states whatever the two ends share once (`2 – 8 de ago. de 2026`) and
+  // collapses a range of one day to that day, so neither needs a branch here.
   const text =
     value.from && value.to
-      ? `${formatDateString(value.from, "dayShort")} – ${formatDateString(value.to, "day")}`
+      ? isWholeMonthRange(value)
+        ? formatMonthString(value.from.slice(0, 7), "monthYear")
+        : formatDateStringRange(value.from, value.to, "day")
       : undefined;
 
   function handleSelect(next: string) {
@@ -161,6 +184,7 @@ export function DateRangePicker({
     const [from, to] = next < draftStart ? [next, draftStart] : [draftStart, next];
 
     setDraftStart(null);
+    setCustom(false);
     onValueChange({ from, to });
     setOpen(false);
   }
@@ -175,6 +199,7 @@ export function DateRangePicker({
         style={style}
         onPress={() => {
           setDraftStart(null);
+          setCustom(false);
           setOpen(true);
         }}
       />
@@ -183,16 +208,29 @@ export function DateRangePicker({
           {DATE_RANGE_PRESETS.map((preset) => (
             <Button
               key={preset.labelKey}
-              variant="outline"
+              variant={
+                !custom && preset === activePreset ? "secondary" : "outline"
+              }
               size="sm"
               label={t(preset.labelKey)}
               onPress={() => {
                 setDraftStart(null);
+                setCustom(false);
                 onValueChange(preset.getRange());
                 setOpen(false);
               }}
             />
           ))}
+
+          {/* The one option that applies nothing: it marks a range no preset can
+              express, and tapping it leaves the sheet open on the calendar below
+              rather than committing anything. */}
+          <Button
+            variant={custom || !activePreset ? "secondary" : "outline"}
+            size="sm"
+            label={t(DATE_RANGE_CUSTOM_KEY)}
+            onPress={() => setCustom(true)}
+          />
         </View>
 
         <Calendar

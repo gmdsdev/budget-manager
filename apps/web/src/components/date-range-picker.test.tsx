@@ -1,8 +1,6 @@
 import { DateRangePicker } from "@budget-manager/ui/components/date-picker";
 import {
   currentMonthRange,
-  DATE_RANGE_PRESETS,
-  type DateRangePresetKey,
   type DateRangeValue,
 } from "@budget-manager/client";
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -48,10 +46,22 @@ describe("DateRangePicker", () => {
     expect(trigger().textContent).toContain("Pick a date range");
   });
 
-  test("reads the stored range back onto the trigger", () => {
+  test("names a whole month rather than reciting its ends", () => {
     render(<Harness initial={{ from: "2026-07-01", to: "2026-07-31" }} />);
 
-    expect(trigger().textContent).toContain("Jul 1 – Jul 31, 2026");
+    expect(trigger().textContent).toContain("July 2026");
+  });
+
+  test("states what a hand-drawn range's two ends share only once", () => {
+    render(<Harness initial={{ from: "2026-07-06", to: "2026-07-18" }} />);
+
+    expect(trigger().textContent).toContain("Jul 6 – 18, 2026");
+  });
+
+  test("a single day reads as that day, not as a range of one", () => {
+    render(<Harness initial={{ from: "2026-07-06", to: "2026-07-06" }} />);
+
+    expect(trigger().textContent).toContain("Jul 6, 2026");
   });
 
   test("selects the stored days, not the UTC-shifted ones", async () => {
@@ -106,40 +116,21 @@ describe("DateRangePicker", () => {
     expect(screen.getByRole("combobox", { name: /month/i })).toBeDefined();
     expect(screen.getByRole("combobox", { name: /year/i })).toBeDefined();
   });
-});
 
-describe("DATE_RANGE_PRESETS", () => {
-  const LEAP_FEBRUARY = new Date(2028, 1, 14);
+  test("Custom applies nothing and leaves the calendar open to pick on", async () => {
+    render(<Harness initial={{ from: "2026-07-01", to: "2026-07-31" }} />);
+    await openCalendar();
 
-  function rangeFor(labelKey: DateRangePresetKey) {
-    return DATE_RANGE_PRESETS.find(
-      (preset) => preset.labelKey === labelKey,
-    )?.getRange(LEAP_FEBRUARY);
-  }
+    fireEvent.click(screen.getByRole("button", { name: "Custom" }));
 
-  test("covers whole months, including a leap February", () => {
-    expect(rangeFor("dateRange.thisMonth")).toEqual({
-      from: "2028-02-01",
-      to: "2028-02-29",
-    });
-    expect(rangeFor("dateRange.lastMonth")).toEqual({
-      from: "2028-01-01",
-      to: "2028-01-31",
-    });
-    expect(rangeFor("dateRange.last3Months")).toEqual({
-      from: "2027-12-01",
-      to: "2028-02-29",
-    });
-  });
+    // It is the one option that sets no range: the popup stays open so the reader
+    // can draw one, and until they do the range is untouched.
+    expect(committed()).toBe("2026-07-01/2026-07-31");
+    expect(screen.getAllByRole("grid").length).toBeGreaterThan(0);
 
-  test("reaches the rows a recurring series lands on later", () => {
-    expect(rangeFor("dateRange.thisYear")).toEqual({
-      from: "2028-01-01",
-      to: "2028-12-31",
-    });
-    expect(rangeFor("dateRange.next12Months")).toEqual({
-      from: "2028-02-01",
-      to: "2029-01-31",
-    });
+    fireEvent.click(screen.getByRole("button", { name: /July 6th, 2026/ }));
+    fireEvent.click(screen.getByRole("button", { name: /July 9th, 2026/ }));
+
+    expect(committed()).toBe("2026-07-06/2026-07-09");
   });
 });
