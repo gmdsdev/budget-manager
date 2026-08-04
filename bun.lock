@@ -49,6 +49,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@budget-manager/api": "workspace:*",
+        "@budget-manager/client": "workspace:*",
         "@budget-manager/i18n": "workspace:*",
         "@budget-manager/schemas": "workspace:*",
         "@trpc/client": "catalog:",

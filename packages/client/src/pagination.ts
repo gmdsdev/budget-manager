@@ -1,4 +1,8 @@
-export const PAGE_SIZE = 20;
+/**
+ * The server caps `limit` at 100, so this is the ceiling: a larger page size here
+ * would be rejected as a `BAD_REQUEST` rather than silently truncated.
+ */
+export const PAGE_SIZE = 100;
 
 export function toOffset(page: number, pageSize = PAGE_SIZE) {
   return Math.max(0, (page - 1) * pageSize);
@@ -9,7 +13,7 @@ export function pageCount(total: number, pageSize = PAGE_SIZE) {
 }
 
 /**
- * The 1-based range shown on the current page, for "Showing 1–20 of 57".
+ * The 1-based range shown on the current page, for "Showing 1–100 of 157".
  * `to` is clamped to `total` so the last page does not overstate itself.
  */
 export function pageRange({

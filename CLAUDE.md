@@ -595,6 +595,11 @@ state so changing a filter always resets to page 1. Two `useState` calls would l
 forget the reset and strand the user on a page that no longer exists. `PAGE_SIZE`, the offset
 math and that hook are all in `@budget-manager/client`.
 
+**`PAGE_SIZE` is 100, which is the server's own `limit` ceiling** — every module's validator caps
+it at `max(100)`, so raising it further is a `BAD_REQUEST` rather than a bigger page. `apps/e2e`
+reads the constant rather than restating it: a suite about paging has to seed *more* than a page,
+and one that hardcoded the old 20 would have quietly stopped having a second page to test.
+
 **Every screen opens with `<PageHeader>`** (`src/components/page-header.tsx`): title, an optional
 line of context, and the actions or scoping controls opposite, stacking below `sm`. All seven
 pages used to spell that markup out themselves, which was seven chances for one heading to drift

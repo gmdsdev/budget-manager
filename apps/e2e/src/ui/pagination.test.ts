@@ -1,3 +1,4 @@
+import { PAGE_SIZE } from "@budget-manager/client";
 import { TransactionKind, TransactionStatus } from "@budget-manager/schemas";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Page } from "playwright";
@@ -16,9 +17,11 @@ import {
   type Session,
 } from "../support/web";
 
-const PAGE_SIZE = 20;
-const EXPENSES = 25;
-const INCOMES = 2;
+// Read from the client rather than restated: the page size is a product decision
+// that has moved once already, and a suite about paging must not quietly stop
+// having a second page when it does. The seeded total only has to clear it.
+const EXPENSES = PAGE_SIZE;
+const INCOMES = 5;
 
 let session: Session;
 let page: Page;
@@ -39,8 +42,13 @@ beforeAll(async () => {
   // to be dated by the browser's clock rather than the test process's.
   const today = await todayInPage(page);
 
-  for (let index = 0; index < EXPENSES; index++) {
-    await api.transaction.create.mutate(
+  // A page-and-a-bit is over a hundred rows, so these go out in batches rather
+  // than one at a time: sequential creates put the seeding alone past the
+  // timeout, and a batch of every row at once would have the dev server holding
+  // a hundred open requests.
+  const BATCH = 20;
+  const rows = [
+    ...Array.from({ length: EXPENSES }, (_, index) =>
       transaction(seed.checking.id, {
         name: `Expense ${index}`,
         amountCents: (index + 1) * 100,
@@ -48,11 +56,8 @@ beforeAll(async () => {
         categoryId: seed.groceries.id,
         status: TransactionStatus.PAID,
       }),
-    );
-  }
-
-  for (let index = 0; index < INCOMES; index++) {
-    await api.transaction.create.mutate(
+    ),
+    ...Array.from({ length: INCOMES }, (_, index) =>
       transaction(seed.checking.id, {
         kind: TransactionKind.INCOME,
         name: `Income ${index}`,
@@ -60,9 +65,17 @@ beforeAll(async () => {
         occurrenceDate: dayThisMonth(index + 26, today),
         categoryId: seed.salary.id,
       }),
+    ),
+  ];
+
+  for (let start = 0; start < rows.length; start += BATCH) {
+    await Promise.all(
+      rows
+        .slice(start, start + BATCH)
+        .map((row) => api.transaction.create.mutate(row)),
     );
   }
-}, 120_000);
+}, 300_000);
 
 afterAll(async () => {
   await closeApp(session);

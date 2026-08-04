@@ -1,5 +1,6 @@
 import {
   DEFAULT_CATEGORIES,
+  DEFAULT_EXPENSE_CATEGORY_NAMES,
   DEFAULT_INCOME_CATEGORY_NAMES,
 } from "@budget-manager/schemas";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -21,8 +22,6 @@ import {
   waitForRowCount,
   type Session,
 } from "../support/web";
-
-const PAGE_SIZE = 20;
 
 let session: Session;
 let page: Page;
@@ -83,15 +82,13 @@ describe("wallet page", () => {
 describe("category page", () => {
   test("lists the defaults a sign-up created", async () => {
     await page.goto(`${WEB_URL}/category`, { waitUntil: "networkidle" });
-    await waitForRowCount(page, PAGE_SIZE);
+    await waitForRowCount(page, DEFAULT_CATEGORIES.length);
 
     expect(await rowFor(page, "Groceries")).toBeTruthy();
     expect(await bodyText(page)).toContain(`of ${DEFAULT_CATEGORIES.length}`);
   }, 60_000);
 
   test("creates categories and filters them by type", async () => {
-    // Names chosen to sort ahead of the seeded defaults, so the new row is on
-    // the first page of its filtered list.
     await createCategory("Consulting", "Income");
     await createCategory("Coffee Runs", "Expense");
 
@@ -105,14 +102,14 @@ describe("category page", () => {
     expect(await rowFor(page, "Consulting")).toBeTruthy();
 
     await pickSelect(page, page, "Type", "Expense");
-    await waitForRowCount(page, PAGE_SIZE);
+    await waitForRowCount(page, DEFAULT_EXPENSE_CATEGORY_NAMES.length + 1);
     expect((await rowTexts(page)).every((row) => row.includes("Expense"))).toBe(
       true,
     );
     expect(await rowFor(page, "Coffee Runs")).toBeTruthy();
 
     await pickSelect(page, page, "Type", "All types");
-    await waitForRowCount(page, PAGE_SIZE);
+    await waitForRowCount(page, DEFAULT_CATEGORIES.length + 2);
     expect(await bodyText(page)).toContain(
       `of ${DEFAULT_CATEGORIES.length + 2}`,
     );
