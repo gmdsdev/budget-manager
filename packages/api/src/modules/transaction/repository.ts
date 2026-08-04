@@ -19,7 +19,6 @@ import {
 import {
   and,
   asc,
-  desc,
   eq,
   gte,
   ilike,
@@ -252,7 +251,7 @@ export class TransactionRepository {
       )
       .where(transactionFilter({ userId, ...filters }))
       .orderBy(
-        desc(transactionOccurrences.occurrenceDate),
+        asc(transactionOccurrences.occurrenceDate),
         asc(transactionOccurrences.id),
       )
       .limit(limit)

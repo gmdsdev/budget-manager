@@ -238,12 +238,12 @@ describe("transaction", () => {
     expect(byRange.length).toBe(2);
   });
 
-  test("lists newest first", async () => {
+  test("lists oldest first", async () => {
     const dates = (await listTransactions(api, {})).map(
       (r) => r.occurrenceDate,
     );
 
-    expect(dates).toEqual([...dates].sort().reverse());
+    expect(dates).toEqual([...dates].sort());
   });
 
   test("respects limit and offset", async () => {
