@@ -43,7 +43,7 @@ export function CreateTransactionSheet({
   const form = useTransactionForm({
     defaultValues: {
       kind: TransactionKind.EXPENSE,
-      status: TransactionStatus.WAITING_PAYMENT,
+      status: TransactionStatus.PAID,
       name: "",
       amountCents: 0,
       occurrenceDate: todayAsDateString(),

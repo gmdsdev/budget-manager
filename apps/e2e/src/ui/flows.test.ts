@@ -142,7 +142,7 @@ describe("transaction page", () => {
 
     expect(row).toContain("Checking");
     expect(row).toContain("Groceries");
-    expect(row).toContain("Waiting payment");
+    expect(row).toContain("Paid");
     expect(row?.some((cell) => cell.includes("−"))).toBe(true);
   }, 60_000);
 
