@@ -1,7 +1,4 @@
-import {
-  transactionRepeatsLabel,
-  type TransactionRow,
-} from "@budget-manager/client";
+import type { TransactionRow } from "@budget-manager/client";
 import { useEnumLabels } from "@budget-manager/client/react";
 import { useI18n } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/money";
@@ -114,12 +111,15 @@ export function TransactionRows({
                   </RecordGlyph>
                 }
                 primary={transaction.name}
+                // What it spends and where it sits — and nothing else. The repeats
+                // label was a third entry that wrapped the line onto a second row on
+                // every recurring transaction, which is most of them; it is stated in
+                // the detail sheet the row opens.
                 meta={[
                   transaction.categoryName ?? t("category.uncategorized"),
                   transaction.walletName ??
                     transaction.creditCardName ??
                     t("common.none"),
-                  transactionRepeatsLabel(t, labels, transaction),
                 ]}
                 tag={
                   <RecordTag tone={STATUS_TONE[transaction.status]}>

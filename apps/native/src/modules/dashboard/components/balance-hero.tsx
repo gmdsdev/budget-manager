@@ -41,11 +41,18 @@ export function BalanceHero({
         <Text variant="eyebrow" tone="onPrimary" style={{ opacity: 0.6 }}>
           {label}
         </Text>
+        {/* The balance is given 85% of the plane to sit in rather than a smaller
+            type step. `figureHero` stays the size the scale says it is, and
+            `adjustsFontSizeToFit` shrinks *this* figure only as far as the narrower
+            box demands — so a short balance still reads at full size and a long one
+            comes down on its own, instead of every account paying for the worst
+            case. The margin it leaves is what stops the number touching the edge. */}
         <Text
           variant="figureHero"
           tone="onPrimary"
           adjustsFontSizeToFit
           numberOfLines={1}
+          style={{ maxWidth: "85%" }}
         >
           {formatMinorUnits(amountCents, currencyCode)}
         </Text>

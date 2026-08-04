@@ -1,5 +1,4 @@
 import { RefreshControl, ScrollView, View, type ViewStyle } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Text } from "@/components/ui/text";
 import { useColors } from "@/theme/theme-provider";
@@ -8,6 +7,16 @@ import { SPACING } from "@/theme/tokens";
 /**
  * The page shell. Horizontal padding is not optional: without it text sits flush
  * against the screen edge on a phone.
+ *
+ * It pays **no safe-area inset of its own** — `contentInsetAdjustmentBehavior` hands
+ * that to iOS, which knows where the bars are. Both are native and both are
+ * translucent, so content has to scroll *under* them while still starting below them,
+ * and only the platform can reconcile that.
+ *
+ * It has to be asked for explicitly. A tab screen gets the adjustment from the native
+ * tab host for free, but a pushed screen does not, and a transparent navigation bar
+ * contributes no layout height — so wallets, cards, categories and settings each lost
+ * the top of their content behind the glass until this was set.
  */
 export function Screen({
   children,
@@ -21,11 +30,11 @@ export function Screen({
   contentStyle?: ViewStyle;
 }) {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
+      contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       refreshControl={
         onRefresh ? (
@@ -40,7 +49,7 @@ export function Screen({
       contentContainerStyle={[
         {
           paddingHorizontal: SPACING.lg,
-          paddingBottom: insets.bottom + SPACING.xl,
+          paddingBottom: SPACING.xl,
           gap: SPACING.lg,
         },
         contentStyle,

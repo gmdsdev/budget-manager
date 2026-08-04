@@ -7,12 +7,14 @@ import {
 import { usePagedFilters, useWalletsQuery } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import { useState } from "react";
+import { View } from "react-native";
 
 import { ListError, ListLoading } from "@/components/list-state";
 import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
 import { Pagination } from "@/components/ui/pagination";
-import { PageHeader, Screen } from "@/components/ui/screen";
+import { Screen } from "@/components/ui/screen";
+import { SPACING } from "@/theme/tokens";
 
 import { CreateWalletSheet } from "../components/create-wallet-sheet";
 import { WalletDetailSheet } from "../components/wallet-detail-sheet";
@@ -33,12 +35,15 @@ export function ListWalletsScreen() {
 
   return (
     <Screen onRefresh={() => void refetch()} refreshing={isRefetching}>
-      <PageHeader title={t("wallet.title")}>
+      {/* No page title: the screen is named by the bar above it — the native header
+          on a pushed screen, the tab bar on a tab. Repeating it costs a 32px row at
+          the top of a phone and says nothing the reader cannot already see. */}
+      <View style={{ paddingTop: SPACING.md }}>
         <Button
           label={t("wallet.create.trigger")}
           onPress={() => setCreating(true)}
         />
-      </PageHeader>
+      </View>
 
       <WalletFilters filters={filters} onFiltersChange={setFilters} />
 

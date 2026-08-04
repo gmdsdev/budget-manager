@@ -76,8 +76,13 @@ export function RecordRow({
         ) : null}
       </View>
 
+      {/* Capped. The trailing column sizes to its content and would otherwise win
+          every argument with the name beside it — a labelled figure like
+          "R$ 11.769,11 available" is wider than most record names, so the figure
+          stayed whole and the name truncated. Past half the row it wraps instead,
+          which is the right thing to lose. */}
       {trailing || tag ? (
-        <View style={{ alignItems: "flex-end", gap: 2 }}>
+        <View style={{ maxWidth: "50%", alignItems: "flex-end", gap: 2 }}>
           {trailing}
           {tag}
         </View>

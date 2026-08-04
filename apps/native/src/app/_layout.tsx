@@ -13,9 +13,11 @@ import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { AccountMenuButton } from "@/components/account-menu-sheet";
 import { Toaster } from "@/components/toaster";
 import { authClient } from "@/lib/auth-client";
 import { AppI18nProvider } from "@/lib/i18n";
+import { useCreateTransactionActions } from "@/modules/transaction/components/create-transaction-actions";
 import { ThemeProvider, useColors, useTheme } from "@/theme/theme-provider";
 import { FONTS } from "@/theme/tokens";
 import { queryClient } from "@/utils/trpc";
@@ -80,29 +82,48 @@ function AuthGate() {
 }
 
 /**
- * The tabs and the login screen own their whole surface; the four screens pushed from
- * the account menu keep a native header, because a pushed screen needs a back
+ * Every bar in this app is a **native** one, which is what lets iOS draw it in its own
+ * material rather than having React Native paint an imitation.
+ *
+ * `headerTransparent` is what makes a navigation bar a *material* rather than a fill:
+ * left opaque it takes a solid background, and since this app's mode is its own rather
+ * than the system's, that background resolved light while the app was dark — a white
+ * band across the top. `Appearance.setColorScheme` does not reach it (see
+ * `theme-provider.tsx`), so the tone is chosen here from the mode we are actually in,
+ * which is also why the effect is named per mode rather than left to `systemDefault`.
+ *
+ * The tab group carries the account mark and the create action as its header, so that
+ * bar is a real `UINavigationBar` shared by all three tabs. The four screens pushed
+ * from the account menu keep their own, because a pushed screen needs the back
  * affordance the system already knows how to draw.
  */
 function AppStack() {
   const t = useTranslate();
-  const colors = useColors();
+  const { mode, colors } = useTheme();
+  const createTransaction = useCreateTransactionActions();
 
-  const pushedOptions = {
-    headerShown: true,
-    // Without this the back button reads `(tabs)`: the label falls back to the
-    // previous route's title, and the previous route is the tab group, whose
-    // `Stack.Screen` has no title to give. All four of these are pushed from the
-    // account menu, so that is where back goes and what it should say.
-    headerBackTitle: t("common.menu"),
-    headerStyle: { backgroundColor: colors.background },
-    headerShadowVisible: false,
+  const headerText = {
+    headerTransparent: true,
+    headerBlurEffect:
+      mode === "dark"
+        ? ("systemChromeMaterialDark" as const)
+        : ("systemChromeMaterialLight" as const),
     headerTintColor: colors.foreground,
     headerTitleStyle: {
       fontFamily: FONTS.semibold,
       fontSize: 18,
       letterSpacing: -0.27,
     },
+  };
+
+  const pushedOptions = {
+    ...headerText,
+    headerShown: true,
+    // Without this the back button reads `(tabs)`: the label falls back to the
+    // previous route's title, and the previous route is the tab group, whose
+    // `Stack.Screen` has no title to give. All four of these are pushed from the
+    // account menu, so that is where back goes and what it should say.
+    headerBackTitle: t("common.menu"),
     headerBackTitleStyle: {
       fontFamily: FONTS.regular,
       fontSize: 16,
@@ -110,32 +131,49 @@ function AppStack() {
   };
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        animation: "slide_from_right",
-        contentStyle: { backgroundColor: colors.background },
-      }}
-    >
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="login" />
-      <Stack.Screen
-        name="wallet"
-        options={{ ...pushedOptions, title: t("nav.wallets") }}
-      />
-      <Stack.Screen
-        name="credit-card"
-        options={{ ...pushedOptions, title: t("nav.creditCards") }}
-      />
-      <Stack.Screen
-        name="category"
-        options={{ ...pushedOptions, title: t("nav.categories") }}
-      />
-      <Stack.Screen
-        name="settings"
-        options={{ ...pushedOptions, title: t("nav.settings") }}
-      />
-    </Stack>
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "slide_from_right",
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            ...headerText,
+            headerShown: true,
+            // No title: the tab bar below already says which screen this is, so the
+            // row is spent on the two things worth reaching instead.
+            title: "",
+            headerLeft: () => <AccountMenuButton />,
+            unstable_headerRightItems: () => createTransaction.items,
+          }}
+        />
+        <Stack.Screen name="login" />
+        <Stack.Screen
+          name="wallet"
+          options={{ ...pushedOptions, title: t("nav.wallets") }}
+        />
+        <Stack.Screen
+          name="credit-card"
+          options={{ ...pushedOptions, title: t("nav.creditCards") }}
+        />
+        <Stack.Screen
+          name="category"
+          options={{ ...pushedOptions, title: t("nav.categories") }}
+        />
+        <Stack.Screen
+          name="settings"
+          options={{ ...pushedOptions, title: t("nav.settings") }}
+        />
+      </Stack>
+      {/* A native bar button hands back a callback and nothing else, so the sheets it
+          opens have to be mounted by something that renders — and staying mounted is
+          what keeps their reset-on-open behaviour. */}
+      {createTransaction.sheets}
+    </>
   );
 }
 

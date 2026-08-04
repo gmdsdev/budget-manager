@@ -45,6 +45,13 @@ export const common = {
   },
   "common.noResults": { en: "No results.", "pt-BR": "Nenhum resultado." },
   "common.clearFilters": { en: "Clear filters", "pt-BR": "Limpar filtros" },
+  // `apps/native` collapses the transaction bar behind this: seven controls is five
+  // rows on a phone, and the ledger they scope starts below them.
+  "common.filters": { en: "Filters", "pt-BR": "Filtros" },
+  "common.filtersApplied": {
+    en: "Filters ({count})",
+    "pt-BR": "Filtros ({count})",
+  },
   "common.filterBy": {
     en: "Filter by {column}",
     "pt-BR": "Filtrar por {column}",

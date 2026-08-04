@@ -34,6 +34,10 @@ export const wallet = {
     en: "{amount} projected",
     "pt-BR": "{amount} projetado",
   },
+  // A marker, not a figure: `apps/native`'s row states only that something is still
+  // to settle, because the projected amount beside the balance was wider than the
+  // wallet's own name. The figure itself is in the detail sheet.
+  "wallet.pending": { en: "Pending rows", "pt-BR": "Lançamentos pendentes" },
   "wallet.column.openingBalanceValue": {
     en: "Opened at {amount}",
     "pt-BR": "Aberta com {amount}",

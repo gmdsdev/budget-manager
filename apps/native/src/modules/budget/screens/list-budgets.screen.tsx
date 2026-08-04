@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
 import { MonthStepper } from "@/components/ui/month-stepper";
 import { Pagination } from "@/components/ui/pagination";
-import { Fading, PageHeader, Screen } from "@/components/ui/screen";
+import { Fading, Screen } from "@/components/ui/screen";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BudgetDetailSheet } from "@/modules/budget/components/budget-detail-sheet";
@@ -31,6 +31,9 @@ import { BudgetRows } from "@/modules/budget/components/budget-list/budget-rows"
 import { BudgetMonthCard } from "@/modules/budget/components/budget-month-card";
 import { CreateBudgetSheet } from "@/modules/budget/components/create-budget-sheet";
 import { SPACING } from "@/theme/tokens";
+
+/** Wide enough for a currency code and its chevron, so the chip never reflows. */
+const CURRENCY_CHIP_WIDTH = 96;
 
 export function ListBudgetsScreen() {
   const { t, formatMonthString } = useI18n();
@@ -64,30 +67,45 @@ export function ListBudgetsScreen() {
 
   return (
     <Screen onRefresh={() => void refetch()} refreshing={isRefetching}>
-      <PageHeader title={t("budget.title")}>
-        {/* Both controls sit above everything they scope. */}
-        <View style={{ gap: SPACING.sm }}>
+      {/* No page title — the tab bar names this screen. Both controls sit above
+          everything they scope, on one row: the currency is sized to its code and the
+          stepper takes the rest, which puts its arrows on the row's own edges. */}
+      <View style={{ gap: SPACING.sm, paddingTop: SPACING.md }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: SPACING.sm,
+          }}
+        >
           {totals.length > 1 && (
             <Select
               label={t("common.currency")}
+              size="sm"
               items={totals.map((entry) => ({
                 label: entry.currencyCode,
                 value: entry.currencyCode,
               }))}
               value={activeCurrency}
               onValueChange={setCurrencyCode}
+              style={{ width: CURRENCY_CHIP_WIDTH }}
             />
           )}
-          <MonthStepper
-            label={monthLabel}
-            onPrevious={() => setMonth(shiftMonth(month, -1))}
-            onNext={() => setMonth(shiftMonth(month, 1))}
-            previousLabel={t("budget.month.previous")}
-            nextLabel={t("budget.month.next")}
-          />
-          <Button label={t("budget.create.trigger")} onPress={() => setCreating(true)} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <MonthStepper
+              label={monthLabel}
+              onPrevious={() => setMonth(shiftMonth(month, -1))}
+              onNext={() => setMonth(shiftMonth(month, 1))}
+              previousLabel={t("budget.month.previous")}
+              nextLabel={t("budget.month.next")}
+            />
+          </View>
         </View>
-      </PageHeader>
+        <Button
+          label={t("budget.create.trigger")}
+          onPress={() => setCreating(true)}
+        />
+      </View>
 
       {/* The month card answers "is there money left"; the list below is what set
           those limits. */}

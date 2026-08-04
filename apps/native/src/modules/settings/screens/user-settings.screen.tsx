@@ -4,7 +4,7 @@ import { View } from "react-native";
 
 import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
-import { PageHeader, Screen } from "@/components/ui/screen";
+import { Screen } from "@/components/ui/screen";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { useSignOut } from "@/hooks/use-sign-out";
 import { authClient } from "@/lib/auth-client";
@@ -22,7 +22,9 @@ export function UserSettingsScreen() {
 
   return (
     <Screen>
-      <PageHeader title={t("settings.title")} description={t("settings.description")} />
+      {/* No page title: the screen is named by the bar above it — the native header
+          on a pushed screen, the tab bar on a tab. Repeating it costs a 32px row at
+          the top of a phone and says nothing the reader cannot already see. */}
 
       {isPending ? (
         <SkeletonList label={t("settings.loading")} count={4} height={140} />

@@ -15,7 +15,7 @@ import { useState } from "react";
 import { ListError, ListLoading } from "@/components/list-state";
 import { Empty } from "@/components/ui/empty";
 import { Pagination } from "@/components/ui/pagination";
-import { PageHeader, Screen } from "@/components/ui/screen";
+import { Screen } from "@/components/ui/screen";
 import { TransactionDetailSheet } from "@/modules/transaction/components/transaction-detail-sheet";
 import { TransactionFilters } from "@/modules/transaction/components/transaction-list/transaction-filters";
 import { TransactionRows } from "@/modules/transaction/components/transaction-list/transaction-rows";
@@ -38,9 +38,9 @@ export function ListTransactionsScreen() {
 
   return (
     <Screen onRefresh={() => void refetch()} refreshing={isRefetching}>
-      {/* Recording something lives in the app bar, where it is reachable from every
-          tab — so the heading here carries nothing but the name of the screen. */}
-      <PageHeader title={t("transaction.title")} />
+      {/* No page title: the screen is named by the bar above it — the native header
+          on a pushed screen, the tab bar on a tab. Repeating it costs a 32px row at
+          the top of a phone and says nothing the reader cannot already see. */}
 
       <TransactionFilters filters={filters} onFiltersChange={setFilters} />
 

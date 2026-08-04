@@ -39,16 +39,11 @@ export function WalletRows({
               </RecordGlyph>
             }
             primary={wallet.name}
-            meta={[
-              labels.walletType(wallet.type),
-              labels.currency(wallet.currencyCode),
-              t("wallet.column.openingBalanceValue", {
-                amount: formatMinorUnits(
-                  wallet.openingBalanceCents,
-                  wallet.currencyCode,
-                ),
-              }),
-            ]}
+            // The bare code, not `labels.currency` — that resolves to
+            // "BRL - Brazilian Real", which on its own is most of a phone's row. And
+            // no opening balance: it is the least-read figure a wallet has, and it was
+            // pushing the two that matter off the line.
+            meta={[labels.walletType(wallet.type), wallet.currencyCode]}
             trailing={
               <>
                 <Text
@@ -58,18 +53,13 @@ export function WalletRows({
                 >
                   {formatMinorUnits(wallet.balanceCents, wallet.currencyCode)}
                 </Text>
+                {/* The figure alone. "R$ 124.215,67 projected" is wider than the
+                    wallet's own name, and it was winning — the name truncated to
+                    "Nubank Che…" to make room for it. The projected balance is a
+                    field in the detail sheet, which is a tap away. */}
                 {hasPending ? (
-                  <Text
-                    variant="meta"
-                    tone="muted"
-                    style={{ fontVariant: ["tabular-nums"] }}
-                  >
-                    {t("wallet.projected", {
-                      amount: formatMinorUnits(
-                        wallet.projectedBalanceCents,
-                        wallet.currencyCode,
-                      ),
-                    })}
+                  <Text variant="meta" tone="muted">
+                    {t("wallet.pending")}
                   </Text>
                 ) : null}
               </>

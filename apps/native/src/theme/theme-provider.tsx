@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Appearance } from "react-native";
 
 import { PALETTES, type ThemeColors, type ThemeMode } from "./tokens";
 
@@ -49,6 +50,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  /**
+   * The app's mode is **its own**, not the OS's, so UIKit has to be told or the
+   * platform's own surfaces keep resolving against the system appearance — a phone in
+   * light mode showing this app in dark would draw light chrome over dark content.
+   *
+   * This is necessary but **not sufficient**: it does not reach the navigation bar or
+   * the tab bar, which is why both name their material's tone from `mode` themselves
+   * (`app/_layout.tsx`, `app/(tabs)/_layout.tsx`). It is still worth doing for the
+   * surfaces that have no prop to set — the keyboard, action sheets, native pickers.
+   */
+  useEffect(() => {
+    Appearance.setColorScheme(mode);
+  }, [mode]);
 
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);

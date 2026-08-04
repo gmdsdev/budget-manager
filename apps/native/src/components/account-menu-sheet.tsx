@@ -1,6 +1,7 @@
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { InteractionManager, Pressable, View } from "react-native";
 
 import { AccountAvatar } from "@/components/account-avatar";
@@ -27,6 +28,37 @@ const LINKS = [
   { to: "/category", label: "nav.categories", icon: "tag" },
   { to: "/settings", label: "nav.settings", icon: "settings" },
 ] as const;
+
+/**
+ * The account mark, as `headerLeft` on the stack screen holding the tab group. It sits
+ * in a real `UINavigationBar` rather than a bar this app draws, which is what gets it
+ * the system material — and it is declared once for all three tabs.
+ */
+export function AccountMenuButton() {
+  const t = useTranslate();
+  const [open, setOpen] = useState(false);
+  const { data: session } = authClient.useSession();
+
+  return (
+    <>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("common.menu")}
+        accessibilityState={{ expanded: open }}
+        onPress={() => setOpen(true)}
+        hitSlop={8}
+        style={({ pressed }) => ({
+          borderRadius: RADIUS.full,
+          opacity: pressed ? 0.7 : 1,
+        })}
+      >
+        <AccountAvatar name={session?.user.name ?? ""} />
+      </Pressable>
+
+      <AccountMenuSheet open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
 
 export function AccountMenuSheet({
   open,

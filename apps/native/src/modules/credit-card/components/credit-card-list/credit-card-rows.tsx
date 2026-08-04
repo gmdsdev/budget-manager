@@ -38,17 +38,19 @@ export function CreditCardRows({
               </RecordGlyph>
             }
             primary={card.name}
+            // What is owed only means something against what is left, so `available`
+            // stays — but on the *meta* line, not opposite the name. Anything in the
+            // trailing column is measured against the name for width and wins, and
+            // "R$ 11.769,11 available" is wider than "Nubank Mastercard": the figure
+            // column kept the amount and the name was cut to "Nubank Master…". The
+            // meta line is allowed to wrap; the name is not allowed to truncate.
+            //
+            // The cycle days, the limit and the billing wallet are configuration
+            // rather than a reading, and live in the detail sheet.
             meta={[
               card.currencyCode,
-              t("creditCard.column.cycleValue", {
-                closeDay: card.closeDay,
-                dueDay: card.dueDay,
-              }),
-              card.defaultBillingWalletName ?? t("common.none"),
-              // What is owed only means something against what may be: the
-              // trailing figure is the outstanding, so the limit rides here.
-              t("creditCard.column.limitValue", {
-                amount: formatMinorUnits(card.limitCents, card.currencyCode),
+              t("creditCard.column.availableValue", {
+                amount: formatMinorUnits(card.availableCents, card.currencyCode),
               }),
             ]}
             trailing={
@@ -60,31 +62,9 @@ export function CreditCardRows({
                 >
                   {formatMinorUnits(card.outstandingCents, card.currencyCode)}
                 </Text>
-                {/* What is owed only means something against what is left. */}
-                <Text
-                  variant="meta"
-                  tone={card.availableCents < 0 ? "destructive" : "muted"}
-                  style={{ fontVariant: ["tabular-nums"] }}
-                >
-                  {t("creditCard.column.availableValue", {
-                    amount: formatMinorUnits(
-                      card.availableCents,
-                      card.currencyCode,
-                    ),
-                  })}
-                </Text>
                 {hasPending ? (
-                  <Text
-                    variant="meta"
-                    tone="muted"
-                    style={{ fontVariant: ["tabular-nums"] }}
-                  >
-                    {t("creditCard.projected", {
-                      amount: formatMinorUnits(
-                        card.projectedOutstandingCents,
-                        card.currencyCode,
-                      ),
-                    })}
+                  <Text variant="meta" tone="muted">
+                    {t("wallet.pending")}
                   </Text>
                 ) : null}
               </>

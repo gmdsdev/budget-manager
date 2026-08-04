@@ -12,7 +12,7 @@ import { Text } from "@/components/ui/text";
 import { BudgetMeter } from "@/modules/budget/components/budget-meter";
 import { EditBudgetPeriodSheet } from "@/modules/budget/components/edit-budget-period-sheet";
 import { useColors } from "@/theme/theme-provider";
-import { SPACING } from "@/theme/tokens";
+import { BORDER_WIDTH, SPACING } from "@/theme/tokens";
 
 /**
  * The month in view: what each category may spend and what it has spent. This is the
@@ -39,8 +39,12 @@ export function BudgetMonthCard({
         description={t("budget.month.description", { month: monthLabel })}
       />
 
+      {/* Rows, not three figures across. At a third of a phone's width each, `R$`
+          broke onto its own line above its digits — the same reason the dashboard's
+          stat tiles became `MonthSummary`. A label on the left and its figure on the
+          right cannot run out of room. */}
       {totals && (
-        <View style={{ flexDirection: "row", gap: SPACING.md }}>
+        <View style={{ gap: SPACING.sm }}>
           <Figure
             label={t("budget.totals.budgeted")}
             cents={totals.limitCents}
@@ -55,6 +59,7 @@ export function BudgetMonthCard({
             label={t("budget.totals.left")}
             cents={totals.remainingCents}
             currencyCode={currencyCode}
+            ruled
           />
         </View>
       )}
@@ -97,14 +102,28 @@ function Figure({
   label,
   cents,
   currencyCode,
+  ruled = false,
 }: {
   label: string;
   cents: number;
   currencyCode: string;
+  /** What is left is derived from the two above it, so it is ruled off. */
+  ruled?: boolean;
 }) {
+  const colors = useColors();
+
   return (
-    <View style={{ flex: 1, gap: 2 }}>
-      <Text variant="eyebrow" tone="muted" numberOfLines={1}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: SPACING.md,
+        paddingTop: ruled ? SPACING.sm : 0,
+        borderTopWidth: ruled ? BORDER_WIDTH : 0,
+        borderColor: colors.border,
+      }}
+    >
+      <Text variant="meta" tone="muted" style={{ flex: 1 }} numberOfLines={1}>
         {label}
       </Text>
       <Amount cents={cents} currencyCode={currencyCode} variant="cardTitle" />

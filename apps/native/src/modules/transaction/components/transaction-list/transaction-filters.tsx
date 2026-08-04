@@ -1,7 +1,6 @@
 import {
   cardAccountValue,
   defaultTransactionFilters,
-  isTransactionFiltered,
   TRANSACTION_FILTER_ALL,
   type TransactionFiltersState,
   walletAccountValue,
@@ -19,12 +18,16 @@ import {
   TransactionRepeats,
   TransactionStatus,
 } from "@budget-manager/schemas";
+import { useState } from "react";
+import { View } from "react-native";
 
-import { FilterBar } from "@/components/filter-bar";
 import { FilterSearch } from "@/components/filter-search";
 import { type FilterItem, FilterSelect } from "@/components/filter-select";
+import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-picker";
+import { Sheet } from "@/components/ui/sheet";
 import { useColors } from "@/theme/theme-provider";
+import { SPACING } from "@/theme/tokens";
 
 export function TransactionFilters({
   filters,
@@ -36,6 +39,7 @@ export function TransactionFilters({
   const t = useTranslate();
   const labels = useEnumLabels();
   const colors = useColors();
+  const [open, setOpen] = useState(false);
 
   const { data: wallets } = useWalletOptionsQuery();
   const { data: cards } = useCreditCardOptionsQuery();
@@ -95,67 +99,126 @@ export function TransactionFilters({
     onFiltersChange({ ...filters, ...next });
   }
 
+  // Everything except the range. The date is the ledger's scope and is always set, so
+  // it is the one control worth a permanent row; these are the narrowing ones, and how
+  // many are on is what the trigger reports.
+  const applied = [
+    filters.search ? 1 : 0,
+    filters.accountId === TRANSACTION_FILTER_ALL ? 0 : 1,
+    filters.categoryId === TRANSACTION_FILTER_ALL ? 0 : 1,
+    filters.kind === TRANSACTION_FILTER_ALL ? 0 : 1,
+    filters.repeats === TRANSACTION_FILTER_ALL ? 0 : 1,
+    filters.status === TRANSACTION_FILTER_ALL ? 0 : 1,
+  ].reduce((total, one) => total + one, 0);
+
   return (
-    <FilterBar
-      // Clearing resets to the current month rather than to nothing: there is no
-      // all-time ledger.
-      isFiltered={isTransactionFiltered(filters)}
-      onClear={() => onFiltersChange(defaultTransactionFilters())}
-    >
-      <DateRangePicker
-        label={t("transaction.filter.dateRange")}
-        size="sm"
-        value={{ from: filters.dateFrom, to: filters.dateTo }}
-        onValueChange={({ from, to }) => patch({ dateFrom: from, dateTo: to })}
-        style={{ width: "100%" }}
-      />
+    <>
+      {/* One row, not five. Seven controls stacked two-up filled most of a phone
+          before the first transaction — a bar that big is not scoping the list, it
+          *is* the screen. The range stays out because the ledger is never unscoped
+          and the dates are worth reading at a glance; the rest open on demand. */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: SPACING.sm,
+          paddingTop: SPACING.md,
+        }}
+      >
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <DateRangePicker
+            label={t("transaction.filter.dateRange")}
+            size="sm"
+            value={{ from: filters.dateFrom, to: filters.dateTo }}
+            onValueChange={({ from, to }) => patch({ dateFrom: from, dateTo: to })}
+          />
+        </View>
+        <Button
+          size="sm"
+          variant={applied > 0 ? "secondary" : "outline"}
+          label={
+            applied > 0
+              ? t("common.filtersApplied", { count: applied })
+              : t("common.filters")
+          }
+          onPress={() => setOpen(true)}
+        />
+      </View>
 
-      <FilterSearch
-        label={t("common.description")}
-        value={filters.search}
-        onValueChange={(search) => patch({ search })}
-      />
-
-      <FilterSelect
-        label={t("common.account")}
-        items={accountItems}
-        value={filters.accountId}
-        onValueChange={(accountId) => patch({ accountId })}
-      />
-
-      <FilterSelect
-        label={t("common.category")}
-        items={categoryFilterItems}
-        value={filters.categoryId}
-        onValueChange={(categoryId) => patch({ categoryId })}
-      />
-
-      <FilterSelect
-        label={t("transaction.filter.kind")}
-        items={kindItems}
-        value={filters.kind}
-        onValueChange={(value) =>
-          patch({ kind: value as TransactionFiltersState["kind"] })
+      <Sheet
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t("common.filters")}
+        footer={
+          <>
+            <Button
+              variant="outline"
+              label={t("common.clearFilters")}
+              // Clearing resets to the current month rather than to nothing: there is
+              // no all-time ledger.
+              onPress={() => onFiltersChange(defaultTransactionFilters())}
+              style={{ flex: 1 }}
+            />
+            <Button
+              label={t("common.close")}
+              onPress={() => setOpen(false)}
+              style={{ flex: 1 }}
+            />
+          </>
         }
-      />
+      >
+        <FilterSearch
+          label={t("common.description")}
+          value={filters.search}
+          onValueChange={(search) => patch({ search })}
+        />
 
-      <FilterSelect
-        label={t("transaction.column.repeats")}
-        items={repeatsItems}
-        value={filters.repeats}
-        onValueChange={(value) =>
-          patch({ repeats: value as TransactionFiltersState["repeats"] })
-        }
-      />
+        <FilterSelect
+          full
+          label={t("common.account")}
+          items={accountItems}
+          value={filters.accountId}
+          onValueChange={(accountId) => patch({ accountId })}
+        />
 
-      <FilterSelect
-        label={t("common.status")}
-        items={statusItems}
-        value={filters.status}
-        onValueChange={(value) =>
-          patch({ status: value as TransactionFiltersState["status"] })
-        }
-      />
-    </FilterBar>
+        <FilterSelect
+          full
+          label={t("common.category")}
+          items={categoryFilterItems}
+          value={filters.categoryId}
+          onValueChange={(categoryId) => patch({ categoryId })}
+        />
+
+        <FilterSelect
+          full
+          label={t("transaction.filter.kind")}
+          items={kindItems}
+          value={filters.kind}
+          onValueChange={(value) =>
+            patch({ kind: value as TransactionFiltersState["kind"] })
+          }
+        />
+
+        <FilterSelect
+          full
+          label={t("transaction.column.repeats")}
+          items={repeatsItems}
+          value={filters.repeats}
+          onValueChange={(value) =>
+            patch({ repeats: value as TransactionFiltersState["repeats"] })
+          }
+        />
+
+        <FilterSelect
+          full
+          label={t("common.status")}
+          items={statusItems}
+          value={filters.status}
+          onValueChange={(value) =>
+            patch({ status: value as TransactionFiltersState["status"] })
+          }
+        />
+      </Sheet>
+    </>
   );
 }
