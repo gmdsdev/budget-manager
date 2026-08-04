@@ -108,10 +108,15 @@ export default tseslint.config(
     extends: [tseslint.configs.disableTypeChecked],
   },
 
-  // Metro and Babel read their config through CommonJS, so these two are the one
-  // place in the repo where `require` and `__dirname` are the correct spelling.
+  // Metro, Babel and the Apple target configs are all read through CommonJS — the
+  // `@bacons/apple-targets` plugin `require`s each `expo-target.config.js`, and its
+  // docs are explicit that ESM is not supported there — so these are the one place
+  // in the repo where `require`, `module` and `__dirname` are the correct spelling.
   {
-    files: ["apps/native/*.config.js"],
+    files: [
+      "apps/native/*.config.js",
+      "apps/native/targets/**/expo-target.config.js",
+    ],
     languageOptions: {
       globals: globals.node,
       sourceType: "commonjs",

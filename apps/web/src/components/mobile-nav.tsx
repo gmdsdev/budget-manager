@@ -16,7 +16,7 @@ import { useState } from "react";
 import { useSignOut } from "@/hooks/use-sign-out";
 import { authClient } from "@/lib/auth-client";
 import { useThemeMode } from "@/components/theme-provider";
-import { KivoLockup } from "./logo";
+import { KivoLogo } from "./logo";
 import { NAV_GROUPS } from "./nav-links";
 
 const THEMES = [
@@ -52,7 +52,7 @@ export function MobileNav() {
       />
       <SheetContent side="right" className="w-4/5 max-w-xs overflow-y-auto">
         <SheetHeader>
-          <KivoLockup className="mb-3 h-9" alt="" />
+          <KivoLogo className="mb-3 h-9" alt="" />
           <SheetTitle>{t("common.menu")}</SheetTitle>
           {session ? (
             <SheetDescription>{session.user.email}</SheetDescription>

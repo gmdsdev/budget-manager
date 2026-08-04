@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CurrencySection } from "@/modules/dashboard/components/currency-section";
 import { PendingList } from "@/modules/dashboard/components/pending-list";
 import { StatementsDueList } from "@/modules/dashboard/components/statements-due-list";
+import { useWidgetSync } from "@/modules/widget/use-widget-sync";
 import { SPACING } from "@/theme/tokens";
 
 /** Wide enough for a currency code and its chevron, so the chip never reflows. */
@@ -52,6 +53,15 @@ export function DashboardScreen() {
     currencies.find((entry) => entry.currencyCode === preferredCurrency) ??
     currencies[0];
   const activeCurrency = summary?.currencyCode;
+
+  // The home-screen widget reads these same figures, so it can never disagree with
+  // the screen behind it — but only while the month in view is the current one.
+  useWidgetSync({
+    summaries: data?.currencies,
+    preferredCurrency,
+    monthLabel,
+    enabled: isCurrentMonth,
+  });
 
   return (
     <Screen onRefresh={() => void refetch()} refreshing={isRefetching}>

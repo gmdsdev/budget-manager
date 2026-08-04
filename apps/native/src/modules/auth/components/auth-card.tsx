@@ -1,7 +1,7 @@
 import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { KivoLockup } from "@/components/logo";
+import { KivoLogo } from "@/components/logo";
 import { Surface } from "@/components/ui/surface";
 import { Text } from "@/components/ui/text";
 import { useColors } from "@/theme/theme-provider";
@@ -35,7 +35,7 @@ export function AuthCard({
       >
         <Surface style={{ padding: SPACING.xl, gap: SPACING.xl }}>
           <View style={{ alignItems: "center", gap: SPACING.lg }}>
-            <KivoLockup height={44} />
+            <KivoLogo height={44} />
             <Text variant="pageTitle" style={{ textAlign: "center" }}>
               {title}
             </Text>

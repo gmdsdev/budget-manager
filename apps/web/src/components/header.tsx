@@ -2,7 +2,7 @@ import { useTranslate } from "@budget-manager/i18n/react";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 
-import { KivoLockup, KivoMark } from "./logo";
+import { KivoLogo, KivoMark } from "./logo";
 import { MobileNav } from "./mobile-nav";
 import { ModeToggle } from "./mode-toggle";
 import { NAV_GROUPS, type NavLabel } from "./nav-links";
@@ -47,7 +47,7 @@ export function Sidebar() {
         aria-label={t("nav.homeLink")}
         className="block px-2 text-foreground"
       >
-        <KivoLockup className="h-10" alt="" />
+        <KivoLogo className="h-10" alt="" />
       </Link>
 
       <nav
@@ -91,7 +91,7 @@ export default function Header() {
             aria-label={t("nav.homeLink")}
             // The negative margin buys the 32px mark a 48px tap area
             // without changing how tall the header draws.
-            className="-m-2 shrink-0 p-2 text-foreground"
+            className="-m-2 flex size-12 shrink-0 items-center justify-center text-foreground"
           >
             <KivoMark className="h-8" alt="" />
           </Link>

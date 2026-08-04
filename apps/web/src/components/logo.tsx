@@ -1,9 +1,9 @@
 import { cn } from "@budget-manager/ui/lib/utils";
 
-import lockupDark from "@/assets/logos/kivo-lockup-dark.svg";
-import lockupLight from "@/assets/logos/kivo-lockup.svg";
-import markDark from "@/assets/logos/kivo-mark-dark.svg";
-import markLight from "@/assets/logos/kivo-mark.svg";
+import logoLight from "@/assets/logo/svg/kivo-logo-forest.svg";
+import logoDark from "@/assets/logo/svg/kivo-logo-green.svg";
+import markLight from "@/assets/logo/svg/kivo-mark-forest.svg";
+import markDark from "@/assets/logo/svg/kivo-mark-green.svg";
 import { useThemeMode } from "@/components/theme-provider";
 
 type LogoProps = Omit<React.ComponentProps<"img">, "src">;
@@ -21,12 +21,12 @@ export function KivoMark({ alt = "Kivo", className, ...props }: LogoProps) {
   );
 }
 
-export function KivoLockup({ alt = "Kivo", className, ...props }: LogoProps) {
+export function KivoLogo({ alt = "Kivo", className, ...props }: LogoProps) {
   const { mode } = useThemeMode();
 
   return (
     <img
-      src={mode === "dark" ? lockupDark : lockupLight}
+      src={mode === "dark" ? logoDark : logoLight}
       alt={alt}
       className={cn("w-fit", className)}
       {...props}

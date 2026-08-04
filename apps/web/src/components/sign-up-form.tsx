@@ -11,7 +11,7 @@ import { authClient } from "@/lib/auth-client";
 import { invalidateSessionCache } from "@/lib/session";
 
 import Loader from "./loader";
-import { KivoLockup } from "./logo";
+import { KivoLogo } from "./logo";
 
 export default function SignUpForm({
   onSwitchToSignIn,
@@ -66,7 +66,7 @@ export default function SignUpForm({
   return (
     <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 dark:border-transparent">
       <div className="mb-6 flex flex-col items-center gap-6">
-        <KivoLockup className="h-12" />
+        <KivoLogo className="h-12" />
         <h1 className="text-center text-3xl font-bold tracking-[-0.03em]">
           {translate("auth.createAccount")}
         </h1>

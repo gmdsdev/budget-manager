@@ -14,6 +14,7 @@ import { settings } from "./settings";
 import { transaction } from "./transaction";
 import { validation } from "./validation";
 import { wallet } from "./wallet";
+import { widget } from "./widget";
 
 /**
  * Flat, dotted keys rather than a nested tree: `keyof typeof messages` is then
@@ -37,4 +38,5 @@ export const messages = {
   ...transaction,
   ...validation,
   ...wallet,
+  ...widget,
 } as const;

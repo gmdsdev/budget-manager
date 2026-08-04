@@ -912,11 +912,15 @@ The exception is the budget month card, which carries two direct icon affordance
 than a menu: there are at most two actions, and a menu would put them one tap further away while
 reintroducing the thing the listings dropped.
 
-**Recording something is one primary action.** `create-transaction-menu.tsx` is that button plus a
-second one opening card purchase / pay card / transfer as a sheet — on a phone a dropdown anchored
-to the top edge has nowhere to go — and `layout="stacked"` is the same wiring on the dashboard hero,
-where the actions get their own buttons on the brand plane. Its sheets are controlled from there and
-**stay mounted**, which is what keeps their reset-on-open behaviour.
+**Recording something is one action on the bar.** `create-transaction-actions.tsx` is a hook
+returning the header's `Create transaction` item *and* the sheets, because the header can only hand
+back a callback and the state has to live with something that renders. It is a **native bar button
+item** with `variant: 'prominent'` — a React view placed in an iOS 26 header is wrapped in the grey
+glass capsule that groups bar items, so a green pill of our own drew as a green rectangle inside a
+grey one. Its sheets are controlled from there and **stay mounted**, which is what keeps their
+reset-on-open behaviour. Card purchase, pay card and transfer still have sheets in that hook but
+**no affordance opens them** — the ellipsis `UIMenu` that used to sit beside the button is gone, and
+nothing has replaced it yet.
 
 **The native dashboard is not the web one made narrow — it answers four questions and stops.** How
 much have I got, what did this month do, what needs paying, and where did it go, in that order: the
@@ -971,7 +975,13 @@ monorepo recipe: bun installs isolated, so a package's dependencies live in a ne
 `node_modules` beside it and disabling the walk makes Metro fail to resolve them. It also hands
 `.svg` to `react-native-svg-transformer`, so the logo is the web app's own artwork imported as
 components — a pair of files per shape, picked by a ternary on the theme, which is again why there
-is no `system` mode.
+is no `system` mode. `src/assets/logo/svg/` mirrors the web path and holds the four files this app
+draws; the rest of the kit (the PNGs, the README) stays in `apps/web`. Both `KivoLogo` and
+`KivoMark` take a **height** and derive the width from the artwork's own ratio — the K stands
+taller than it is wide, so passing one `size` to both axes would stretch it. The app icon is
+`assets/icon.png` (the kit's unrounded square, since iOS and the stores apply their own mask) with
+an Android `adaptiveIcon` over `#163300`; its foreground is padded so the K clears the safe circle,
+which the kit's own square icon does not.
 
 There is no `test` script, so `turbo run test` stays hermetic and fast: the logic worth
 unit-testing lives in `packages/client`, and its tests live there too — that package registers its
@@ -979,6 +989,79 @@ own happy-dom preload rather than borrowing an app's, because a test belongs bes
 pins. `check-types` runs in CI like every other workspace. The bundle is the other check worth
 running by hand — `bunx expo export --platform ios` fails on an unresolved import or a broken
 transform without needing a simulator.
+
+#### The iOS home-screen widget
+
+**Parked, and deliberately inert.** The code is complete and the Swift compiles, but nothing runs
+it today: a widget is a native extension, so it needs a local build, and a locally-built Expo app
+**cannot launch under the Xcode 27 SDK** — iOS 27 makes the missing UIKit scene lifecycle fatal,
+and neither `expo@57` nor `react-native@0.86` has adopted it (`grep` for `UIScene` in either finds
+nothing; the generated `AppDelegate` still does `window = UIWindow(frame: UIScreen.main.bounds)`).
+That is upstream — [expo#46664](https://github.com/expo/expo/issues/46664), labelled *Upstream:
+React Native* — not something this repo can fix from `app.json`. So `apps/native/ios` stays
+unbuilt, `bun run native:ios` stays `expo start --ios` (Expo Go), and the feature waits.
+
+Two things keep it harmless while parked, and both are worth not "tidying away": the JS reaches
+native through `requireOptionalNativeModule`, which returns **null** rather than throwing when the
+module is absent, so every call is an `await undefined`; and `@bacons/apple-targets` only ever
+writes the *widget* target's Info.plist, so its presence in `plugins` changes nothing about the
+app. Unparking is `npx expo prebuild -p ios` once upstream lands scene support — at which point
+the run scripts flip back to `expo run:ios`, which is what prebuild rewrites them to.
+
+`apps/native/targets/widget/` is a **WidgetKit extension in Swift**, linked into the generated
+Xcode project by `@bacons/apple-targets` on every `npx expo prebuild`. That is the whole reason it
+can exist without `ios/` being checked in: the target's source lives outside the generated
+directory and the plugin re-attaches it each time. Two consequences: the widget does not exist in
+Expo Go (there is no native extension in that client), and editing the target config or `app.json`
+means re-running prebuild.
+
+**The snapshot is the only channel, and it carries words rather than keys.** The app writes one
+JSON blob into the shared app group (`group.dev.gmds.kivo`) and asks WidgetKit to reload; the
+widget reads it and lays it out. Every string in that blob is **already translated and already
+formatted** — a widget extension cannot import `@budget-manager/i18n`, and a `NumberFormatter`
+written beside `formatMinorUnits` would be a second money implementation for the one currency it
+disagrees about. So a reworded message or a new locale reaches the widget with no Swift change at
+all, and `cents` rides alongside each formatted figure only because *sign* is a layout decision
+(which way the net arrow points) that must not be parsed back out of a localized string. The shape
+is declared twice on purpose — `src/modules/widget/snapshot.ts` and `targets/widget/Snapshot.swift`
+— and `version` is what makes a drift show up as the placeholder rather than as a misread payload.
+
+Four rules the feature turns on:
+
+- **Only the current month is ever published.** `useWidgetSync` hangs off the dashboard screen, so
+  it costs no extra request — React Query is already holding exactly that payload — but it is gated
+  on the month in view being the current one. A widget quoting March on a home screen in August is
+  worse than one that has not moved, so stepping back through history leaves the last good snapshot
+  in place instead of overwriting it.
+- **Sign-out clears it.** `useSignOut` drops the snapshot alongside the query cache, for a sharper
+  version of the same reason: the home screen is readable by anyone holding the phone, so a balance
+  must not outlive the session it belongs to.
+- **The widget is a reading of the dashboard, not a second source.** It is built from the same
+  `CurrencySummary` the screen draws, so it cannot disagree with the app behind it.
+- **The timeline policy is `.never`.** These figures move when a transaction does, not when the
+  clock does, and the app reloads the timeline itself on every write. Scheduling refreshes ahead
+  would spend the widget's reload budget re-reading a file that had not changed. The flip side is
+  the honest limitation stated on the widget itself: `updatedAtLabel` says when the reading was
+  taken, because a pushed figure is only as fresh as the last time the app ran.
+
+`apps/native/modules/widget-bridge/` is the local Expo module that does the writing — Swift only,
+autolinked, `platforms: ["apple"]`. Its JS half is `src/modules/widget/bridge.ts` rather than an
+`index.ts` beside the Swift, so the feature reads as one directory and nothing imports across the
+`src` boundary; it reaches the native side through `requireOptionalNativeModule`, which is what
+makes the whole thing a no-op on Android and in any client built before the widget existed.
+
+Type in the widget is **SF, not Inter**: an extension has its own bundle and its own font
+registration, and a home-screen widget set in the system face reads as part of iOS. The brand pair
+is the only palette that reaches it, generated as colorsets from `expo-target.config.js` — so this
+target is a *third* place a token is written down, after `globals.css` and `theme/tokens.ts`. The
+gallery name, the parameter labels and the "nothing synced yet" placeholder are the one set of
+user-visible strings not in `packages/i18n`: iOS draws them before any JavaScript has run, so they
+live in `targets/widget/Localizable.xcstrings`, and unlike the snapshot they follow the *device*
+language rather than the account's `preferredLocale`.
+
+`ios.appleTeamId` is unset in `app.json`, so prebuild warns and a **device** build will fail
+signing until it is added — an app group needs a provisioning profile that declares it. Simulator
+builds do not care.
 
 ### Language
 
@@ -1163,18 +1246,26 @@ New components should speak this grammar rather than invent a parallel one.
 "change a token there and change it here" rule under **Native** is a live obligation, not a debt.
 
 **The app is Kivo, and the logo is a pair of files per shape, not a `currentColor` SVG.**
-`apps/web/src/assets/logos/` holds the light and dark artwork for the mark and the lockup
-(which carries the "Personal finance" tagline, so nothing should print a second one beneath
-it); `components/logo.tsx` imports all four as URLs and picks one with a ternary on
-`useThemeMode()`. That ternary is why **there is no system theme**: `ThemeProvider` runs
+`apps/web/src/assets/logo/` is the brand kit — `svg/` and `png/` beside a
+`KIVO-LOGO-README.md` that states the geometry and the two on-brand colourways — and
+`components/logo.tsx` imports four of those SVGs as URLs and picks one with a ternary on
+`useThemeMode()`. **Only forest-on-light and green-on-dark are legal**: bright green on white
+fails contrast, which is why `KivoLogo` reads `kivo-logo-forest` / `kivo-logo-green` and
+`KivoMark` reads `kivo-mark-forest` / `kivo-mark-green` rather than tinting one file.
+That ternary is why **there is no system theme**: `ThemeProvider` runs
 next-themes with `enableSystem={false}` over `THEME_MODES` (`light | dark`) under the
 `kivo-theme` key, so the mode in state is always the mode on screen — a `system` setting would
 mean guessing which artwork the OS is showing. `useThemeMode` is the only theme hook the app
-uses; it narrows to `ThemeMode` so a stale stored value can never reach a `src`. The lockup is
-the brand everywhere it fits (sidebar, sheet nav, auth cards, ≥36px so the tagline is legible)
-and the mark is for the tight spots (the phone top bar); `kivo-favicon.svg` is a mark without
-the offset shadow and is wired up in `index.html`, so it is Vite that hashes it and there is no
-`public/` copy to drift. Both components render an `<img>` with `w-fit`, not `w-auto`: a flex
+uses; it narrows to `ThemeMode` so a stale stored value can never reach a `src`.
+**There is no mark-plus-wordmark lockup, and there is no tagline.** The K *is* the wordmark's
+capital letter, so setting the mark beside "Kivo" would read as "Kkivo" — `KivoLogo` (the
+wordmark) is the brand everywhere it fits (sidebar, sheet nav, auth cards) and `KivoMark` is
+for the tight spots (the phone top bar), where the narrow K is centred in a fixed 48px box so
+the tap target does not shrink with it. `svg/kivo-app-icon.svg` is the favicon and
+`png/kivo-app-icon-180.png` the apple-touch icon, both wired up in `index.html`, so it is Vite
+that hashes them and there is no `public/` copy to drift; those two carry their own forest
+tile and so are deliberately *not* theme-aware.
+Both components render an `<img>` with `w-fit`, not `w-auto`: a flex
 column stretches an `auto` cross size, and an `<img>` obeys the stretch while the SVG's own
 `preserveAspectRatio` re-centres the artwork inside it — the logo silently drifts to the middle
 of a `SheetHeader`.

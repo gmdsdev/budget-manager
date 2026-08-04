@@ -1,0 +1,61 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Balance" : {
+      "comment" : "The widget's name in the iOS widget gallery.",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saldo"
+          }
+        }
+      }
+    },
+    "Choose which currency this widget reports." : {
+      "comment" : "Help text on the widget's currency parameter when editing it.",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolha qual moeda este widget informa."
+          }
+        }
+      }
+    },
+    "Currency" : {
+      "comment" : "The widget's one configurable parameter.",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moeda"
+          }
+        }
+      }
+    },
+    "Open Kivo to sync your balance." : {
+      "comment" : "Shown before the app has ever run, and after a sign-out clears the snapshot.",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abra o Kivo para sincronizar seu saldo."
+          }
+        }
+      }
+    },
+    "Your balance, income and expenses this month." : {
+      "comment" : "The widget's description in the iOS widget gallery.",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu saldo, receitas e despesas deste mês."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

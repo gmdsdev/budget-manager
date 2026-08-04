@@ -18,6 +18,17 @@ export const DATE_STYLES = {
   monthShort: { month: "short" },
   /** `Jul 31` — a due date in a list already scoped to a year. */
   monthDay: { month: "short", day: "numeric" },
+  /**
+   * `Jul 31, 14:05` — when a *reading* was taken, not when something is due. The
+   * day is carried alongside the clock because the reader cannot tell a snapshot
+   * five minutes old from one five days old by the time alone.
+   */
+  dayTime: {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  },
 } as const satisfies Record<string, Intl.DateTimeFormatOptions>;
 
 export type DateStyle = keyof typeof DATE_STYLES;

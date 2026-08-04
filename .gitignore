@@ -45,6 +45,12 @@ lerna-debug.log*
 apps/native/ios
 apps/native/android
 
+# Every entry in an Apple target's asset catalog is declared in its own
+# `expo-target.config.js` (the `icon` and `colors` keys) and rewritten by
+# `expo prebuild`, so it is derived output like `ios/` itself. The target's
+# `Info.plist` is *not* generated after the first run and stays tracked.
+apps/native/targets/*/Assets.xcassets
+
 # Better-T-Stack
 .alchemy
 .vercel
