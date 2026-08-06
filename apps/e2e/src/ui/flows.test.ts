@@ -20,6 +20,7 @@ import {
   signUpThroughUi,
   summaryFigures,
   waitForRowCount,
+  waitForSummaryFigure,
   type Session,
 } from "../support/web";
 
@@ -196,14 +197,29 @@ describe("transaction page", () => {
   }, 60_000);
 
   test("totals the rows under the list, settled beside projected", async () => {
+    // The dialogs default to paid, so the settled and projected columns need a
+    // row that opts into waiting payment to come apart.
+    await page.getByRole("button", { name: "Create Transaction" }).click();
+    await dialog(page).waitFor({ state: "visible" });
+    await fillField(dialog(page), "Description", "Internet bill");
+    await pickSelect(page, dialog(page), "Wallet", "Checking");
+    await fillField(dialog(page), "Amount", "5000");
+    await pickSelect(page, dialog(page), "Category", "Groceries");
+    await pickSelect(page, dialog(page), "Status", "Waiting payment");
+    await page.getByRole("button", { name: "Create transaction" }).click();
+    await dialog(page).waitFor({ state: "hidden" });
+    await waitForRowCount(page, 4);
+    await waitForSummaryFigure(page, "wallets", ["-R$ 240,00", "-R$ 290,00"]);
+
     const figures = await summaryFigures(page);
 
     // Both legs of the transfer land in wallets the user owns, so the position
-    // is still the opening balance whatever the transfer's status.
-    expect(figures.wallets?.[0]).toBe("R$ 10,00");
-    // The pending expense counts toward projected only, and a transfer is never
+    // is the opening balance less the paid expense; only the pending bill
+    // separates projected from settled.
+    expect(figures.wallets).toEqual(["-R$ 240,00", "-R$ 290,00"]);
+    // The pending bill counts toward projected only, and a transfer is never
     // spending.
-    expect(figures.expenses).toEqual(["R$ 0,00", "R$ 250,00"]);
+    expect(figures.expenses).toEqual(["R$ 250,00", "R$ 300,00"]);
     expect(figures.income).toEqual(["R$ 0,00", "R$ 0,00"]);
   }, 60_000);
 
@@ -211,15 +227,18 @@ describe("transaction page", () => {
     await pickSelect(page, page, "Kind", "Transfer out");
     // The totals panel carries no list rows, so it cannot inflate the count.
     await waitForRowCount(page, 1);
+    // A balance covers every wallet, so a row filter cannot narrow it — but
+    // this filter key was fetched once already, before the pending bill
+    // existed, so the cached figures have to be waited past.
+    await waitForSummaryFigure(page, "wallets", ["-R$ 240,00", "-R$ 290,00"]);
 
     const filtered = await summaryFigures(page);
 
     expect(filtered.expenses).toEqual(["R$ 0,00", "R$ 0,00"]);
-    // A balance covers every wallet, so a row filter cannot narrow it.
-    expect(filtered.wallets?.[0]).toBe("R$ 10,00");
+    expect(filtered.wallets).toEqual(["-R$ 240,00", "-R$ 290,00"]);
 
     await page.getByRole("button", { name: "Clear filters" }).click();
-    await waitForRowCount(page, 3);
+    await waitForRowCount(page, 4);
   }, 60_000);
 });
 
@@ -228,12 +247,13 @@ describe("balances", () => {
     await page.goto(`${WEB_URL}/wallet`, { waitUntil: "networkidle" });
     await waitForRowCount(page, 2);
 
-    // Checking: opening 10.00, paid transfer out 300.00 → settled -290.00,
-    // plus a pending 250.00 expense → projected -540.00.
+    // Checking: opening 10.00, paid 250.00 expense and paid transfer out
+    // 300.00 → settled -540.00, plus the pending 50.00 bill → projected
+    // -590.00 on the meta line.
     const checking = (await rowFor(page, "Checking"))?.join(" | ") ?? "";
     const savings = (await rowFor(page, "Savings"))?.join(" | ") ?? "";
 
-    expect(checking).toMatch(/290,00/);
+    expect(checking).toMatch(/540,00/);
     expect(checking).toMatch(/projected/);
     expect(savings).toMatch(/300,00/);
   }, 60_000);

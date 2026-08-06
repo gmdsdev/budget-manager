@@ -94,16 +94,21 @@ describe("transaction pagination", () => {
     expect(await page.getByText("Page 1 of 2").count()).toBe(1);
   }, 60_000);
 
+  // Every Previous/Next locator is exact: the period stepper in the page header
+  // carries "Previous period" / "Next period", which a substring match reads as
+  // a second pagination button and trips strict mode.
   test("Previous is disabled on the first page", async () => {
     expect(
-      await page.getByRole("button", { name: "Previous" }).isDisabled(),
+      await page
+        .getByRole("button", { name: "Previous", exact: true })
+        .isDisabled(),
     ).toBe(true);
   }, 60_000);
 
   test("Next shows the remainder and disables at the end", async () => {
     const firstPageIds = (await rowTexts(page)).map((cells) => cells[0]);
 
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await waitForRowCount(page, EXPENSES + INCOMES - PAGE_SIZE);
 
     expect(await summary().innerText()).toBe(
@@ -119,23 +124,27 @@ describe("transaction pagination", () => {
       false,
     );
 
-    expect(await page.getByRole("button", { name: "Next" }).isDisabled()).toBe(
-      true,
-    );
     expect(
-      await page.getByRole("button", { name: "Previous" }).isDisabled(),
+      await page
+        .getByRole("button", { name: "Next", exact: true })
+        .isDisabled(),
+    ).toBe(true);
+    expect(
+      await page
+        .getByRole("button", { name: "Previous", exact: true })
+        .isDisabled(),
     ).toBe(false);
   }, 60_000);
 
   test("Previous returns to the first page", async () => {
-    await page.getByRole("button", { name: "Previous" }).click();
+    await page.getByRole("button", { name: "Previous", exact: true }).click();
     await waitForRowCount(page, PAGE_SIZE);
 
     expect(await page.getByText("Page 1 of 2").count()).toBe(1);
   }, 60_000);
 
   test("filtering from a later page resets to page 1", async () => {
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
     await waitForRowCount(page, EXPENSES + INCOMES - PAGE_SIZE);
     expect(await page.getByText("Page 2 of 2").count()).toBe(1);
 
