@@ -442,6 +442,22 @@ export class TransactionRepository {
     return row ? toDomainRow(row) : null;
   }
 
+  /** One statement for the whole batch, so an import is all-or-nothing. */
+  async insertMany({
+    values,
+  }: {
+    values: (typeof transactionOccurrences.$inferInsert)[];
+  }) {
+    if (values.length === 0) {
+      return [];
+    }
+
+    return this.db
+      .insert(transactionOccurrences)
+      .values(values)
+      .returning({ id: transactionOccurrences.id });
+  }
+
   async findCreditCardById({ id, userId }: { id: string; userId: string }) {
     const rows = await this.db
       .select({ id: creditCards.id, currencyCode: creditCards.currencyCode })

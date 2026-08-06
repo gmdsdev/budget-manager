@@ -4,6 +4,7 @@ import {
   CreateCardPurchaseInput,
   CreateTransactionInput,
   CreateTransferInput,
+  ImportTransactionsInput,
   ListTransactionsInput,
   TransactionIdInput,
   TransactionSummaryInput,
@@ -52,6 +53,15 @@ export const transactionRouter = router({
       return await ctx.services.transaction.create({
         userId: ctx.session.user.id,
         transaction: input,
+      });
+    }),
+
+  import: protectedProcedure
+    .input(ImportTransactionsInput)
+    .mutation(async ({ input, ctx }) => {
+      return await ctx.services.transaction.importRows({
+        userId: ctx.session.user.id,
+        rows: input.rows,
       });
     }),
 

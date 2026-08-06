@@ -6,6 +6,7 @@ import {
   TransactionStatus,
   type CardPaymentFormDto,
   type CardPurchaseFormDto,
+  type ImportTransactionRowDto,
   type TransactionFormDto,
   type TransactionFormKind,
   type TransferFormDto,
@@ -13,6 +14,7 @@ import {
 import { randomUUID } from "node:crypto";
 import { ConflictError, NotFoundError } from "../../errors";
 import type { CreditCardService } from "../credit-card";
+import { buildImportInsertValues, importBillKey } from "./import-values";
 import type { TransactionFilters, TransactionRepository } from "./repository";
 import { buildTransactionSummary } from "./summary";
 
@@ -111,6 +113,122 @@ export class TransactionService {
     }
 
     return created;
+  }
+
+  /**
+   * A validated CSV lands as one batch: every reference is asserted before a
+   * single row is written, so a bad id imports nothing rather than half a
+   * file, and the whole set then goes in as one multi-row insert.
+   */
+  async importRows({
+    userId,
+    rows,
+  }: {
+    userId: string;
+    rows: ImportTransactionRowDto[];
+  }) {
+    await this.assertImportReferences({ userId, rows });
+
+    const billIdByCardAndDate = await this.resolveImportBills({ userId, rows });
+
+    const inserted = await this.repository.insertMany({
+      values: buildImportInsertValues({
+        userId,
+        rows,
+        billIdByCardAndDate,
+        now: new Date(),
+      }),
+    });
+
+    return { count: inserted.length };
+  }
+
+  private async assertImportReferences({
+    userId,
+    rows,
+  }: {
+    userId: string;
+    rows: ImportTransactionRowDto[];
+  }) {
+    const walletIds = new Set<string>();
+    const cardIds = new Set<string>();
+    const categoryChecks = new Map<
+      string,
+      { categoryId: string; kind: TransactionFormKind | null }
+    >();
+
+    for (const row of rows) {
+      if (row.target === "card") {
+        cardIds.add(row.creditCardId);
+      } else {
+        walletIds.add(row.walletId);
+      }
+
+      if (row.categoryId) {
+        const kind = row.target === "card" ? null : row.kind;
+
+        categoryChecks.set(`${row.categoryId}:${kind ?? "card"}`, {
+          categoryId: row.categoryId,
+          kind,
+        });
+      }
+    }
+
+    await Promise.all([
+      ...[...walletIds].map(async (id) => {
+        const wallet = await this.repository.findWalletById({ id, userId });
+
+        if (!wallet) {
+          throw new NotFoundError("error.notFound.wallet");
+        }
+      }),
+      ...[...cardIds].map((creditCardId) =>
+        this.assertCard({ userId, creditCardId }),
+      ),
+      ...[...categoryChecks.values()].map(({ categoryId, kind }) =>
+        kind
+          ? this.assertCategoryForKind({ userId, categoryId, kind })
+          : this.assertExpenseCategory({ userId, categoryId }),
+      ),
+    ]);
+  }
+
+  /** One statement lookup per unique card, shared by every date it carries. */
+  private async resolveImportBills({
+    userId,
+    rows,
+  }: {
+    userId: string;
+    rows: ImportTransactionRowDto[];
+  }) {
+    const datesByCard = new Map<string, Set<string>>();
+
+    for (const row of rows) {
+      if (row.target !== "card") {
+        continue;
+      }
+
+      const dates = datesByCard.get(row.creditCardId) ?? new Set<string>();
+
+      dates.add(row.occurrenceDate);
+      datesByCard.set(row.creditCardId, dates);
+    }
+
+    const billIdByCardAndDate = new Map<string, string>();
+
+    for (const [creditCardId, dates] of datesByCard) {
+      const { billIdByDate } = await this.creditCards.ensureBillsFor({
+        userId,
+        creditCardId,
+        dates: [...dates],
+      });
+
+      for (const [date, billId] of billIdByDate) {
+        billIdByCardAndDate.set(importBillKey(creditCardId, date), billId);
+      }
+    }
+
+    return billIdByCardAndDate;
   }
 
   async update({
@@ -603,12 +721,28 @@ export class TransactionService {
       throw new NotFoundError("error.notFound.wallet");
     }
 
-    if (!transaction.categoryId) {
+    await this.assertCategoryForKind({
+      userId,
+      categoryId: transaction.categoryId,
+      kind: transaction.kind,
+    });
+  }
+
+  private async assertCategoryForKind({
+    userId,
+    categoryId,
+    kind,
+  }: {
+    userId: string;
+    categoryId: string | null;
+    kind: TransactionFormKind;
+  }) {
+    if (!categoryId) {
       return;
     }
 
     const category = await this.repository.findCategoryById({
-      id: transaction.categoryId,
+      id: categoryId,
       userId,
     });
 
@@ -616,10 +750,10 @@ export class TransactionService {
       throw new NotFoundError("error.notFound.category");
     }
 
-    if (category.type !== KIND_TO_CATEGORY_TYPE[transaction.kind]) {
+    if (category.type !== KIND_TO_CATEGORY_TYPE[kind]) {
       throw new ConflictError("error.conflict.categoryOnTransaction", {
         categoryType: ref(`enum.categoryType.${category.type}.inline`),
-        kind: ref(`enum.transactionKind.${transaction.kind}.inline`),
+        kind: ref(`enum.transactionKind.${kind}.inline`),
       });
     }
   }

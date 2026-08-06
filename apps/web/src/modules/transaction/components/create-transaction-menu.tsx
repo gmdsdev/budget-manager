@@ -4,6 +4,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@budget-manager/ui/components/dropdown-menu";
 import {
@@ -11,8 +12,10 @@ import {
   BankIcon,
   CaretDownIcon,
   CreditCardIcon,
+  FileArrowUpIcon,
   PlusIcon,
 } from "@phosphor-icons/react";
+import { useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 
 import { CreateCardPaymentDialog } from "./create-card-payment-dialog";
@@ -66,6 +69,7 @@ export function CreateTransactionMenu({
   layout?: "split" | "stacked";
 } = {}) {
   const t = useTranslate();
+  const navigate = useNavigate();
   const [dialog, setDialog] = useState<CreateDialog>(null);
 
   function close(next: boolean) {
@@ -152,6 +156,15 @@ export function CreateTransactionMenu({
                 {t(entry.label)}
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            {/* Navigates rather than opening a dialog, so it stays out of
+                SECONDARY — the import flow is a screen of its own. */}
+            <DropdownMenuItem
+              onClick={() => void navigate({ to: "/transaction/import" })}
+            >
+              <FileArrowUpIcon aria-hidden />
+              {t("transaction.import.trigger")}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

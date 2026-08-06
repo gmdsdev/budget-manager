@@ -44,6 +44,10 @@ export const validation = {
     en: "Must be {max} or fewer",
     "pt-BR": "Deve ser no máximo {max}",
   },
+  "validation.importTooManyRows": {
+    en: "An import can carry at most {max} rows",
+    "pt-BR": "Uma importação pode ter no máximo {max} linhas",
+  },
   "validation.dateRequired": {
     en: "Date is required",
     "pt-BR": "A data é obrigatória",

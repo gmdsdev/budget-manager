@@ -12,6 +12,7 @@ import { pagination } from "./pagination";
 import { recurring } from "./recurring";
 import { settings } from "./settings";
 import { transaction } from "./transaction";
+import { transactionImport } from "./transaction-import";
 import { validation } from "./validation";
 import { wallet } from "./wallet";
 import { widget } from "./widget";
@@ -36,6 +37,7 @@ export const messages = {
   ...recurring,
   ...settings,
   ...transaction,
+  ...transactionImport,
   ...validation,
   ...wallet,
   ...widget,

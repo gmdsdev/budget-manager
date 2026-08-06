@@ -3,6 +3,7 @@ import type {
   CardPaymentFormDto,
   CardPurchaseFormDto,
   DeleteTransactionDto,
+  ImportTransactionsDto,
   TransactionFormDto,
   TransactionKind,
   TransferFormDto,
@@ -101,6 +102,14 @@ export function useCreateTransactionMutation() {
   return useApiMutation<unknown, TransactionFormDto>({
     mutationFn: api().transaction.create.mutationOptions().mutationFn,
     successMessage: t("transaction.toast.created"),
+    invalidateQueries: transactionInvalidations(),
+  });
+}
+
+export function useImportTransactionsMutation() {
+  return useApiMutation<unknown, ImportTransactionsDto>({
+    mutationFn: api().transaction.import.mutationOptions().mutationFn,
+    successMessage: t("transaction.import.toast.imported"),
     invalidateQueries: transactionInvalidations(),
   });
 }

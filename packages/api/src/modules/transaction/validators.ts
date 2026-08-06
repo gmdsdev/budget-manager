@@ -3,6 +3,7 @@ import {
   CardPurchaseFormSchema,
   DISTINCT_WALLETS_ERROR,
   FILTER_NONE,
+  ImportTransactionsSchema,
   TransactionFormSchema,
   TransactionKind,
   TransactionRepeats,
@@ -23,6 +24,8 @@ export const UpdateTransactionInput = TransactionFormSchema.extend({
 });
 
 export const TransactionIdInput = TransactionSchema.pick({ id: true });
+
+export const ImportTransactionsInput = ImportTransactionsSchema;
 
 export const CreateTransferInput = TransferFormSchema;
 
