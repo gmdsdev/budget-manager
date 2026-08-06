@@ -330,6 +330,36 @@ export async function summaryFigures(page: Page) {
   );
 }
 
+/**
+ * Waits until one summary figure reads the expected pair. The row count is not
+ * enough on its own: the totals are a query of their own, and a filter key the
+ * page has fetched before is served from cache while the refetch is still in
+ * flight — reading immediately gets the figures as they stood the last time
+ * that filter was applied.
+ */
+export async function waitForSummaryFigure(
+  page: Page,
+  figure: string,
+  expected: [effective: string, projected: string],
+) {
+  await page.waitForFunction(
+    ([figureName, effective, projected]) => {
+      const node = document.querySelector(
+        `section[aria-label='Totals'] [data-summary-figure='${figureName}']`,
+      );
+      const read = (name: string) =>
+        (node?.getAttribute(name) ?? "").replace(/[\u00a0\u202f]/g, " ").trim();
+
+      return (
+        read("data-summary-effective") === effective &&
+        read("data-summary-projected") === projected
+      );
+    },
+    [figure, ...expected] as const,
+    { timeout: 15_000 },
+  );
+}
+
 export async function rowFor(page: Page, name: string) {
   const all = await rowTexts(page);
 
