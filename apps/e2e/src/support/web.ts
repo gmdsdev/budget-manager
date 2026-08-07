@@ -305,10 +305,10 @@ export async function rowTexts(page: Page) {
 
 /**
  * The figures under the transaction list, keyed by figure rather than by label —
- * `{ expenses: [effective, projected] }`. The panel states what is still waiting
- * rather than a projected column, so both figures are read off `data-summary-*`:
- * an assertion about a number has no business breaking when a subline is
- * reworded.
+ * `{ expenses: [effective, projected] }`. The panel lays the pair out as
+ * labelled peers with a split bar, so both figures are read off
+ * `data-summary-*`: an assertion about a number has no business breaking when
+ * the layout or a subline is reworded.
  *
  * Only the currency in view is in the DOM — the panel opens on the account's
  * preferred currency and switches client-side.

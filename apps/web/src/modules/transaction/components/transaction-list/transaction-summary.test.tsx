@@ -26,13 +26,18 @@ function flatten(value: string | null) {
   return (value ?? "").replace(/[\u00a0\u202f]/g, " ");
 }
 
+function figureNode(name: string) {
+  return document.querySelector(`[data-summary-figure="${name}"]`);
+}
+
 function figure(name: string) {
-  const node = document.querySelector(`[data-summary-figure="${name}"]`);
+  const node = figureNode(name);
 
   return {
     effective: flatten(node?.getAttribute("data-summary-effective") ?? null),
     projected: flatten(node?.getAttribute("data-summary-projected") ?? null),
     text: flatten(node?.textContent ?? null),
+    bar: node?.querySelector("[data-summary-bar]") ?? null,
   };
 }
 
@@ -68,7 +73,7 @@ describe("TransactionSummary", () => {
     });
   });
 
-  test("states what is still waiting rather than a projected column", () => {
+  test("states settled and projected as labelled peers while anything waits", () => {
     render(
       <TransactionSummary
         currencies={[summaryRow()]}
@@ -77,12 +82,21 @@ describe("TransactionSummary", () => {
       />,
     );
 
-    // 5.500,00 projected less 5.000,00 settled.
-    expect(figure("income").text).toContain("R$ 500,00 waiting");
-    expect(figure("expenses").text).toContain("R$ 100,00 waiting");
+    const income = figure("income");
+
+    expect(income.text).toContain("Effective");
+    expect(income.text).toContain("Projected");
+    expect(income.text).toContain("R$ 5.000,00");
+    expect(income.text).toContain("R$ 5.500,00");
+    expect(income.bar).not.toBeNull();
+
+    const net = figure("net");
+
+    expect(net.text).toContain("R$ 4.750,00");
+    expect(net.text).toContain("R$ 5.150,00");
   });
 
-  test("says so when a figure has nothing outstanding", () => {
+  test("collapses to one figure when nothing is outstanding", () => {
     render(
       <TransactionSummary
         currencies={[
@@ -93,7 +107,11 @@ describe("TransactionSummary", () => {
       />,
     );
 
-    expect(figure("income").text).toContain("Fully settled");
+    const income = figure("income");
+
+    expect(income.text).toContain("Fully settled");
+    expect(income.text).not.toContain("Projected");
+    expect(income.bar).toBeNull();
   });
 
   test("reads the pending balance as a magnitude, whichever way it moves", () => {
@@ -106,10 +124,23 @@ describe("TransactionSummary", () => {
     );
 
     // The projection is 100,00 lower than the settled balance, so the amount
-    // still waiting must not read as a negative figure.
-    expect(figure("wallets").text).toContain(
-      "R$ 900,00 projected · R$ 100,00 still waiting",
+    // still waiting must not read as a negative figure — and a settled share
+    // of a projection below the settled figure means nothing, so no bar.
+    expect(figure("wallets").text).toContain("R$ 100,00 waiting");
+    expect(figure("wallets").bar).toBeNull();
+  });
+
+  test("draws the balance bar only when the projection sits above the settled figure", () => {
+    render(
+      <TransactionSummary
+        currencies={[summaryRow({ projectedBalanceCents: 400_000 })]}
+        rangeTo="2026-07-31"
+        total={52}
+      />,
     );
+
+    expect(figure("wallets").bar).not.toBeNull();
+    expect(figure("wallets").text).toContain("R$ 3.000,00 waiting");
   });
 
   test("counts the rows the figures cover and the day they are read as of", () => {

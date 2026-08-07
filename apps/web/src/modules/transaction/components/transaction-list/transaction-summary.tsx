@@ -13,15 +13,79 @@ import { useState } from "react";
 const EYEBROW =
   "text-xs font-semibold tracking-[0.02em] text-muted-foreground uppercase";
 
+const HATCH_FILL =
+  "repeating-linear-gradient(-55deg, color-mix(in srgb, var(--chart-income) 45%, transparent) 0 4px, transparent 4px 8px)";
+
 function amountClass(amountCents: number) {
   return amountCents < 0 ? "text-destructive" : "";
 }
 
+function projectedClass(amountCents: number) {
+  return amountCents < 0 ? "text-destructive" : "text-content-secondary";
+}
+
 /**
- * The two flow figures, as tiles on their own plane inside the card: what is
- * settled leads, and the delta still awaiting payment follows it. The projected
- * figure is not restated here — it is this sum, and the wallet balance and the
- * net line above and below already carry it.
+ * The settled share of the projected figure: solid is settled, hatched is
+ * still waiting. Decoration only — both figures are stated in full beside it —
+ * and the hatch is a pattern rather than a second hue, so there is no new
+ * colour pairing to keep colourblind-safe. Callers only render it when
+ * 0 ≤ settled ≤ projected, since a share outside that range means nothing.
+ */
+function SplitBar({
+  settledCents,
+  projectedCents,
+}: {
+  settledCents: number;
+  projectedCents: number;
+}) {
+  const share =
+    projectedCents > 0 ? (settledCents / projectedCents) * 100 : 0;
+
+  return (
+    <div
+      aria-hidden
+      data-summary-bar
+      className="mt-3 flex h-1.5 w-full flex-row overflow-hidden rounded-full bg-chart-track"
+    >
+      <div
+        className="h-full bg-chart-income"
+        style={{ width: `${share}%` }}
+      />
+      <div
+        className="h-full"
+        style={{ width: `${100 - share}%`, backgroundImage: HATCH_FILL }}
+      />
+    </div>
+  );
+}
+
+function PairCell({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string;
+  value: string;
+  valueClassName: string;
+}) {
+  return (
+    <div>
+      <p className={EYEBROW}>{label}</p>
+      <p
+        className={`mt-0.5 font-heading tracking-[-0.03em] tabular-nums ${valueClassName}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * The two flow figures, as tiles on their own plane inside the card. While
+ * anything is waiting, settled and projected sit side by side as peers — a
+ * projected figure demoted to a caption made a pending-heavy month lead with
+ * the least informative number — and the bar shows the split before either is
+ * read. Fully settled, the pair collapses back to one quiet figure.
  */
 function FlowTile({
   figure,
@@ -54,20 +118,41 @@ function FlowTile({
         <Icon aria-hidden className={`size-3.5 shrink-0 ${iconClassName}`} />
         {label}
       </p>
-      <p
-        className={`mt-1 font-heading text-2xl font-bold tracking-[-0.03em] tabular-nums ${amountClass(
-          amountCents,
-        )}`}
-      >
-        {formatMinorUnits(amountCents, currencyCode)}
-      </p>
-      <p className="mt-0.5 text-xs text-muted-foreground">
-        {waitingCents > 0
-          ? t("transaction.summary.waiting", {
-              amount: formatMinorUnits(waitingCents, currencyCode),
-            })
-          : t("transaction.summary.settled")}
-      </p>
+      {waitingCents > 0 ? (
+        <>
+          <div className="mt-2 flex flex-row flex-wrap gap-x-6 gap-y-1">
+            <PairCell
+              label={t("transaction.summary.effective")}
+              value={formatMinorUnits(amountCents, currencyCode)}
+              valueClassName={`text-2xl font-bold ${amountClass(amountCents)}`}
+            />
+            <PairCell
+              label={t("transaction.summary.projected")}
+              value={formatMinorUnits(projectedCents, currencyCode)}
+              valueClassName={`text-2xl font-semibold ${projectedClass(
+                projectedCents,
+              )}`}
+            />
+          </div>
+          <SplitBar
+            settledCents={Math.max(0, amountCents)}
+            projectedCents={projectedCents}
+          />
+        </>
+      ) : (
+        <>
+          <p
+            className={`mt-1 font-heading text-2xl font-bold tracking-[-0.03em] tabular-nums ${amountClass(
+              amountCents,
+            )}`}
+          >
+            {formatMinorUnits(amountCents, currencyCode)}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {t("transaction.summary.settled")}
+          </p>
+        </>
+      )}
     </div>
   );
 }
@@ -120,14 +205,11 @@ function CurrencyTabs({
 
 /**
  * The figures under the transaction list: the balance the period ends on leads,
- * the two flows follow it, and the net closes with a bar reading one against the
- * other.
- *
- * It was a four-by-two table of effective and projected columns, which gave the
- * eight figures equal weight and left the reader to work out which one answers
- * "how much have I got". Money-in and money-out state what is still waiting
- * rather than repeating a projected column, since the delta is the part worth
- * acting on.
+ * the two flows follow it, and the net closes the card. Wherever settled and
+ * projected disagree the two are stated as labelled peers with a split bar
+ * between them, so the comparison is visible before a single digit is read;
+ * wherever they agree the block collapses to one figure, which is what keeps a
+ * fully settled past month as quiet as it used to be.
  */
 export function TransactionSummary({
   currencies,
@@ -163,15 +245,19 @@ export function TransactionSummary({
   const format = (amountCents: number) =>
     formatMinorUnits(amountCents, row.currencyCode);
 
-  const pendingCents = Math.abs(
+  const walletWaitingCents = Math.abs(
     row.projectedBalanceCents - row.balanceCents,
   );
-  // Settled money in against settled money out, as a share of the two together.
-  const settledFlowCents = Math.max(0, row.incomeCents) + Math.max(0, row.expenseCents);
-  const incomeShare =
-    settledFlowCents > 0
-      ? (Math.max(0, row.incomeCents) / settledFlowCents) * 100
-      : 0;
+  // Pending expenses can project the balance below the settled figure, and a
+  // settled share of that projection means nothing — the pair and the waiting
+  // caption still state both readings.
+  const walletBar =
+    row.balanceCents >= 0 && row.projectedBalanceCents > row.balanceCents;
+  const netWaiting = row.projectedNetCents !== row.netCents;
+  const anyBar =
+    walletBar ||
+    row.projectedIncomeCents > row.incomeCents ||
+    row.projectedExpenseCents > row.expenseCents;
 
   return (
     <section
@@ -212,26 +298,51 @@ export function TransactionSummary({
           data-summary-projected={format(row.projectedBalanceCents)}
         >
           <p className={EYEBROW}>{t("transaction.summary.inWallets")}</p>
-          <p
-            className={`mt-1 font-heading text-3xl font-bold tracking-[-0.04em] tabular-nums sm:text-4xl ${amountClass(
-              row.balanceCents,
-            )}`}
-          >
-            {format(row.balanceCents)}
-          </p>
-          <p className="mt-1.5 flex flex-row items-center gap-1.5 text-sm text-muted-foreground">
-            {pendingCents > 0 ? (
-              <>
+          {walletWaitingCents > 0 ? (
+            <>
+              <div className="mt-2 flex flex-row flex-wrap gap-x-8 gap-y-1">
+                <PairCell
+                  label={t("transaction.summary.effective")}
+                  value={format(row.balanceCents)}
+                  valueClassName={`text-3xl font-bold tracking-[-0.04em] sm:text-4xl ${amountClass(
+                    row.balanceCents,
+                  )}`}
+                />
+                <PairCell
+                  label={t("transaction.summary.projected")}
+                  value={format(row.projectedBalanceCents)}
+                  valueClassName={`text-3xl font-semibold tracking-[-0.04em] sm:text-4xl ${projectedClass(
+                    row.projectedBalanceCents,
+                  )}`}
+                />
+              </div>
+              {walletBar && (
+                <SplitBar
+                  settledCents={row.balanceCents}
+                  projectedCents={row.projectedBalanceCents}
+                />
+              )}
+              <p className="mt-2 flex flex-row items-center gap-1.5 text-sm text-muted-foreground">
                 <ClockIcon aria-hidden className="size-4 shrink-0" />
-                {t("transaction.summary.walletsPending", {
-                  projected: format(row.projectedBalanceCents),
-                  waiting: format(pendingCents),
+                {t("transaction.summary.waiting", {
+                  amount: format(walletWaitingCents),
                 })}
-              </>
-            ) : (
-              t("transaction.summary.settled")
-            )}
-          </p>
+              </p>
+            </>
+          ) : (
+            <>
+              <p
+                className={`mt-1 font-heading text-3xl font-bold tracking-[-0.04em] tabular-nums sm:text-4xl ${amountClass(
+                  row.balanceCents,
+                )}`}
+              >
+                {format(row.balanceCents)}
+              </p>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                {t("transaction.summary.settled")}
+              </p>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -255,53 +366,68 @@ export function TransactionSummary({
           />
         </div>
 
+        {/* The pattern is named once for the whole card; every figure it
+            decorates is already stated in text beside the bars. */}
+        {anyBar && (
+          <p className="flex flex-row flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className="size-2.5 shrink-0 rounded-xs bg-chart-income"
+              />
+              {t("transaction.summary.effective")}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className="size-2.5 shrink-0 rounded-xs"
+                style={{ backgroundImage: HATCH_FILL }}
+              />
+              {t("transaction.summary.waitingLabel")}
+            </span>
+          </p>
+        )}
+
         <div
           className="border-t border-border pt-4"
           data-summary-figure="net"
           data-summary-effective={format(row.netCents)}
           data-summary-projected={format(row.projectedNetCents)}
         >
-          <div className="flex flex-row items-baseline justify-between gap-3">
+          <div className="flex flex-row flex-wrap items-baseline justify-between gap-3">
             <p className="text-sm text-content-secondary">
               {t("transaction.summary.net")}
             </p>
-            <p className="text-right">
-              <span
-                className={`font-heading text-xl font-bold tracking-[-0.03em] tabular-nums ${amountClass(
-                  row.netCents,
-                )}`}
-              >
-                {format(row.netCents)}
-              </span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">
-                {row.projectedNetCents === row.netCents
-                  ? t("transaction.summary.settled")
-                  : t("transaction.summary.netProjected", {
-                      amount: format(row.projectedNetCents),
-                    })}
-              </span>
-            </p>
+            {netWaiting ? (
+              <div className="flex flex-row flex-wrap justify-end gap-x-6 gap-y-1 text-right">
+                <PairCell
+                  label={t("transaction.summary.effective")}
+                  value={format(row.netCents)}
+                  valueClassName={`text-xl font-bold ${amountClass(row.netCents)}`}
+                />
+                <PairCell
+                  label={t("transaction.summary.projected")}
+                  value={format(row.projectedNetCents)}
+                  valueClassName={`text-xl font-semibold ${projectedClass(
+                    row.projectedNetCents,
+                  )}`}
+                />
+              </div>
+            ) : (
+              <p className="text-right">
+                <span
+                  className={`font-heading text-xl font-bold tracking-[-0.03em] tabular-nums ${amountClass(
+                    row.netCents,
+                  )}`}
+                >
+                  {format(row.netCents)}
+                </span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  {t("transaction.summary.settled")}
+                </span>
+              </p>
+            )}
           </div>
-
-          {/* Decoration: both figures are stated in full above it. */}
-          <div
-            aria-hidden
-            className="mt-2.5 flex h-1.5 w-full flex-row overflow-hidden rounded-full bg-chart-track"
-          >
-            <div
-              className="h-full bg-chart-income"
-              style={{ width: `${incomeShare}%` }}
-            />
-            <div
-              className="h-full bg-chart-expense"
-              style={{
-                width: `${settledFlowCents > 0 ? 100 - incomeShare : 0}%`,
-              }}
-            />
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t("transaction.summary.flowBar")}
-          </p>
         </div>
 
         {/* Folded away rather than dropped: the two scopes that meet in this
