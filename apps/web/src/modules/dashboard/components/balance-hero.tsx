@@ -1,59 +1,123 @@
+import { useI18n } from "@budget-manager/i18n/react";
 import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
+import { ClockIcon } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 
+import {
+  amountClass,
+  EYEBROW,
+  PairCell,
+  projectedClass,
+  SplitBar,
+} from "@/components/summary-figures";
+
 /**
- * The one figure the page is answering — "how much have I got" — set on the
- * brand plane rather than in the grid of tiles, so the eye lands on it first,
- * with the one action worth taking from here opposite it.
- *
- * The panel is always bright green with forest-green ink in both themes: it is
- * the brand surface, not a themed one, which is why the colours are literal
- * here instead of reading `--foreground`.
+ * The one figure the page is answering — "how much have I got" — stated the
+ * way the transaction totals state it: on a card rather than a high-contrast
+ * plane, with settled and projected as labelled peers and the split bar
+ * showing how much of the projection is already real. The one action worth
+ * taking from here sits opposite it.
  */
 export function BalanceHero({
   label,
   amountCents,
+  projectedAmountCents,
   currencyCode,
-  note,
+  context,
   splits,
   action,
 }: {
   label: string;
   amountCents: number;
+  projectedAmountCents: number;
   currencyCode: string;
-  note?: ReactNode;
+  /** The scope line: the currency, the accounts behind it, the month. */
+  context: string;
   splits?: readonly { key: string; label: string; amountCents: number }[];
   /** The one thing to do from here. Sits opposite the figure above sm. */
   action?: ReactNode;
 }) {
+  const { t } = useI18n();
+  const format = (cents: number) => formatMinorUnits(cents, currencyCode);
+  const waitingCents = Math.abs(projectedAmountCents - amountCents);
+  // Pending expenses can project the balance below the settled figure, and a
+  // settled share of that projection means nothing — the pair and the waiting
+  // caption still state both readings.
+  const showBar = amountCents >= 0 && projectedAmountCents > amountCents;
+
   return (
-    <section className="flex flex-col gap-6 rounded-2xl bg-wise-bright-green p-6 text-wise-forest-green sm:flex-row sm:items-center sm:justify-between sm:p-8">
-      <div className="min-w-0">
-        <p className="text-xs font-semibold tracking-[0.02em] uppercase opacity-60">
-          {label}
-        </p>
-        <p className="mt-2 text-4xl font-bold tracking-[-0.045em] sm:text-6xl">
-          {formatMinorUnits(amountCents, currencyCode)}
-        </p>
-        {note ? <div className="mt-1 text-sm opacity-70">{note}</div> : null}
-
-        {splits && splits.length > 0 ? (
-          <dl className="mt-6 flex flex-row flex-wrap gap-x-10 gap-y-4">
-            {splits.map((split) => (
-              <div key={split.key} className="flex flex-col">
-                <dt className="text-xs font-semibold tracking-[0.02em] uppercase opacity-60">
-                  {split.label}
-                </dt>
-                <dd className="text-xl font-bold tracking-[-0.025em]">
-                  {formatMinorUnits(split.amountCents, currencyCode)}
-                </dd>
+    <section className="rounded-xl border border-border bg-card p-4 sm:p-6 dark:border-transparent">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <p className={EYEBROW}>{label}</p>
+          {waitingCents > 0 ? (
+            <>
+              <div className="mt-2 flex flex-row flex-wrap gap-x-8 gap-y-1">
+                <PairCell
+                  label={t("transaction.summary.effective")}
+                  value={format(amountCents)}
+                  valueClassName={`text-3xl font-bold tracking-[-0.04em] sm:text-4xl ${amountClass(
+                    amountCents,
+                  )}`}
+                />
+                <PairCell
+                  label={t("transaction.summary.projected")}
+                  value={format(projectedAmountCents)}
+                  valueClassName={`text-3xl font-semibold tracking-[-0.04em] sm:text-4xl ${projectedClass(
+                    projectedAmountCents,
+                  )}`}
+                />
               </div>
-            ))}
-          </dl>
-        ) : null}
-      </div>
+              {showBar && (
+                <SplitBar
+                  settledCents={amountCents}
+                  projectedCents={projectedAmountCents}
+                />
+              )}
+              <p className="mt-2 flex flex-row items-center gap-1.5 text-sm text-muted-foreground">
+                <ClockIcon aria-hidden className="size-4 shrink-0" />
+                {t("transaction.summary.waiting", {
+                  amount: format(waitingCents),
+                })}
+              </p>
+            </>
+          ) : (
+            <>
+              <p
+                className={`mt-1 font-heading text-3xl font-bold tracking-[-0.04em] tabular-nums sm:text-4xl ${amountClass(
+                  amountCents,
+                )}`}
+              >
+                {format(amountCents)}
+              </p>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                {t("transaction.summary.settled")}
+              </p>
+            </>
+          )}
 
-      {action ? <div className="shrink-0">{action}</div> : null}
+          <p className="mt-2 text-sm text-muted-foreground">{context}</p>
+
+          {splits && splits.length > 0 ? (
+            <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {splits.map((split) => (
+                <div key={split.key} className="rounded-lg bg-muted p-4">
+                  <dt className={EYEBROW}>{split.label}</dt>
+                  <dd
+                    className={`mt-1 font-heading text-xl font-bold tracking-[-0.025em] tabular-nums ${amountClass(
+                      split.amountCents,
+                    )}`}
+                  >
+                    {format(split.amountCents)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+        </div>
+
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
     </section>
   );
 }

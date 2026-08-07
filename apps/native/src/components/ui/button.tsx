@@ -11,7 +11,6 @@ import { withAlpha } from "@/theme/color";
 import { useColors } from "@/theme/theme-provider";
 import {
   BORDER_WIDTH,
-  BRAND,
   CONTROL_HEIGHT,
   RADIUS,
   SPACING,
@@ -60,10 +59,10 @@ function heightFor(size: ButtonSize) {
  * wash rather than the surface sliding into its own ink — and `rounded-full` is
  * not a choice a caller makes, it is what a button is in this design.
  *
- * `default` is the brand surface, not a themed one: bright green with forest
- * green ink in **both** modes. `destructive` is outlined rather than a filled red
- * block, and `onBrand`/`ghostOnBrand` are for the dashboard hero, where the
- * page's own primary is the background and would vanish.
+ * `default` is the monochrome `primary` pair — ink on light, white on dark.
+ * `destructive` is outlined rather than a filled red block, and
+ * `onBrand`/`ghostOnBrand` are for the dashboard hero, where the page's own
+ * primary is the background and would vanish — they wear the inverse pair.
  */
 export function Button({
   variant = "default",
@@ -94,9 +93,9 @@ export function Button({
       : variant === "secondary"
         ? colors.secondary
         : variant === "onBrand"
-          ? BRAND.forestGreen
+          ? colors.primaryForeground
           : variant === "ghostOnBrand"
-            ? withAlpha(BRAND.forestGreen, 0.08)
+            ? withAlpha(colors.primaryForeground, 0.08)
             : "transparent";
 
   const pressedBackground =
@@ -105,9 +104,9 @@ export function Button({
       : variant === "secondary"
         ? withAlpha(colors.secondary, 0.7)
         : variant === "onBrand"
-          ? withAlpha(BRAND.forestGreen, 0.85)
+          ? withAlpha(colors.primaryForeground, 0.85)
           : variant === "ghostOnBrand"
-            ? withAlpha(BRAND.forestGreen, 0.14)
+            ? withAlpha(colors.primaryForeground, 0.14)
             : variant === "destructive"
               ? withAlpha(colors.destructive, 0.1)
               : variant === "link"
@@ -120,7 +119,7 @@ export function Button({
       : variant === "destructive"
         ? withAlpha(colors.destructive, 0.4)
         : variant === "ghostOnBrand"
-          ? withAlpha(BRAND.forestGreen, 0.25)
+          ? withAlpha(colors.primaryForeground, 0.25)
           : "transparent";
 
   const tone =
@@ -142,9 +141,9 @@ export function Button({
           : variant === "link"
             ? colors.link
             : variant === "onBrand"
-              ? BRAND.brightGreen
+              ? colors.primary
               : variant === "ghostOnBrand"
-                ? BRAND.forestGreen
+                ? colors.primaryForeground
                 : colors.foreground;
 
   return (

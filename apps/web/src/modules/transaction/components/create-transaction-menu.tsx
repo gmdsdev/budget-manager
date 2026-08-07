@@ -98,18 +98,14 @@ export function CreateTransactionMenu({
     return (
       <>
         <div className="flex w-full flex-col gap-2 sm:w-52">
-          <Button
-            variant="onBrand"
-            onClick={() => setDialog("transaction")}
-            className="w-full"
-          >
+          <Button onClick={() => setDialog("transaction")} className="w-full">
             <PlusIcon aria-hidden />
             {t("transaction.create.trigger")}
           </Button>
           {SECONDARY.map((entry) => (
             <Button
               key={entry.dialog}
-              variant="ghostOnBrand"
+              variant="outline"
               onClick={() => setDialog(entry.dialog)}
               className="w-full"
             >

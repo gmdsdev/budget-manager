@@ -21,8 +21,8 @@ export type TextTone =
  * **eyebrow** — a small label over a figure — which is why it is also the only
  * variant that folds its own casing.
  *
- * `text-primary` is not a text colour: bright green on white is unreadable, so a
- * link reads `link` and the softer body ink is `secondary`.
+ * `text-primary` is not a text colour — it is the brand surface — so a link
+ * reads `link` and the softer body ink is `secondary`.
  */
 export function Text({
   variant = "body",

@@ -48,7 +48,7 @@ export default function UserMenu() {
       <DropdownMenuTrigger className="flex w-full min-w-0 items-center gap-2.5 rounded-lg bg-muted px-3 py-2.5 text-left transition-colors outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring aria-expanded:bg-accent">
         <span
           aria-hidden
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-wise-bright-blue text-xs font-bold text-wise-forest-green"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-content-secondary"
         >
           {initials(session.user.name)}
         </span>

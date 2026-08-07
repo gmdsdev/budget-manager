@@ -1,6 +1,5 @@
 import type { Translate } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
-import { formatMinorUnits } from "@budget-manager/ui/lib/currency";
 import type { CurrencySummary } from "@budget-manager/client";
 import { CreateTransactionMenu } from "@/modules/transaction/components/create-transaction-menu";
 import { BalanceHero } from "./balance-hero";
@@ -37,7 +36,6 @@ export function CurrencySection({
   monthLabel: string;
 }) {
   const t = useTranslate();
-  const hasPending = summary.projectedBalanceCents !== summary.balanceCents;
   const hasCards = summary.cardCount > 0;
   const hasWallets = summary.wallets.length > 0;
   const hasBudgets = summary.budgets.length > 0;
@@ -49,33 +47,19 @@ export function CurrencySection({
         currency: summary.currencyCode,
       })}
     >
-      {/* The lead figure sits on the brand plane; the month's three movement
-          figures follow as tiles. Card debt rides in the hero's split row —
-          without it the balance reads as though money owed does not exist. */}
+      {/* The lead figure opens the page as a card, in the same grammar as the
+          transaction totals; the month's three movement figures follow as
+          tiles. Card debt rides in the hero's split row — without it the
+          balance reads as though money owed does not exist. The currency in
+          the context line is not decoration: nothing on this page is ever
+          summed across currencies, so the card has to say which one it is
+          reporting. */}
       <BalanceHero
         label={t("dashboard.stat.inWallets")}
         amountCents={summary.balanceCents}
+        projectedAmountCents={summary.projectedBalanceCents}
         currencyCode={summary.currencyCode}
-        note={
-          <>
-            {/* The currency the figures are in is not decoration: nothing on
-                this page is ever summed across currencies, so the plane has to
-                say which one it is reporting. */}
-            <span className="block">
-              {summary.currencyCode} · {accountsLine(t, summary)} · {monthLabel}
-            </span>
-            <span className="block">
-              {hasPending
-                ? t("dashboard.stat.inWallets.projected", {
-                    amount: formatMinorUnits(
-                      summary.projectedBalanceCents,
-                      summary.currencyCode,
-                    ),
-                  })
-                : t("dashboard.stat.inWallets.settled")}
-            </span>
-          </>
-        }
+        context={`${summary.currencyCode} · ${accountsLine(t, summary)} · ${monthLabel}`}
         splits={
           hasCards
             ? [

@@ -18,16 +18,6 @@ const buttonVariants = cva(
         destructive:
           "border-destructive/40 bg-transparent text-destructive hover:bg-destructive/10 focus-visible:ring-destructive",
         link: "text-link underline-offset-4 hover:underline",
-        // For the branded plane (the dashboard hero), where the page's own
-        // `primary` is the background and would vanish. Forest fill, bright
-        // green label — and the focus ring has to be offset against the brand
-        // surface rather than the page.
-        onBrand:
-          "bg-wise-forest-green text-wise-bright-green hover:bg-wise-forest-green/85 focus-visible:ring-wise-forest-green focus-visible:ring-offset-wise-bright-green",
-        // The secondary actions on that plane: a wash of the same ink with a
-        // ring, so they read as one set with `onBrand` without competing.
-        ghostOnBrand:
-          "bg-wise-forest-green/[0.08] text-wise-forest-green ring-[1.5px] ring-wise-forest-green/25 ring-inset hover:bg-wise-forest-green/[0.14] focus-visible:ring-wise-forest-green focus-visible:ring-offset-wise-bright-green",
       },
       // Wise's control scale, and it does not change with the viewport: the
       // everyday button is 48px (`13px 24px` around 16px/1.2 text in the

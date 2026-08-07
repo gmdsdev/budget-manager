@@ -12,12 +12,10 @@ export type ThemeMode = "light" | "dark";
 export const THEME_MODES: readonly ThemeMode[] = ["light", "dark"];
 
 /**
- * Wise's own palette, for surfaces that are deliberately branded rather than
- * themed — the dashboard hero, and the ink on the buttons that sit on it. It does
- * not flip with the mode: bright green with forest-green ink is the brand, not a
- * light-mode reading of it. Reach for a semantic token first; these are the
- * exception, and the account mark is deliberately *not* one of them — a second
- * green beside the create action would read as a peer of it.
+ * The UI itself is monochrome now, so no surface is branded with these any
+ * more — the hero and its buttons read the themed `primary` pair instead. What
+ * keeps this palette alive is the charts: data colours deliberately kept, and
+ * `chartIncome` below still aliases the Wise green.
  */
 export const BRAND = {
   brightGreen: "#9fe870",
@@ -89,37 +87,37 @@ const DARK_CHART = [
 
 const light: Palette = {
   background: "#ffffff",
-  foreground: "#0e0f0c",
+  foreground: "#111111",
   card: "#ffffff",
-  cardForeground: "#0e0f0c",
+  cardForeground: "#111111",
   popover: "#ffffff",
-  popoverForeground: "#0e0f0c",
-  primary: BRAND.brightGreen,
-  primaryForeground: BRAND.forestGreen,
-  primaryHover: "#80e142",
-  secondary: "#e2f6d5",
-  secondaryForeground: BRAND.forestGreen,
-  muted: "#f1f4ef",
-  mutedForeground: "#6a6c6a",
-  accent: "#f1f4ef",
-  accentForeground: "#0e0f0c",
+  popoverForeground: "#111111",
+  primary: "#111111",
+  primaryForeground: "#ffffff",
+  primaryHover: "#2e2e2e",
+  secondary: "#e8e8e8",
+  secondaryForeground: "#111111",
+  muted: "#f2f2f2",
+  mutedForeground: "#6b6b6b",
+  accent: "#f2f2f2",
+  accentForeground: "#111111",
   destructive: "#cb272f",
   destructiveMuted: "#fbeaea",
-  border: "#e3e4e1",
-  input: "#c9cbc7",
-  ring: "#0e0f0c",
-  link: BRAND.forestGreen,
-  contentSecondary: "#454745",
+  border: "#e4e4e4",
+  input: "#cacaca",
+  ring: "#111111",
+  link: "#111111",
+  contentSecondary: "#454545",
   success: "#054d28",
   successMuted: "#e2f6d5",
   warning: "#4a3b1c",
   warningMuted: "#fff7d7",
   warningMark: "#ffd11a",
   chart: LIGHT_CHART,
-  // Wise's own pair: bright green income against forest green spending.
+  // Bright green income against the chart ring's red for spending.
   chartIncome: BRAND.brightGreen,
-  chartExpense: BRAND.forestGreen,
-  chartTrack: "#e3e7e0",
+  chartExpense: LIGHT_CHART[7],
+  chartTrack: "#e6e6e6",
   glyphTint: 0.16,
   // Eight slots alias the chart ring so a category bar and a chart series of
   // the same hue cannot drift apart; four fill the gaps the ring leaves.
@@ -140,38 +138,37 @@ const light: Palette = {
 };
 
 const dark: Palette = {
-  background: "#121511",
-  foreground: "#f3f5f1",
-  card: "#1e211d",
-  cardForeground: "#f3f5f1",
-  popover: "#1e211d",
-  popoverForeground: "#f3f5f1",
-  primary: BRAND.brightGreen,
-  primaryForeground: BRAND.forestGreen,
-  primaryHover: "#cdffad",
-  secondary: "#1d3f06",
-  secondaryForeground: "#cdffad",
-  muted: "#262a24",
-  mutedForeground: "#a8ada4",
-  accent: "#262a24",
-  accentForeground: "#f3f5f1",
+  background: "#121212",
+  foreground: "#f4f4f4",
+  card: "#1e1e1e",
+  cardForeground: "#f4f4f4",
+  popover: "#1e1e1e",
+  popoverForeground: "#f4f4f4",
+  primary: "#f4f4f4",
+  primaryForeground: "#111111",
+  primaryHover: "#d9d9d9",
+  secondary: "#363636",
+  secondaryForeground: "#f4f4f4",
+  muted: "#262626",
+  mutedForeground: "#a3a3a3",
+  accent: "#262626",
+  accentForeground: "#f4f4f4",
   destructive: "#ffa8ad",
   destructiveMuted: "#410b0d",
-  border: "#33372f",
-  input: "#4b5046",
-  ring: "#f3f5f1",
-  link: BRAND.brightGreen,
-  contentSecondary: "#cacfc7",
+  border: "#333333",
+  input: "#4d4d4d",
+  ring: "#f4f4f4",
+  link: "#f4f4f4",
+  contentSecondary: "#cccccc",
   success: "#bae5a0",
   successMuted: "#252c20",
   warning: "#fadc65",
   warningMuted: "#3a3523",
   warningMark: "#fadc65",
   chart: DARK_CHART,
-  // Forest green disappears on the dark plane, so spending takes bright blue.
   chartIncome: BRAND.brightGreen,
-  chartExpense: BRAND.brightBlue,
-  chartTrack: "#33372f",
+  chartExpense: DARK_CHART[7],
+  chartTrack: "#333333",
   glyphTint: 0.26,
   category: {
     blue: DARK_CHART[0],
@@ -240,7 +237,7 @@ export type ControlSize = keyof typeof CONTROL_HEIGHT;
 export const SHADOW = {
   menu: {
     light: {
-      shadowColor: "#0e0f0c",
+      shadowColor: "#111111",
       shadowOpacity: 0.12,
       shadowRadius: 24,
       shadowOffset: { width: 0, height: 4 },

@@ -656,7 +656,7 @@ are ordered to match the row, and the bar is **left-aligned** — `FilterBar`
 (`src/components/filter-bar.tsx`) owns that alignment and the `Clear filters` button, so no
 page positions its own. `FilterSelect` and `FilterSearch` are the two control shapes, both
 `rounded-full` chips; a `FilterSelect` whose column is actually filtered switches from outlined
-to the pale-green filled state, so the bar shows at a glance which columns are narrowing the
+to the `secondary` filled state, so the bar shows at a glance which columns are narrowing the
 list. `FilterSearch` debounces, because a request per keystroke is not a filter. Each module keeps a
 `XFiltersState` + `EMPTY_X_FILTERS` + `isXFiltered` trio in `@budget-manager/client` and one
 `xQueryInput(filters?, page?)` builder that drops sentinel values — the route loaders call it
@@ -870,19 +870,20 @@ return to, not for reaching other destinations. A **More** tab spent a fifth of 
 navigation about navigation, and five tabs left each one too narrow to tell apart by its icon.
 
 `AccountAvatar` is a **neutral** disc (`muted` fill, `contentSecondary` initials), not a branded one:
-it sits a thumb's width from the bright-green create action, and two saturated greens that close
-together read as two peers when only one of them is the action. On native the dashboard hero is
-therefore the only branded surface. The web's own avatar in `user-menu.tsx` is still bright blue —
-the two apps disagree here, and if that is settled it should be settled in both.
+it sits a thumb's width from the filled create action, and two filled discs that close
+together read as two peers when only one of them is the action. The web's avatar in
+`user-menu.tsx` wears the same neutral pair — the two apps agree here, and a change to one
+should be settled in both.
 
 **The tokens are mirrored, not imported.** `src/theme/tokens.ts` carries the same palette,
 spacing, radius, control and type steps as `packages/ui/src/styles/globals.css` — React Native
 reads neither CSS custom properties nor `oklch()`, and since the web file is plain sRGB hex this
 is now a transcription rather than a conversion. Change a token there and change it here; that
 duplication is the price of one design language across two renderers, and it is the *only*
-duplication of the design that is accepted. `BRAND` is Wise's own palette, which does **not** flip
-with the mode: bright green with forest-green ink is the brand, not a light-mode reading of it.
-Inter is loaded through `@expo-google-fonts/inter` and nothing renders until it is in hand.
+duplication of the design that is accepted. `BRAND` is Wise's old palette, kept only because the
+charts still speak it (`chartIncome`/`chartExpense`); no surface or control reads it any more —
+the hero and its buttons read the themed `primary` pair, which is monochrome and flips with the
+mode. Inter is loaded through `@expo-google-fonts/inter` and nothing renders until it is in hand.
 
 Elevation reads the same as on the web: **nothing casts a hard shadow.** `components/ui/surface.tsx`
 is the plane every card, sheet, popup and listing sits on — a hairline border in light mode, and in
@@ -943,8 +944,8 @@ reintroducing the thing the listings dropped.
 returning the header's `Create transaction` item *and* the sheets, because the header can only hand
 back a callback and the state has to live with something that renders. It is a **native bar button
 item** with `variant: 'prominent'` — a React view placed in an iOS 26 header is wrapped in the grey
-glass capsule that groups bar items, so a green pill of our own drew as a green rectangle inside a
-grey one. Its sheets are controlled from there and **stay mounted**, which is what keeps their
+glass capsule that groups bar items, so a filled pill of our own drew as a rectangle inside a
+grey capsule. Its sheets are controlled from there and **stay mounted**, which is what keeps their
 reset-on-open behaviour. Card purchase, pay card and transfer still have sheets in that hook but
 **no affordance opens them** — the ellipsis `UIMenu` that used to sit beside the button is gone, and
 nothing has replaced it yet.
@@ -955,7 +956,7 @@ two that can be *acted* on come before the two that can only be read. `currency-
 where that order lives, and the two lists arrive as its `children` because the screen owns them (the
 payload carries them at the top level, filtered to the currency in view).
 
-- `balance-hero.tsx` — the bright-green plane: the balance, a `currency · accounts · month` line,
+- `balance-hero.tsx` — the `primary` plane: the balance, a `currency · accounts · month` line,
   the settled-or-projected line, and **two** card splits (`Net position`, `On cards`). Splits take an
   even share of the row rather than a `flexBasis`, which is what made a third one wrap to a line of
   its own; `Credit available` was that third one and is a reading of the two beside it.
@@ -979,9 +980,9 @@ solid baseline, and no number reachable only by looking at a bar — **each mont
 own figures out** through `dashboard.cashFlow.monthSummary`, which is what the web's `sr-only`
 `ChartDataTable` does there. Those figures used to be a *visible* table of four money columns under
 the bars; at phone width every row wrapped, so the one part of the chart that existed to make the
-numbers legible was the least legible thing on the screen. The pair is Wise's own —
-`chartIncome`/`chartExpense`, bright green against forest green in light and against bright blue in
-dark, since forest green disappears on the dark plane. A budget meter's fill states the **reading**
+numbers legible was the least legible thing on the screen. The pair is green against red —
+`chartIncome` is Wise's bright green and `chartExpense` reads the chart ring's red (slot 8), in
+both modes. A budget meter's fill states the **reading**
 (green on track, yellow close, red overspent) while the category's own ink stays in the swatch
 beside its name.
 
@@ -1007,7 +1008,7 @@ draws; the rest of the kit (the PNGs, the README) stays in `apps/web`. Both `Kiv
 `KivoMark` take a **height** and derive the width from the artwork's own ratio — the K stands
 taller than it is wide, so passing one `size` to both axes would stretch it. The app icon is
 `assets/icon.png` (the kit's unrounded square, since iOS and the stores apply their own mask) with
-an Android `adaptiveIcon` over `#163300`; its foreground is padded so the K clears the safe circle,
+an Android `adaptiveIcon` over `#111111`; its foreground is padded so the K clears the safe circle,
 which the kit's own square icon does not.
 
 There is no `test` script, so `turbo run test` stays hermetic and fast: the logic worth
@@ -1231,20 +1232,23 @@ in the list below it is worse than a long one — and compacts the locale's own 
 
 Primitives in `packages/ui/src/components` are shadcn (`style: base-lyra`, `iconLibrary: remixicon`) on top of **@base-ui/react**, not Radix. The package is **web only** — React Native renders none of it, so `apps/native` has its own primitives under `src/components/ui/` speaking the same design language (see Native, above). Base UI composes via the `render` prop, not `asChild`: `<DialogTrigger render={<Button>Create</Button>} />`. Design tokens live in `packages/ui/src/styles/globals.css` (Tailwind v4, CSS-first).
 
-**The design language is Wise's Neptune, and it is carried by tokens plus a handful of
-recurring classes.** The palette is Wise's own, mapped onto the shadcn variable names so no
-primitive had to learn new ones: `--primary` is **Bright Green `#9fe870` with a Forest Green
-`#163300` label, in both themes** — it is the brand surface, not a themed one, which is the one
-place a literal colour is correct. `--secondary` is the pale-green pill the active nav and an
-applied filter wear. Surfaces are plain white over `#121511`/`#1e211d`, `--border` is a hairline
-(`#e3e4e1` / `#33372f`) rather than ink, and `--ring` is `--foreground`, because Wise focus is a
-dark ring not a glow.
+**The design language is Wise's Neptune in structure, carried by tokens plus a handful of
+recurring classes — but the UI palette is monochrome.** Chrome carries no hue: `--primary` is
+**the ink pair, and it flips with the theme** — `#111111` with a white label in light mode,
+`#f4f4f4` with an ink label in dark — so the primary action reads as the boldest
+neutral on the page rather than a brand colour. The web dashboard hero is a plain card in the
+transaction totals' grammar (settled/projected pairs, the hatched split bar), not a `primary`
+plane; the native hero still sits on `primary`. `--secondary` is the grey pill the active nav
+and an applied filter wear. Surfaces are plain white over `#121212`/`#1e1e1e`, `--border` is a
+hairline (`#e4e4e4` / `#333333`) rather than ink, and `--ring` is `--foreground`, because focus
+is a dark ring not a glow. Colour survives only where it *is* data: categories, charts, and the
+status inks (`--success`/`--warning`/`--destructive`, the budget meter's traffic light).
 
 Four rules follow from that and are easy to undo by accident:
 
 - **Nothing is square and nothing casts a hard shadow.** The radius scale is Wise's — `--radius-md`
   10px (inputs, select triggers), `--radius-lg` 16px (menus, popovers, tooltips), `--radius-xl`
-  24px (cards, dialogs, sheets, listings), `--radius-2xl` 32px (the dashboard hero) — and
+  24px (cards, dialogs, sheets, listings), `--radius-2xl` 32px (the native hero) — and
   **buttons, chips, nav pills, swatches, meters and glyphs are `rounded-full`**. `--shadow-brutal-*`
   is gone; elevation is `--shadow-menu` on things that float over the page and nothing at all on
   a card, which reads as elevated by its border alone. In dark mode a card drops its border
@@ -1258,8 +1262,8 @@ Four rules follow from that and are easy to undo by accident:
   18px/-0.015em, body and controls 16px, meta and captions 14px, eyebrows and tags 12px. Figures
   get their own steps — 60px on the hero, 32px on a stat tile, 18px on a ledger row's amount —
   and headings take negative tracking rather than extra weight.
-- **`text-primary` is not a text colour.** Bright green on white is unreadable, so links and the
-  button `link` variant read `--link` (Forest Green in light, Bright Green in dark) and
+- **`text-primary` is not a text colour.** It is the brand surface, so links and the
+  button `link` variant read `--link` (the theme's own ink) and
   `--content-secondary` is the softer body ink. A destructive action is outlined
   (`border-destructive/40 text-destructive`), never a filled red block.
 - **A swatch carries no ink outline any more** — it is a plain round fill, so a category dot is
@@ -1267,8 +1271,9 @@ Four rules follow from that and are easy to undo by accident:
   and table twin for relief rather than on a border.
 
 `--wise-bright-green/-forest-green/-bright-blue/-bright-yellow/-bright-orange/-bright-pink` are
-the brand palette itself, for surfaces that are deliberately branded rather than themed: the
-dashboard hero and the account avatar. Reach for a semantic token first; these are the exception.
+the old brand palette, kept only because charts still speak it (`--chart-income`
+and the budget meter's on-track fill). No surface or control may use them any more — the hero and
+its buttons read the `primary` pair. Reach for a semantic token; these are chart colours now.
 
 New components should speak this grammar rather than invent a parallel one.
 
@@ -1279,9 +1284,10 @@ New components should speak this grammar rather than invent a parallel one.
 `apps/web/src/assets/logo/` is the brand kit — `svg/` and `png/` beside a
 `KIVO-LOGO-README.md` that states the geometry and the two on-brand colourways — and
 `components/logo.tsx` imports four of those SVGs as URLs and picks one with a ternary on
-`useThemeMode()`. **Only forest-on-light and green-on-dark are legal**: bright green on white
-fails contrast, which is why `KivoLogo` reads `kivo-logo-forest` / `kivo-logo-green` and
-`KivoMark` reads `kivo-mark-forest` / `kivo-mark-green` rather than tinting one file.
+`useThemeMode()`. **The logo is monochrome: ink on light, white on dark** — `KivoLogo` reads
+`kivo-logo-black` / `kivo-logo-white` and `KivoMark` reads `kivo-mark-black` /
+`kivo-mark-white` rather than tinting one file. The green/forest colourways stay in the kit
+but nothing in the app draws them.
 That ternary is why **there is no system theme**: `ThemeProvider` runs
 next-themes with `enableSystem={false}` over `THEME_MODES` (`light | dark`) under the
 `kivo-theme` key, so the mode in state is always the mode on screen — a `system` setting would
@@ -1293,8 +1299,8 @@ wordmark) is the brand everywhere it fits (sidebar, sheet nav, auth cards) and `
 for the tight spots (the phone top bar), where the narrow K is centred in a fixed 48px box so
 the tap target does not shrink with it. `svg/kivo-app-icon.svg` is the favicon and
 `png/kivo-app-icon-180.png` the apple-touch icon, both wired up in `index.html`, so it is Vite
-that hashes them and there is no `public/` copy to drift; those two carry their own forest
-tile and so are deliberately *not* theme-aware.
+that hashes them and there is no `public/` copy to drift; those two carry their own ink
+(`#111111`) tile and so are deliberately *not* theme-aware.
 Both components render an `<img>` with `w-fit`, not `w-auto`: a flex
 column stretches an `auto` cross size, and an `<img>` obeys the stretch while the SVG's own
 `preserveAspectRatio` re-centres the artwork inside it — the logo silently drifts to the middle
@@ -1318,9 +1324,9 @@ themes, so a series reads `fill="var(--color-income)"` while the palette itself 
 `globals.css`. `--chart-1…8` are a validated eight-hue categorical set (blue, orange, aqua,
 yellow, magenta, green, violet, red) with **light and dark steps of the same hue** — the slot
 *order* is what keeps adjacent pairs colourblind-separable, so add a hue at the end rather than
-re-ordering, and never generate a ninth. `--chart-income` (green) and `--chart-expense` (red)
-alias slots 6 and 8: that pair sits in the colourblind-safety warn band, which is why the bars
-are also positionally fixed (income always left) and legended. `--chart-track` is the meter
+re-ordering, and never generate a ninth. `--chart-income` is Wise's bright green and
+`--chart-expense` aliases slot 8 (red): that pair sits in the colourblind-safety warn band,
+which is why the bars are also positionally fixed (income always left) and legended. `--chart-track` is the meter
 track, `--success`/`--warning` are status inks. The steps are not taste: they were run through a
 colourblind-separation and contrast check against this app's own surfaces — light `#fcfaf4`
 (`--card`) and dark `#25221d`, **not** the page plane. The steps are deliberately pastel

@@ -2,7 +2,8 @@ import { formatMinorUnits } from "@budget-manager/money";
 import { View } from "react-native";
 
 import { Text } from "@/components/ui/text";
-import { BRAND, RADIUS, SPACING } from "@/theme/tokens";
+import { useColors } from "@/theme/theme-provider";
+import { RADIUS, SPACING } from "@/theme/tokens";
 
 /**
  * The one figure the screen is answering — "how much have I got" — set on the brand
@@ -11,9 +12,8 @@ import { BRAND, RADIUS, SPACING } from "@/theme/tokens";
  * It carries no actions: recording something moved to the app bar, where it is
  * reachable from every tab rather than only from the top of this one screen.
  *
- * The panel is always bright green with forest-green ink in both themes: it is the
- * brand surface, not a themed one, which is why the colours are literal here instead
- * of reading the palette.
+ * The panel is the `primary` plane — ink on light, white on dark — so the monochrome
+ * brand surface flips with the theme instead of carrying a colour of its own.
  */
 export function BalanceHero({
   label,
@@ -28,11 +28,13 @@ export function BalanceHero({
   note?: readonly string[];
   splits?: readonly { key: string; label: string; amountCents: number }[];
 }) {
+  const colors = useColors();
+
   return (
     <View
       style={{
         borderRadius: RADIUS["2xl"],
-        backgroundColor: BRAND.brightGreen,
+        backgroundColor: colors.primary,
         padding: SPACING.xl,
         gap: SPACING.xl,
       }}

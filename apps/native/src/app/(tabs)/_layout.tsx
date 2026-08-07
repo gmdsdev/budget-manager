@@ -27,10 +27,9 @@ import { useTheme } from "@/theme/theme-provider";
  * - The **tone** of the glass. This app's mode is its own rather than the system's,
  *   and `Appearance.setColorScheme` does not reach either bar, so leaving the effect
  *   to `systemDefault` puts light glass under a dark app on a phone in light mode.
- * - The **tint**, so the selected tab is the brand's green rather than iOS blue. It
- *   reads `link`, not `primary`: bright green is the brand *surface*, and on the light
- *   material it would be about as legible as it is on white. `link` is the green that
- *   is already defined as ink in both modes — forest in light, bright in dark.
+ * - The **tint**, so the selected tab is the app's own ink rather than iOS blue. It
+ *   reads `link`, not `primary`: `primary` is the brand *surface*, and `link` is the
+ *   colour already defined as ink in both modes.
  */
 export default function TabsLayout() {
   const t = useTranslate();

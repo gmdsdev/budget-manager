@@ -14,12 +14,12 @@ module.exports = (config) => ({
   // The widget is the third renderer of this design language, after the web's CSS
   // custom properties and `src/theme/tokens.ts`. Only the brand pair reaches it, and
   // that pair is the one part of the palette that deliberately does *not* flip with
-  // the mode — bright green with forest-green ink is the brand, exactly as on the
-  // dashboard hero this widget is a shrunken reading of.
+  // the mode — the monochrome ink plane with white ink is the brand, exactly as on
+  // the dashboard hero this widget is a shrunken reading of.
   colors: {
-    $widgetBackground: "#9fe870",
-    $accent: "#163300",
-    widgetInk: "#163300",
+    $widgetBackground: "#111111",
+    $accent: "#ffffff",
+    widgetInk: "#ffffff",
   },
 
   // Mirrors the app's own group rather than declaring a second one: the shared

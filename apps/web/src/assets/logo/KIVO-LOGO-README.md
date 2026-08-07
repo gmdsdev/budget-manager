@@ -21,8 +21,11 @@ and the logo everywhere else.
 | `--kivo-ink` | `#0E1B00` | Mono dark (print, one-colour) |
 | white | `#FFFFFF` | Mono light on photography |
 
-Only two combinations are on-brand: **green on forest** and **forest on green**. Never green
-on white (fails contrast) and never green on mid-tone photography.
+The app's UI is monochrome: it draws the **mono** colourways (`kivo-logo-black` /
+`kivo-logo-white`, and their marks), and the app-icon tiles are now `#111111` with a white K
+(`kivo-app-icon-inverted` is the reverse). The green/forest colourways remain in the kit for
+contexts that want the original pair — there, only **green on forest** and **forest on green**
+are on-brand: never green on white (fails contrast) and never green on mid-tone photography.
 
 ## Geometry
 

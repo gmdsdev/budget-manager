@@ -54,7 +54,7 @@ export function Select({
   label?: string;
   /** `sm` is the 36pt chip the filter bar wears; `default` is the 48pt field. */
   size?: "default" | "sm";
-  /** The pale-green filled state an applied filter takes. */
+  /** The filled state an applied filter takes. */
   filled?: boolean;
   style?: ViewStyle;
 }) {

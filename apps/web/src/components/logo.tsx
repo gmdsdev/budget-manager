@@ -1,9 +1,9 @@
 import { cn } from "@budget-manager/ui/lib/utils";
 
-import logoLight from "@/assets/logo/svg/kivo-logo-forest.svg";
-import logoDark from "@/assets/logo/svg/kivo-logo-green.svg";
-import markLight from "@/assets/logo/svg/kivo-mark-forest.svg";
-import markDark from "@/assets/logo/svg/kivo-mark-green.svg";
+import logoLight from "@/assets/logo/svg/kivo-logo-black.svg";
+import logoDark from "@/assets/logo/svg/kivo-logo-white.svg";
+import markLight from "@/assets/logo/svg/kivo-mark-black.svg";
+import markDark from "@/assets/logo/svg/kivo-mark-white.svg";
 import { useThemeMode } from "@/components/theme-provider";
 
 type LogoProps = Omit<React.ComponentProps<"img">, "src">;

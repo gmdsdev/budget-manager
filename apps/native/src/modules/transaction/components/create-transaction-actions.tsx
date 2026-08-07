@@ -50,14 +50,14 @@ export function useCreateTransactionActions() {
       //
       // A prominent item *is* Liquid Glass, and glass is translucent: `tintColor`
       // tints the material rather than filling it, so what you see is the brand
-      // green composited over whatever is behind the bar. On this app's dark plane
+      // ink composited over whatever is behind the bar. On this app's dark plane
       // that resolved several steps darker than `--primary`, and it would have
       // resolved lighter on a pale one — a brand colour that changes with its
       // backdrop is not the brand colour.
       //
       // `hidesSharedBackground` drops the grey capsule iOS 26 otherwise wraps a
       // React header view in, so this is the button on its own: exactly `--primary`
-      // with forest-green ink, matching the hero below it. The cost is that this one
+      // with its own ink, matching the hero below it. The cost is that this one
       // control is flat rather than glass — the bars around it still are.
       type: "custom",
       hidesSharedBackground: true,
