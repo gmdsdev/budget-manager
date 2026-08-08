@@ -1,11 +1,14 @@
 import { db as sharedDb, type Db } from "@budget-manager/db";
 import { ensureDefaultCategories } from "@budget-manager/db/defaults/categories";
+import { ensureTrialSubscription } from "@budget-manager/db/subscription/store";
 import * as schema from "@budget-manager/db/schema/auth";
 import { env } from "@budget-manager/env/server";
 import { USER_ADDITIONAL_FIELDS } from "@budget-manager/schemas";
 import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+
+import { polarPlugin } from "./polar";
 
 /**
  * The native app has no browser origin: `@better-auth/expo` identifies itself
@@ -33,6 +36,8 @@ function trustedOrigins() {
 }
 
 export function createAuth(db: Db = sharedDb) {
+  const polar = polarPlugin(db);
+
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "pg",
@@ -60,6 +65,19 @@ export function createAuth(db: Db = sharedDb) {
                 error,
               );
             }
+
+            try {
+              await ensureTrialSubscription({
+                db,
+                userId: createdUser.id,
+                startedAt: createdUser.createdAt,
+              });
+            } catch (error) {
+              console.error(
+                `Failed to start the trial for user ${createdUser.id}`,
+                error,
+              );
+            }
           },
         },
       },
@@ -74,7 +92,7 @@ export function createAuth(db: Db = sharedDb) {
         httpOnly: true,
       },
     },
-    plugins: [expo()],
+    plugins: polar ? [expo(), polar] : [expo()],
   });
 }
 

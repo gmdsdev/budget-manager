@@ -11,6 +11,7 @@ import { nav } from "./nav";
 import { pagination } from "./pagination";
 import { recurring } from "./recurring";
 import { settings } from "./settings";
+import { subscription } from "./subscription";
 import { transaction } from "./transaction";
 import { transactionImport } from "./transaction-import";
 import { validation } from "./validation";
@@ -36,6 +37,7 @@ export const messages = {
   ...pagination,
   ...recurring,
   ...settings,
+  ...subscription,
   ...transaction,
   ...transactionImport,
   ...validation,

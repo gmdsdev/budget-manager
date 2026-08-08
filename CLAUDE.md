@@ -266,10 +266,11 @@ Workspace packages export raw TypeScript from `src/` (no build step) — only `a
 
 ### Backend layering (packages/api)
 
-`packages/api/src/index.ts` builds the tRPC instance and exports `publicProcedure` / `protectedProcedure`. Two middlewares matter:
+`packages/api/src/index.ts` builds the tRPC instance and exports `publicProcedure` / `protectedProcedure` / `subscribedProcedure`. Three middlewares matter:
 
 - `requireSession` narrows `ctx.session` to non-null for `protectedProcedure`.
-- `mapDomainErrors` translates the domain errors in `errors.ts` (`NotFoundError` → `NOT_FOUND`, `ConflictError` → `CONFLICT`). Services throw those; they never build `TRPCError`s. Unmapped errors become `INTERNAL_SERVER_ERROR` and the formatter replaces the message with a generic string, so internals never leak.
+- `mapDomainErrors` translates the domain errors in `errors.ts` (`NotFoundError` → `NOT_FOUND`, `ConflictError` → `CONFLICT`, `SubscriptionRequiredError` → `FORBIDDEN`). Services throw those; they never build `TRPCError`s. Unmapped errors become `INTERNAL_SERVER_ERROR` and the formatter replaces the message with a generic string, so internals never leak.
+- the paywall, which is what `subscribedProcedure` adds on top of `protectedProcedure`. **Every feature router is built from `subscribedProcedure`** — see Subscriptions, below.
 
 A feature is a directory under `src/modules/<feature>/` with `routes.ts` (thin — reads `ctx.session.user.id`, delegates), `service.ts` (rules, throws domain errors), `repository.ts` (Drizzle queries), `validators.ts` (tRPC inputs composed from `@budget-manager/schemas`), and a barrel `index.ts`. Services are instantiated once in `containers.ts` and reach handlers as `ctx.services` via `context.ts` — repositories take `Db` in their constructor, so nothing imports `db` directly.
 
@@ -560,6 +561,83 @@ everything they scope, the same grammar the dashboard uses. The route loader pre
 `getMonth` with an **explicit** `currentMonth()`, not a bare call: the page asks for that key,
 and a bare prefetch would sit under a different one and leave the card loading on every visit.
 `BudgetMeter` is shared by the page and the dashboard widget, so one bar renders both.
+
+### Subscriptions
+
+**The app is paid, and nobody uses it without an active subscription — a trial or a plan.**
+Access is one boolean derived in one place, `deriveSubscriptionAccess`
+(`modules/subscription/access.ts`, unit tested), from one row per user in `subscriptions`.
+
+**Two clocks feed it, read in that order.** A *paid* subscription first — Polar's, whose status
+lives on the row — because a reader who has paid is not on a trial any more even while the
+trial's own fortnight is still running. The **trial** second, which is ours rather than Polar's:
+`TRIAL_DAYS` (14) from the day the account was opened, no card and no checkout. That split is
+what lets a fresh sign-up straight into the app while still refusing an account with nothing
+behind it, and it is why `status` stays **null** until there is a subscription to report — the
+trial is `trialEndsAt` alone.
+
+Three consequences worth knowing:
+
+- **`past_due` still grants access**, bounded by `currentPeriodEnd`: Polar keeps dunning a
+  failed renewal, and the period already paid for is what that date measures. When it passes
+  with the status unchanged the reader falls through to the trial and then to the paywall, so
+  **nothing has to run on a schedule** to shut an unpaid account off. A `canceled` subscription
+  is refused immediately; a subscription merely *set* to cancel (`cancelAtPeriodEnd`) is not.
+- **The row is written at sign-up** by `ensureTrialSubscription`, in the same
+  `databaseHooks.user.create.after` the default categories use and with the same bargain — a
+  failure is logged, not thrown, because the `user` row is already committed. `SubscriptionService`
+  writes a missing row on first read instead, anchored on the user's own `createdAt`, so
+  repairing one can never hand out a second fortnight. Migration `0010` backfills existing
+  accounts the same way, which means an account older than the trial is locked out the moment
+  it applies. That is the feature, not a regression.
+- **The paywall is a middleware, and the routers are what carry it.** `subscribedProcedure`
+  is `protectedProcedure` plus `SubscriptionService.requireAccess`, and every feature router —
+  wallet, category, transaction, credit-card, recurring, budget, dashboard — is built from it.
+  Deliberately *not* behind it: better-auth's own routes (which is how a locked-out reader still
+  signs in and pays), `privateData`, and `subscription.status` itself — the paywall cannot be
+  behind the paywall, or an expired account has no way to learn why it is expired.
+
+**The refusal is a `FORBIDDEN` the client can act on rather than merely report.** A tenant-scoped
+miss is forbidden too, so `SubscriptionRequiredError` is flagged onto the payload by the error
+formatter (`subscriptionRequired: true`) and `isSubscriptionRequiredError`
+(`@budget-manager/client`) is what reads it. The client answers it by *navigating*: the query
+cache suppresses its toast (every query on a page fails at once, and a stack of identical plates
+would bury the redirect) and the retry rule skips it, exactly as it skips an expired session.
+
+**Polar is wired through better-auth, not through a module of ours.** `packages/auth/src/polar.ts`
+registers `@polar-sh/better-auth` with `createCustomerOnSignUp` — so every account has a Polar
+customer whose `externalId` *is* the better-auth user id, which is how a webhook names the account
+it belongs to without a lookup table — plus `checkout` (one product, under the `subscription`
+slug), `portal` and `webhooks`. Every subscription lifecycle event writes the same row through
+the same mapping (`applyPolarSubscription`, in `packages/db` because `packages/auth` cannot import
+`packages/api` without a cycle): Polar reports the whole subscription each time, so there is
+nothing to reconcile between events and no order they have to arrive in. **Polar is never called
+on a gated request** — the webhooks keep the row current, and asking it per request would put a
+third-party round trip in front of every screen.
+
+**Billing is optional configuration, never an optional rule.** `POLAR_ACCESS_TOKEN`,
+`POLAR_WEBHOOK_SECRET` and `POLAR_PRODUCT_ID` are all-or-nothing (`isBillingConfigured`); with
+none of them set the plugin is not registered and the deployment loses the ability to *sell*,
+not the ability to refuse. That is what keeps `bun run dev`, `apps/e2e` and `apps/demo-seed`
+working on a machine with no Polar organisation behind it — each of those signs up a fresh
+account, so each is on the trial. `billingEnabled` rides on the status payload so the paywall
+can say so instead of offering a button that 404s.
+
+On the client, `subscription.status` is the one query the guard, the paywall and the banner all
+read (`staleTime: 0` — a reader coming back from Polar's checkout has just changed the answer).
+The web's `/billing` route is a **sibling** of `_auth` rather than a child: the layout's
+`beforeLoad` sends a locked-out reader there, and a paywall inside the thing it guards would
+redirect to itself. `useSubscriptionGuard` covers the other case that `beforeLoad` cannot — the
+reader *sitting* on a screen when the trial runs out. The phone does the same two things from
+`AuthGate`, which is also where its `enabled` flag matters: the status route is protected, so it
+must not be asked before there is a session. `TrialBanner` (one per app, same rule via
+`subscriptionNeedsAttention`) speaks only in the last `TRIAL_WARNING_DAYS`, on a failed renewal,
+or on a subscription already set to end — a banner that is always there is a banner nobody reads.
+
+Checkout and the portal are Polar's own web pages on both platforms. The web lets better-auth's
+redirect fetch plugin follow the `{ url, redirect }` payload; the phone has no `window` for that
+plugin to use, so the URL comes back and `expo-web-browser` opens it — and `openBrowserAsync`
+resolving on dismiss is exactly when the status is re-read.
 
 ### Frontend (apps/web)
 

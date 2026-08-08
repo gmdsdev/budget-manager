@@ -15,6 +15,8 @@
     "@budget-manager/db": "workspace:*",
     "@budget-manager/env": "workspace:*",
     "@budget-manager/schemas": "workspace:*",
+    "@polar-sh/better-auth": "^1.8.4",
+    "@polar-sh/sdk": "^0.47.1",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "zod": "catalog:"

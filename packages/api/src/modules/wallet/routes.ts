@@ -1,4 +1,4 @@
-import { protectedProcedure, router } from "../../index";
+import { subscribedProcedure, router } from "../../index";
 import {
   CreateWalletInput,
   ListWalletsInput,
@@ -7,7 +7,7 @@ import {
 } from "./validators";
 
 export const walletRouter = router({
-  getAll: protectedProcedure
+  getAll: subscribedProcedure
     .input(ListWalletsInput)
     .query(async ({ input, ctx }) => {
       const { limit, offset, includeArchived, ...filters } = input;
@@ -22,13 +22,13 @@ export const walletRouter = router({
     }),
 
   // Unpaginated, for select inputs. See CLAUDE.md on pagination.
-  options: protectedProcedure.query(async ({ ctx }) => {
+  options: subscribedProcedure.query(async ({ ctx }) => {
     return await ctx.services.wallet.getOptions({
       userId: ctx.session.user.id,
     });
   }),
 
-  create: protectedProcedure
+  create: subscribedProcedure
     .input(CreateWalletInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.wallet.create({
@@ -37,7 +37,7 @@ export const walletRouter = router({
       });
     }),
 
-  update: protectedProcedure
+  update: subscribedProcedure
     .input(UpdateWalletInput)
     .mutation(async ({ input, ctx }) => {
       const { id, ...patch } = input;
@@ -49,7 +49,7 @@ export const walletRouter = router({
       });
     }),
 
-  archive: protectedProcedure
+  archive: subscribedProcedure
     .input(WalletIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.wallet.archive({
@@ -58,7 +58,7 @@ export const walletRouter = router({
       });
     }),
 
-  unarchive: protectedProcedure
+  unarchive: subscribedProcedure
     .input(WalletIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.wallet.unarchive({
@@ -67,7 +67,7 @@ export const walletRouter = router({
       });
     }),
 
-  delete: protectedProcedure
+  delete: subscribedProcedure
     .input(WalletIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.wallet.delete({

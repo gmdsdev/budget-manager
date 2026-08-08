@@ -7,6 +7,10 @@ import {
 } from "./modules/credit-card";
 import { DashboardRepository, DashboardService } from "./modules/dashboard";
 import { RecurringRepository, RecurringService } from "./modules/recurring";
+import {
+  SubscriptionRepository,
+  SubscriptionService,
+} from "./modules/subscription";
 import { TransactionRepository, TransactionService } from "./modules/transaction";
 import { WalletRepository, WalletService } from "./modules/wallet";
 
@@ -17,6 +21,7 @@ const dashboardRepository = new DashboardRepository(db);
 const creditCardRepository = new CreditCardRepository(db);
 const recurringRepository = new RecurringRepository(db);
 const budgetRepository = new BudgetRepository(db);
+const subscriptionRepository = new SubscriptionRepository(db);
 
 const walletService = new WalletService(walletRepository);
 const categoryService = new CategoryService(categoryRepository);
@@ -27,6 +32,7 @@ const transactionService = new TransactionService(
 );
 const budgetService = new BudgetService(budgetRepository);
 const dashboardService = new DashboardService(dashboardRepository);
+const subscriptionService = new SubscriptionService(subscriptionRepository);
 const recurringService = new RecurringService(
   recurringRepository,
   creditCardService,
@@ -40,4 +46,5 @@ export const services = {
   creditCard: creditCardService,
   recurring: recurringService,
   budget: budgetService,
+  subscription: subscriptionService,
 };

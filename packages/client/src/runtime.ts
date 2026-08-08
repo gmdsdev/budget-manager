@@ -4,7 +4,11 @@ import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
-import { getErrorMessage, isUnauthorizedError } from "./errors";
+import {
+  getErrorMessage,
+  isSubscriptionRequiredError,
+  isUnauthorizedError,
+} from "./errors";
 
 /**
  * Taken off the link's own options rather than spelled as a DOM `fetch`: this package is
@@ -123,12 +127,18 @@ export function createClientRuntime(options: ClientRuntimeOptions): ClientRuntim
         // An expired session will not un-expire on a retry, and retrying it three
         // times only delays the redirect to the login screen.
         retry: (failureCount, error) =>
-          !isUnauthorizedError(error) && failureCount < 2,
+          !isUnauthorizedError(error) &&
+          !isSubscriptionRequiredError(error) &&
+          failureCount < 2,
       },
     },
 
     queryCache: new QueryCache({
       onError: (error, query) => {
+        if (isSubscriptionRequiredError(error)) {
+          return;
+        }
+
         options.toast.error(getErrorMessage(error), {
           action: {
             label: t("common.retry"),

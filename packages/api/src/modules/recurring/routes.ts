@@ -1,4 +1,4 @@
-import { protectedProcedure, router } from "../../index";
+import { subscribedProcedure, router } from "../../index";
 import {
   CreateRecurringInput,
   ListRecurringInput,
@@ -8,7 +8,7 @@ import {
 } from "./validators";
 
 export const recurringRouter = router({
-  getAll: protectedProcedure
+  getAll: subscribedProcedure
     .input(ListRecurringInput)
     .query(async ({ input, ctx }) => {
       return await ctx.services.recurring.getAll({
@@ -18,7 +18,7 @@ export const recurringRouter = router({
       });
     }),
 
-  create: protectedProcedure
+  create: subscribedProcedure
     .input(CreateRecurringInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.recurring.create({
@@ -27,7 +27,7 @@ export const recurringRouter = router({
       });
     }),
 
-  update: protectedProcedure
+  update: subscribedProcedure
     .input(UpdateRecurringInput)
     .mutation(async ({ input, ctx }) => {
       const { id, ...recurring } = input;
@@ -39,7 +39,7 @@ export const recurringRouter = router({
       });
     }),
 
-  setActive: protectedProcedure
+  setActive: subscribedProcedure
     .input(SetRecurringActiveInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.recurring.setActive({
@@ -49,7 +49,7 @@ export const recurringRouter = router({
       });
     }),
 
-  delete: protectedProcedure
+  delete: subscribedProcedure
     .input(RecurringIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.recurring.delete({

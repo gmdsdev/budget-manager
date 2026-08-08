@@ -29,8 +29,17 @@ export const env = createEnv({
     BETTER_AUTH_URL: z.url(),
     CORS_ORIGIN: z.url(),
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+    POLAR_ACCESS_TOKEN: z.string().min(1).optional(),
+    POLAR_WEBHOOK_SECRET: z.string().min(1).optional(),
+    POLAR_PRODUCT_ID: z.string().min(1).optional(),
+    POLAR_SERVER: z.enum(["sandbox", "production"]).default("sandbox"),
   },
   runtimeEnv: runtimeEnv,
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,
 });
+
+export const isBillingConfigured =
+  Boolean(env.POLAR_ACCESS_TOKEN) &&
+  Boolean(env.POLAR_WEBHOOK_SECRET) &&
+  Boolean(env.POLAR_PRODUCT_ID);

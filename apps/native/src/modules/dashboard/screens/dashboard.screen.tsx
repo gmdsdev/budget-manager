@@ -12,6 +12,7 @@ import { MonthStepper } from "@/components/ui/month-stepper";
 import { Fading, Screen } from "@/components/ui/screen";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TrialBanner } from "@/modules/billing/components/trial-banner";
 import { CurrencySection } from "@/modules/dashboard/components/currency-section";
 import { PendingList } from "@/modules/dashboard/components/pending-list";
 import { StatementsDueList } from "@/modules/dashboard/components/statements-due-list";
@@ -105,6 +106,8 @@ export function DashboardScreen() {
           />
         </View>
       </View>
+
+      <TrialBanner />
 
       {isPending ? (
         <View style={{ gap: SPACING.md }}>

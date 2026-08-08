@@ -71,6 +71,13 @@
       "when": 1785542686651,
       "tag": "0009_skinny_captain_america",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786152114294,
+      "tag": "0010_known_silver_sable",
+      "breakpoints": true
     }
   ]
 }

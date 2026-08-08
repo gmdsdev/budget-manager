@@ -27,6 +27,7 @@ const LINKS = [
   { to: "/credit-card", label: "nav.creditCards", icon: "credit-card" },
   { to: "/category", label: "nav.categories", icon: "tag" },
   { to: "/settings", label: "nav.settings", icon: "settings" },
+  { to: "/billing", label: "subscription.title", icon: "award" },
 ] as const;
 
 /**

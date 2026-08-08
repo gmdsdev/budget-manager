@@ -1,4 +1,4 @@
-import { protectedProcedure, router } from "../../index";
+import { subscribedProcedure, router } from "../../index";
 import {
   CreateCreditCardInput,
   ListCreditCardBillsInput,
@@ -8,7 +8,7 @@ import {
 } from "./validators";
 
 export const creditCardRouter = router({
-  getAll: protectedProcedure
+  getAll: subscribedProcedure
     .input(ListCreditCardsInput)
     .query(async ({ input, ctx }) => {
       const { limit, offset, includeArchived, ...filters } = input;
@@ -23,13 +23,13 @@ export const creditCardRouter = router({
     }),
 
   // Unpaginated, for select inputs. See CLAUDE.md on pagination.
-  options: protectedProcedure.query(async ({ ctx }) => {
+  options: subscribedProcedure.query(async ({ ctx }) => {
     return await ctx.services.creditCard.getOptions({
       userId: ctx.session.user.id,
     });
   }),
 
-  bills: protectedProcedure
+  bills: subscribedProcedure
     .input(ListCreditCardBillsInput)
     .query(async ({ input, ctx }) => {
       return await ctx.services.creditCard.getBills({
@@ -40,7 +40,7 @@ export const creditCardRouter = router({
       });
     }),
 
-  create: protectedProcedure
+  create: subscribedProcedure
     .input(CreateCreditCardInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.creditCard.create({
@@ -49,7 +49,7 @@ export const creditCardRouter = router({
       });
     }),
 
-  update: protectedProcedure
+  update: subscribedProcedure
     .input(UpdateCreditCardInput)
     .mutation(async ({ input, ctx }) => {
       const { id, ...card } = input;
@@ -61,7 +61,7 @@ export const creditCardRouter = router({
       });
     }),
 
-  archive: protectedProcedure
+  archive: subscribedProcedure
     .input(CreditCardIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.creditCard.archive({
@@ -70,7 +70,7 @@ export const creditCardRouter = router({
       });
     }),
 
-  unarchive: protectedProcedure
+  unarchive: subscribedProcedure
     .input(CreditCardIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.creditCard.unarchive({
@@ -79,7 +79,7 @@ export const creditCardRouter = router({
       });
     }),
 
-  delete: protectedProcedure
+  delete: subscribedProcedure
     .input(CreditCardIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.creditCard.delete({

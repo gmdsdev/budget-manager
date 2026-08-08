@@ -1,4 +1,4 @@
-import { protectedProcedure, router } from "../../index";
+import { subscribedProcedure, router } from "../../index";
 import {
   BudgetIdInput,
   BudgetMonthInput,
@@ -11,7 +11,7 @@ import {
 } from "./validators";
 
 export const budgetRouter = router({
-  getAll: protectedProcedure
+  getAll: subscribedProcedure
     .input(ListBudgetsInput)
     .query(async ({ input, ctx }) => {
       const { limit, offset, ...filters } = input;
@@ -25,7 +25,7 @@ export const budgetRouter = router({
     }),
 
   // Unpaginated on purpose: the figures describe a whole month.
-  getMonth: protectedProcedure
+  getMonth: subscribedProcedure
     .input(BudgetMonthInput)
     .query(async ({ input, ctx }) => {
       return await ctx.services.budget.getMonth({
@@ -34,7 +34,7 @@ export const budgetRouter = router({
       });
     }),
 
-  periods: protectedProcedure
+  periods: subscribedProcedure
     .input(BudgetIdInput)
     .query(async ({ input, ctx }) => {
       return await ctx.services.budget.getPeriods({
@@ -43,7 +43,7 @@ export const budgetRouter = router({
       });
     }),
 
-  create: protectedProcedure
+  create: subscribedProcedure
     .input(CreateBudgetInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.budget.create({
@@ -52,7 +52,7 @@ export const budgetRouter = router({
       });
     }),
 
-  update: protectedProcedure
+  update: subscribedProcedure
     .input(UpdateBudgetInput)
     .mutation(async ({ input, ctx }) => {
       const { id, ...budget } = input;
@@ -64,7 +64,7 @@ export const budgetRouter = router({
       });
     }),
 
-  setActive: protectedProcedure
+  setActive: subscribedProcedure
     .input(SetBudgetActiveInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.budget.setActive({
@@ -74,7 +74,7 @@ export const budgetRouter = router({
       });
     }),
 
-  delete: protectedProcedure
+  delete: subscribedProcedure
     .input(BudgetIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.budget.delete({
@@ -83,7 +83,7 @@ export const budgetRouter = router({
       });
     }),
 
-  setPeriodAmount: protectedProcedure
+  setPeriodAmount: subscribedProcedure
     .input(SetBudgetPeriodAmountInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.budget.setPeriodAmount({
@@ -93,7 +93,7 @@ export const budgetRouter = router({
       });
     }),
 
-  resetPeriod: protectedProcedure
+  resetPeriod: subscribedProcedure
     .input(BudgetPeriodIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.budget.resetPeriod({

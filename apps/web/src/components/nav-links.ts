@@ -3,6 +3,7 @@ import {
   CreditCardIcon,
   GearIcon,
   ReceiptIcon,
+  SealCheckIcon,
   SquaresFourIcon,
   TagIcon,
   TargetIcon,
@@ -21,6 +22,7 @@ export const SETTINGS_LINKS = [
   { to: "/credit-card", label: "nav.creditCards", icon: CreditCardIcon },
   { to: "/category", label: "nav.categories", icon: TagIcon },
   { to: "/settings/user", label: "nav.settings", icon: GearIcon },
+  { to: "/billing", label: "subscription.title", icon: SealCheckIcon },
 ] as const satisfies readonly { to: string; label: MessageKey; icon: unknown }[];
 
 /**
@@ -51,7 +53,7 @@ export const NAV_GROUPS = [
       SETTINGS_LINKS[2],
     ],
   },
-  { heading: "nav.group.account", links: [SETTINGS_LINKS[3]] },
+  { heading: "nav.group.account", links: [SETTINGS_LINKS[3], SETTINGS_LINKS[4]] },
 ] as const satisfies readonly {
   heading: NavGroupHeading;
   links: readonly { to: string; label: NavLabel; icon: unknown }[];

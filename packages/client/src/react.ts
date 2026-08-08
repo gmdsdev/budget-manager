@@ -51,6 +51,7 @@ export * from "./hooks/dashboard";
 export * from "./hooks/recurring";
 export * from "./hooks/session";
 export * from "./hooks/settings";
+export * from "./hooks/subscription";
 export * from "./hooks/transaction";
 export * from "./hooks/wallet";
 export { useApiMutation } from "./use-api-mutation";

@@ -1,3 +1,4 @@
+import { useSubscriptionStatusQuery } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
 import {
   Inter_400Regular,
@@ -48,10 +49,11 @@ export default function RootLayout() {
 }
 
 /**
- * The native reading of the web's `_auth` layout route: the signed-out user is
- * sent to `/login` and the signed-in one is kept out of it. Redirecting in an
- * effect rather than during render, because the navigator has to be mounted
- * before it can be told where to go.
+ * The native reading of the web's `_auth` layout route and its paywall: the
+ * signed-out user is sent to `/login`, the signed-in one is kept out of it, and
+ * an account with neither a running trial nor an active subscription is held on
+ * `/billing`. Redirecting in an effect rather than during render, because the
+ * navigator has to be mounted before it can be told where to go.
  */
 function AuthGate() {
   const { data: session, isPending } = authClient.useSession();
@@ -59,6 +61,12 @@ function AuthGate() {
   const router = useRouter();
 
   const onLogin = segments[0] === "login";
+  const onBilling = segments[0] === "billing";
+
+  const { data: subscription } = useSubscriptionStatusQuery({
+    enabled: Boolean(session),
+  });
+  const locked = subscription ? !subscription.hasAccess : false;
 
   useEffect(() => {
     if (isPending) {
@@ -67,12 +75,18 @@ function AuthGate() {
 
     if (!session && !onLogin) {
       router.replace("/login");
+      return;
     }
 
     if (session && onLogin) {
       router.replace("/");
+      return;
     }
-  }, [session, isPending, onLogin, router]);
+
+    if (locked && !onBilling) {
+      router.replace("/billing");
+    }
+  }, [session, isPending, onLogin, onBilling, locked, router]);
 
   if (isPending) {
     return <Splash />;
@@ -152,6 +166,7 @@ function AppStack() {
           }}
         />
         <Stack.Screen name="login" />
+        <Stack.Screen name="billing" />
         <Stack.Screen
           name="wallet"
           options={{ ...pushedOptions, title: t("nav.wallets") }}

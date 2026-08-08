@@ -8,7 +8,12 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import { z, ZodError } from "zod";
 
 import type { Context } from "./context";
-import { ConflictError, type DomainError, NotFoundError } from "./errors";
+import {
+  ConflictError,
+  type DomainError,
+  NotFoundError,
+  SubscriptionRequiredError,
+} from "./errors";
 
 /**
  * Translating here rather than in the service is what keeps the server free of
@@ -40,6 +45,7 @@ const t = initTRPC.context<Context>().create({
         stack: undefined,
         zodError:
           error.cause instanceof ZodError ? z.flattenError(error.cause) : null,
+        subscriptionRequired: error.cause instanceof SubscriptionRequiredError,
       },
     };
   },
@@ -65,6 +71,14 @@ const mapDomainErrors = t.middleware(async ({ ctx, next }) => {
     if (cause instanceof ConflictError) {
       throw new TRPCError({
         code: "CONFLICT",
+        message: messageFor(cause, ctx.locale),
+        cause,
+      });
+    }
+
+    if (cause instanceof SubscriptionRequiredError) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
         message: messageFor(cause, ctx.locale),
         cause,
       });
@@ -95,3 +109,13 @@ export const publicProcedure = t.procedure.use(mapDomainErrors);
 export const protectedProcedure = t.procedure
   .use(mapDomainErrors)
   .use(requireSession);
+
+export const subscribedProcedure = protectedProcedure.use(
+  async ({ ctx, next }) => {
+    const access = await ctx.services.subscription.requireAccess({
+      userId: ctx.session.user.id,
+    });
+
+    return next({ ctx: { ...ctx, access } });
+  },
+);

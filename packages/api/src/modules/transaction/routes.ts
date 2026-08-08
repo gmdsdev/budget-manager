@@ -1,4 +1,4 @@
-import { protectedProcedure, router } from "../../index";
+import { subscribedProcedure, router } from "../../index";
 import {
   CreateCardPaymentInput,
   CreateCardPurchaseInput,
@@ -16,7 +16,7 @@ import {
 } from "./validators";
 
 export const transactionRouter = router({
-  getAll: protectedProcedure
+  getAll: subscribedProcedure
     .input(ListTransactionsInput)
     .query(async ({ input, ctx }) => {
       const { limit, offset, ...filters } = input;
@@ -29,7 +29,7 @@ export const transactionRouter = router({
       });
     }),
 
-  summary: protectedProcedure
+  summary: subscribedProcedure
     .input(TransactionSummaryInput)
     .query(async ({ input, ctx }) => {
       return await ctx.services.transaction.getSummary({
@@ -38,7 +38,7 @@ export const transactionRouter = router({
       });
     }),
 
-  getTransfer: protectedProcedure
+  getTransfer: subscribedProcedure
     .input(TransferGroupIdInput)
     .query(async ({ input, ctx }) => {
       return await ctx.services.transaction.getTransfer({
@@ -47,7 +47,7 @@ export const transactionRouter = router({
       });
     }),
 
-  create: protectedProcedure
+  create: subscribedProcedure
     .input(CreateTransactionInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.transaction.create({
@@ -56,7 +56,7 @@ export const transactionRouter = router({
       });
     }),
 
-  import: protectedProcedure
+  import: subscribedProcedure
     .input(ImportTransactionsInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.transaction.importRows({
@@ -65,7 +65,7 @@ export const transactionRouter = router({
       });
     }),
 
-  update: protectedProcedure
+  update: subscribedProcedure
     .input(UpdateTransactionInput)
     .mutation(async ({ input, ctx }) => {
       const { id, ...transaction } = input;
@@ -77,7 +77,7 @@ export const transactionRouter = router({
       });
     }),
 
-  createTransfer: protectedProcedure
+  createTransfer: subscribedProcedure
     .input(CreateTransferInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.transaction.createTransfer({
@@ -86,7 +86,7 @@ export const transactionRouter = router({
       });
     }),
 
-  updateTransfer: protectedProcedure
+  updateTransfer: subscribedProcedure
     .input(UpdateTransferInput)
     .mutation(async ({ input, ctx }) => {
       const { transferGroupId, ...transfer } = input;
@@ -98,7 +98,7 @@ export const transactionRouter = router({
       });
     }),
 
-  deleteTransfer: protectedProcedure
+  deleteTransfer: subscribedProcedure
     .input(TransferGroupIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.transaction.deleteTransfer({
@@ -107,7 +107,7 @@ export const transactionRouter = router({
       });
     }),
 
-  createCardPurchase: protectedProcedure
+  createCardPurchase: subscribedProcedure
     .input(CreateCardPurchaseInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.transaction.createCardPurchase({
@@ -116,7 +116,7 @@ export const transactionRouter = router({
       });
     }),
 
-  updateCardPurchase: protectedProcedure
+  updateCardPurchase: subscribedProcedure
     .input(UpdateCardPurchaseInput)
     .mutation(async ({ input, ctx }) => {
       const { id, ...purchase } = input;
@@ -128,7 +128,7 @@ export const transactionRouter = router({
       });
     }),
 
-  createCardPayment: protectedProcedure
+  createCardPayment: subscribedProcedure
     .input(CreateCardPaymentInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.transaction.createCardPayment({
@@ -137,7 +137,7 @@ export const transactionRouter = router({
       });
     }),
 
-  updateCardPayment: protectedProcedure
+  updateCardPayment: subscribedProcedure
     .input(UpdateCardPaymentInput)
     .mutation(async ({ input, ctx }) => {
       const { id, ...payment } = input;
@@ -149,7 +149,7 @@ export const transactionRouter = router({
       });
     }),
 
-  markPaid: protectedProcedure
+  markPaid: subscribedProcedure
     .input(TransactionIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.transaction.markPaid({
@@ -158,7 +158,7 @@ export const transactionRouter = router({
       });
     }),
 
-  delete: protectedProcedure
+  delete: subscribedProcedure
     .input(TransactionIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.transaction.delete({

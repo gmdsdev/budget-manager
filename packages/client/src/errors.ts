@@ -52,6 +52,7 @@ const BY_CODE = {
 
 type ErrorData = {
   code?: string;
+  subscriptionRequired?: boolean;
   zodError?: {
     formErrors: string[];
     fieldErrors: Record<string, string[] | undefined>;
@@ -81,8 +82,8 @@ export function getErrorMessage(error: unknown): string {
     }
   }
 
-  // The server already translated this one, using the locale on the request.
-  if (data?.code === "CONFLICT" && error.message) {
+  // The server already translated these, using the locale on the request.
+  if ((data?.code === "CONFLICT" || data?.subscriptionRequired) && error.message) {
     return error.message;
   }
 
@@ -97,5 +98,12 @@ export function isUnauthorizedError(error: unknown): boolean {
   return (
     error instanceof TRPCClientError &&
     (error.data as ErrorData | undefined)?.code === "UNAUTHORIZED"
+  );
+}
+
+export function isSubscriptionRequiredError(error: unknown): boolean {
+  return (
+    error instanceof TRPCClientError &&
+    (error.data as ErrorData | undefined)?.subscriptionRequired === true
   );
 }

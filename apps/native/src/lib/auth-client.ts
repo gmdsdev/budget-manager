@@ -1,5 +1,6 @@
 import { expoClient } from "@better-auth/expo/client";
 import { USER_ADDITIONAL_FIELDS } from "@budget-manager/schemas";
+import { polarClient } from "@polar-sh/better-auth/client";
 import { inferAdditionalFields } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import * as SecureStore from "expo-secure-store";
@@ -44,7 +45,11 @@ const expoPlugin = expoClient({
  */
 export const authClient = createAuthClient({
   baseURL: new URL("/api/auth", getServerUrl()).toString(),
-  plugins: [expoPlugin, inferAdditionalFields({ user: USER_ADDITIONAL_FIELDS })],
+  plugins: [
+    expoPlugin,
+    inferAdditionalFields({ user: USER_ADDITIONAL_FIELDS }),
+    polarClient(),
+  ],
 });
 
 /**

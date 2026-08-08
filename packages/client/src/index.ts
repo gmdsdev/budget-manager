@@ -17,6 +17,7 @@ export * from "./errors";
 export * from "./month";
 export * from "./pagination";
 export * from "./recurring";
+export * from "./subscription";
 export * from "./transaction";
 export * from "./transaction-import";
 export * from "./transaction-repeats";

@@ -1,4 +1,4 @@
-import { protectedProcedure, router } from "../../index";
+import { subscribedProcedure, router } from "../../index";
 import {
   CategoryIdInput,
   CategoryOptionsInput,
@@ -8,7 +8,7 @@ import {
 } from "./validators";
 
 export const categoryRouter = router({
-  getAll: protectedProcedure
+  getAll: subscribedProcedure
     .input(ListCategoriesInput)
     .query(async ({ input, ctx }) => {
       const { limit, offset, includeArchived, ...filters } = input;
@@ -23,7 +23,7 @@ export const categoryRouter = router({
     }),
 
   // Unpaginated, for select inputs. See CLAUDE.md on pagination.
-  options: protectedProcedure
+  options: subscribedProcedure
     .input(CategoryOptionsInput)
     .query(async ({ input, ctx }) => {
       return await ctx.services.category.getOptions({
@@ -32,7 +32,7 @@ export const categoryRouter = router({
       });
     }),
 
-  create: protectedProcedure
+  create: subscribedProcedure
     .input(CreateCategoryInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.category.create({
@@ -41,7 +41,7 @@ export const categoryRouter = router({
       });
     }),
 
-  update: protectedProcedure
+  update: subscribedProcedure
     .input(UpdateCategoryInput)
     .mutation(async ({ input, ctx }) => {
       const { id, ...patch } = input;
@@ -53,7 +53,7 @@ export const categoryRouter = router({
       });
     }),
 
-  archive: protectedProcedure
+  archive: subscribedProcedure
     .input(CategoryIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.category.archive({
@@ -62,7 +62,7 @@ export const categoryRouter = router({
       });
     }),
 
-  unarchive: protectedProcedure
+  unarchive: subscribedProcedure
     .input(CategoryIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.category.unarchive({
@@ -71,7 +71,7 @@ export const categoryRouter = router({
       });
     }),
 
-  delete: protectedProcedure
+  delete: subscribedProcedure
     .input(CategoryIdInput)
     .mutation(async ({ input, ctx }) => {
       return await ctx.services.category.delete({

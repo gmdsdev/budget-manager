@@ -1,8 +1,8 @@
-import { protectedProcedure, router } from "../../index";
+import { subscribedProcedure, router } from "../../index";
 import { DashboardSummaryInput } from "./validators";
 
 export const dashboardRouter = router({
-  getSummary: protectedProcedure
+  getSummary: subscribedProcedure
     .input(DashboardSummaryInput)
     .query(async ({ input, ctx }) => {
       return await ctx.services.dashboard.getSummary({

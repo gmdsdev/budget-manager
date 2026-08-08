@@ -5,6 +5,7 @@ export * from "./category/default-categories";
 export * from "./credit-card/credit-card.schema";
 export * from "./filters";
 export * from "./recurring/recurring.schema";
+export * from "./subscription/subscription.schema";
 export * from "./transaction/transaction-import.schema";
 export * from "./transaction/transaction.schema";
 export * from "./user/user.schema";

@@ -41,3 +41,12 @@ export class ConflictError<
     this.name = "ConflictError";
   }
 }
+
+export class SubscriptionRequiredError<
+  K extends MessageKey = MessageKey,
+> extends DomainError {
+  constructor(messageKey: K, ...args: TranslateArgs<K>) {
+    super(messageKey, args[0]);
+    this.name = "SubscriptionRequiredError";
+  }
+}
