@@ -6,8 +6,9 @@ import {
 } from "@budget-manager/schemas";
 
 export type SubscriptionRow = {
-  trialEndsAt: Date;
   status: SubscriptionStatus | null;
+  trialStartsAt: Date | null;
+  trialEndsAt: Date | null;
   currentPeriodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
   polarCustomerId: string | null;
@@ -18,41 +19,74 @@ export type SubscriptionAccess = {
   state: SubscriptionAccessState;
   hasAccess: boolean;
   status: SubscriptionStatus | null;
-  trialEndsAt: Date;
+  trialEndsAt: Date | null;
   trialDaysRemaining: number;
   currentPeriodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
 };
 
+const NONE: SubscriptionAccess = {
+  state: SubscriptionAccessState.NONE,
+  hasAccess: false,
+  status: null,
+  trialEndsAt: null,
+  trialDaysRemaining: 0,
+  currentPeriodEnd: null,
+  cancelAtPeriodEnd: false,
+};
+
+export const UNMANAGED: SubscriptionAccess = {
+  ...NONE,
+  state: SubscriptionAccessState.UNMANAGED,
+  hasAccess: true,
+};
+
+function stateFor(row: SubscriptionRow, now: Date): SubscriptionAccessState {
+  if (row.status === null || !PAID_ACCESS_STATUSES.includes(row.status)) {
+    return SubscriptionAccessState.EXPIRED;
+  }
+
+  if (
+    row.currentPeriodEnd !== null &&
+    row.currentPeriodEnd.getTime() <= now.getTime()
+  ) {
+    return SubscriptionAccessState.EXPIRED;
+  }
+
+  if (row.status === SubscriptionStatus.TRIALING) {
+    return row.trialEndsAt !== null &&
+      row.trialEndsAt.getTime() <= now.getTime()
+      ? SubscriptionAccessState.EXPIRED
+      : SubscriptionAccessState.TRIALING;
+  }
+
+  return row.status === SubscriptionStatus.PAST_DUE
+    ? SubscriptionAccessState.PAST_DUE
+    : SubscriptionAccessState.ACTIVE;
+}
+
 export function deriveSubscriptionAccess(
-  row: SubscriptionRow,
+  row: SubscriptionRow | null,
   now: Date,
 ): SubscriptionAccess {
-  const paid =
-    row.status !== null &&
-    PAID_ACCESS_STATUSES.includes(row.status) &&
-    (row.currentPeriodEnd === null ||
-      row.currentPeriodEnd.getTime() > now.getTime());
+  if (!row) {
+    return NONE;
+  }
 
-  const trialing = row.trialEndsAt.getTime() > now.getTime();
-
-  const state = paid
-    ? row.status === SubscriptionStatus.PAST_DUE
-      ? SubscriptionAccessState.PAST_DUE
-      : SubscriptionAccessState.ACTIVE
-    : trialing
-      ? SubscriptionAccessState.TRIALING
-      : SubscriptionAccessState.EXPIRED;
+  const state = stateFor(row, now);
 
   return {
     state,
     hasAccess: state !== SubscriptionAccessState.EXPIRED,
     status: row.status,
     trialEndsAt: row.trialEndsAt,
-    trialDaysRemaining: Math.max(
-      0,
-      Math.floor((row.trialEndsAt.getTime() - now.getTime()) / DAY_MS),
-    ),
+    trialDaysRemaining:
+      state === SubscriptionAccessState.TRIALING && row.trialEndsAt
+        ? Math.max(
+            0,
+            Math.floor((row.trialEndsAt.getTime() - now.getTime()) / DAY_MS),
+          )
+        : 0,
     currentPeriodEnd: row.currentPeriodEnd,
     cancelAtPeriodEnd: row.cancelAtPeriodEnd,
   };

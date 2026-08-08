@@ -36,9 +36,10 @@ export const subscriptions = pgTable(
       .unique()
       .references(() => user.id, { onDelete: "cascade" }),
 
-    trialEndsAt: timestamp("trial_ends_at").notNull(),
-
     status: subscriptionStatusEnum("status"),
+
+    trialStartsAt: timestamp("trial_starts_at"),
+    trialEndsAt: timestamp("trial_ends_at"),
 
     polarCustomerId: text("polar_customer_id"),
     polarSubscriptionId: text("polar_subscription_id"),

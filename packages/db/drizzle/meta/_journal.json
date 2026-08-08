@@ -78,6 +78,13 @@
       "when": 1786152114294,
       "tag": "0010_known_silver_sable",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786156600280,
+      "tag": "0011_absurd_thunderbolt_ross",
+      "breakpoints": true
     }
   ]
 }

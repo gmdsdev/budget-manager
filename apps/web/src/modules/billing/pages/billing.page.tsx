@@ -1,10 +1,9 @@
+import { subscriptionAction } from "@budget-manager/client";
 import { useSubscriptionStatusQuery } from "@budget-manager/client/react";
+import type { MessageKey } from "@budget-manager/i18n";
 import { useTranslate } from "@budget-manager/i18n/react";
-import { SubscriptionAccessState, TRIAL_DAYS } from "@budget-manager/schemas";
-import {
-  Button,
-  buttonVariants,
-} from "@budget-manager/ui/components/button";
+import { TRIAL_DAYS } from "@budget-manager/schemas";
+import { Button, buttonVariants } from "@budget-manager/ui/components/button";
 import {
   Card,
   CardContent,
@@ -19,11 +18,25 @@ import { useSignOut } from "@/hooks/use-sign-out";
 import { SubscriptionSummary } from "../components/subscription-summary";
 import { useBillingActions } from "../components/use-billing-actions";
 
+const ACTION_LABELS = {
+  start: "subscription.action.startTrial",
+  subscribe: "subscription.action.subscribe",
+  updatePayment: "subscription.action.updatePayment",
+  manage: "subscription.action.manage",
+} as const satisfies Record<string, MessageKey>;
+
 export default function BillingPage() {
   const t = useTranslate();
   const signOut = useSignOut();
-  const { data: status, isPending, refetch, isFetching } = useSubscriptionStatusQuery();
+  const {
+    data: status,
+    isPending,
+    refetch,
+    isFetching,
+  } = useSubscriptionStatusQuery();
   const { pending, subscribe, manage } = useBillingActions();
+
+  const action = status ? subscriptionAction(status) : null;
 
   return (
     <div className="flex min-h-svh items-center justify-center px-4 py-10">
@@ -32,7 +45,7 @@ export default function BillingPage() {
 
         <Card>
           <CardContent className="flex flex-col gap-6">
-            {isPending || !status ? (
+            {isPending || !status || !action ? (
               <div
                 role="status"
                 aria-label={t("subscription.loading")}
@@ -52,36 +65,18 @@ export default function BillingPage() {
 
                 {status.billingEnabled ? (
                   <div className="flex flex-col gap-2">
-                    {status.state === SubscriptionAccessState.EXPIRED ? (
-                      <Button
-                        size="lg"
-                        onClick={subscribe}
-                        disabled={pending !== null}
-                      >
-                        {t("subscription.action.subscribe")}
-                      </Button>
-                    ) : (
-                      <Button
-                        size="lg"
-                        variant={
-                          status.state === SubscriptionAccessState.PAST_DUE
-                            ? "default"
-                            : "outline"
-                        }
-                        onClick={
-                          status.state === SubscriptionAccessState.TRIALING
-                            ? subscribe
-                            : manage
-                        }
-                        disabled={pending !== null}
-                      >
-                        {status.state === SubscriptionAccessState.TRIALING
-                          ? t("subscription.action.subscribe")
-                          : status.state === SubscriptionAccessState.PAST_DUE
-                            ? t("subscription.action.updatePayment")
-                            : t("subscription.action.manage")}
-                      </Button>
-                    )}
+                    <Button
+                      size="lg"
+                      variant={action === "manage" ? "outline" : "default"}
+                      onClick={
+                        action === "start" || action === "subscribe"
+                          ? subscribe
+                          : manage
+                      }
+                      disabled={pending !== null}
+                    >
+                      {t(ACTION_LABELS[action])}
+                    </Button>
 
                     <Button
                       variant="ghost"
@@ -102,7 +97,10 @@ export default function BillingPage() {
 
           <CardFooter className="justify-between">
             {status?.hasAccess ? (
-              <Link to="/dashboard" className={buttonVariants({ variant: "link" })}>
+              <Link
+                to="/dashboard"
+                className={buttonVariants({ variant: "link" })}
+              >
                 {t("subscription.action.backToApp")}
               </Link>
             ) : (

@@ -1,7 +1,4 @@
-import {
-  SubscriptionAccessState,
-  TRIAL_DAYS,
-} from "@budget-manager/schemas";
+import { SubscriptionAccessState, TRIAL_DAYS } from "@budget-manager/schemas";
 import { beforeAll, describe, expect, test } from "bun:test";
 
 import {
@@ -20,26 +17,24 @@ beforeAll(async () => {
 });
 
 describe("subscription", () => {
-  test("a new account is put on the trial by the sign-up hook", async () => {
+  test("a new account has no subscription of its own: the trial is Polar's to start", async () => {
     const status = await api.subscription.status.query();
 
-    expect(status.state).toBe(SubscriptionAccessState.TRIALING);
-    expect(status.hasAccess).toBe(true);
     expect(status.status).toBeNull();
+    expect(status.trialEndsAt).toBeNull();
+    expect(status.trialDaysRemaining).toBe(0);
     expect(status.trialDays).toBe(TRIAL_DAYS);
   });
 
-  test("the trial runs the full fortnight from sign-up", async () => {
+  test("a deployment that cannot sell does not refuse an account Polar has never reported on", async () => {
     const status = await api.subscription.status.query();
-    const daysLeft =
-      (new Date(status.trialEndsAt).getTime() - Date.now()) / 86_400_000;
 
-    expect(daysLeft).toBeGreaterThan(TRIAL_DAYS - 1);
-    expect(daysLeft).toBeLessThanOrEqual(TRIAL_DAYS);
-    expect(status.trialDaysRemaining).toBe(TRIAL_DAYS - 1);
+    expect(status.billingEnabled).toBe(false);
+    expect(status.state).toBe(SubscriptionAccessState.UNMANAGED);
+    expect(status.hasAccess).toBe(true);
   });
 
-  test("the trial lets every gated route through", async () => {
+  test("every gated route is reachable with access", async () => {
     await Promise.all([
       api.wallet.getAll.query({}),
       api.category.getAll.query({}),
@@ -51,9 +46,9 @@ describe("subscription", () => {
   });
 
   test("the status route is not itself behind the paywall", async () => {
-    expect(await errorCodeOf(anonymousClient().subscription.status.query())).toBe(
-      "UNAUTHORIZED",
-    );
+    expect(
+      await errorCodeOf(anonymousClient().subscription.status.query()),
+    ).toBe("UNAUTHORIZED");
   });
 
   test("a signed-out caller is refused before the paywall ever runs", async () => {

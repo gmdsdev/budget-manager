@@ -1,7 +1,8 @@
+import { subscriptionAction, subscriptionCopy } from "@budget-manager/client";
 import { useSubscriptionStatusQuery } from "@budget-manager/client/react";
-import { formatDate } from "@budget-manager/i18n";
+import { formatDate, type MessageKey } from "@budget-manager/i18n";
 import { useLocale, useTranslate } from "@budget-manager/i18n/react";
-import { SubscriptionAccessState, TRIAL_DAYS } from "@budget-manager/schemas";
+import { TRIAL_DAYS } from "@budget-manager/schemas";
 import { useCallback } from "react";
 import { ActivityIndicator, View } from "react-native";
 
@@ -13,15 +14,25 @@ import { SPACING } from "@/theme/tokens";
 
 import { useBillingActions } from "../components/use-billing-actions";
 
+const ACTION_LABELS = {
+  start: "subscription.action.startTrial",
+  subscribe: "subscription.action.subscribe",
+  updatePayment: "subscription.action.updatePayment",
+  manage: "subscription.action.manage",
+} as const satisfies Record<string, MessageKey>;
+
 export function BillingScreen() {
   const t = useTranslate();
   const locale = useLocale();
   const signOut = useSignOut();
-  const { data: status, isPending, refetch, isFetching } = useSubscriptionStatusQuery();
+  const {
+    data: status,
+    isPending,
+    refetch,
+    isFetching,
+  } = useSubscriptionStatusQuery();
   const onReturn = useCallback(() => void refetch(), [refetch]);
   const { pending, subscribe, manage } = useBillingActions({ onReturn });
-
-  const date = (value: string) => formatDate(locale, new Date(value), "day");
 
   if (isPending || !status) {
     return (
@@ -31,32 +42,42 @@ export function BillingScreen() {
     );
   }
 
-  const expired = status.state === SubscriptionAccessState.EXPIRED;
-  const pastDue = status.state === SubscriptionAccessState.PAST_DUE;
-  const trialing = status.state === SubscriptionAccessState.TRIALING;
+  const copy = subscriptionCopy(status);
+  const action = subscriptionAction(status);
+  const date = (value: string) => formatDate(locale, new Date(value), "day");
 
-  const title = expired
-    ? t("subscription.paywall.title")
-    : pastDue
-      ? t("subscription.paywall.pastDueTitle")
-      : trialing
+  const title =
+    copy.kind === "start"
+      ? t("subscription.paywall.startTitle", { days: copy.days })
+      : copy.kind === "trialing"
         ? t("subscription.paywall.trialTitle")
-        : t("subscription.paywall.activeTitle");
+        : copy.kind === "pastDue"
+          ? t("subscription.paywall.pastDueTitle")
+          : copy.kind === "expired"
+            ? t("subscription.paywall.title")
+            : t("subscription.paywall.activeTitle");
 
-  const description = expired
-    ? t("subscription.paywall.description")
-    : pastDue
-      ? t("subscription.paywall.pastDueDescription")
-      : trialing
-        ? t("subscription.trial.endsOn", { date: date(status.trialEndsAt) })
-        : status.currentPeriodEnd
-          ? t(
-              status.cancelAtPeriodEnd
-                ? "subscription.endsOn"
-                : "subscription.renewsOn",
-              { date: date(status.currentPeriodEnd) },
-            )
-          : t("subscription.paywall.activeDescription");
+  const description =
+    copy.kind === "start"
+      ? t("subscription.paywall.startDescription")
+      : copy.kind === "trialing"
+        ? copy.endsAt
+          ? t("subscription.trial.endsOn", { date: date(copy.endsAt) })
+          : t("subscription.paywall.activeDescription")
+        : copy.kind === "pastDue"
+          ? t("subscription.paywall.pastDueDescription")
+          : copy.kind === "expired"
+            ? t("subscription.paywall.description")
+            : copy.kind === "unmanaged"
+              ? t("subscription.unavailable")
+              : copy.endsAt
+                ? t(
+                    copy.ending
+                      ? "subscription.endsOn"
+                      : "subscription.renewsOn",
+                    { date: date(copy.endsAt) },
+                  )
+                : t("subscription.paywall.activeDescription");
 
   return (
     <AuthCard title={title}>
@@ -70,15 +91,12 @@ export function BillingScreen() {
           <View style={{ gap: SPACING.sm }}>
             <Button
               size="lg"
-              label={
-                expired || trialing
-                  ? t("subscription.action.subscribe")
-                  : pastDue
-                    ? t("subscription.action.updatePayment")
-                    : t("subscription.action.manage")
-              }
+              variant={action === "manage" ? "outline" : "default"}
+              label={t(ACTION_LABELS[action])}
               loading={pending !== null}
-              onPress={expired || trialing ? subscribe : manage}
+              onPress={
+                action === "start" || action === "subscribe" ? subscribe : manage
+              }
             />
             <Button
               variant="ghost"
@@ -93,11 +111,7 @@ export function BillingScreen() {
           </Text>
         )}
 
-        <Button
-          variant="ghost"
-          label={t("nav.signOut")}
-          onPress={signOut}
-        />
+        <Button variant="ghost" label={t("nav.signOut")} onPress={signOut} />
       </View>
     </AuthCard>
   );

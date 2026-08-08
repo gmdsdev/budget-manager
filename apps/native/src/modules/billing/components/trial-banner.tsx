@@ -36,7 +36,7 @@ export function TrialBanner() {
           label={
             status.state === SubscriptionAccessState.PAST_DUE
               ? t("subscription.action.updatePayment")
-              : t("subscription.action.subscribe")
+              : t("subscription.action.manage")
           }
           onPress={() => router.push("/billing")}
         />

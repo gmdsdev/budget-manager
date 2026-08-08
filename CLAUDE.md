@@ -566,36 +566,44 @@ and a bare prefetch would sit under a different one and leave the card loading o
 
 **The app is paid, and nobody uses it without an active subscription — a trial or a plan.**
 Access is one boolean derived in one place, `deriveSubscriptionAccess`
-(`modules/subscription/access.ts`, unit tested), from one row per user in `subscriptions`.
+(`modules/subscription/access.ts`, unit tested), over at most one row per user in
+`subscriptions` — and that row is **Polar's, mirrored**. Nothing about a subscription is
+computed here: the trial is a Polar trial, with Polar's `trialing` status and Polar's
+`trialStart`/`trialEnd` dates, exactly like the paid period that follows it.
 
-**Two clocks feed it, read in that order.** A *paid* subscription first — Polar's, whose status
-lives on the row — because a reader who has paid is not on a trial any more even while the
-trial's own fortnight is still running. The **trial** second, which is ours rather than Polar's:
-`TRIAL_DAYS` (14) from the day the account was opened, no card and no checkout. That split is
-what lets a fresh sign-up straight into the app while still refusing an account with nothing
-behind it, and it is why `status` stays **null** until there is a subscription to report — the
-trial is `trialEndsAt` alone.
+**A row exists if and only if Polar has reported a subscription for that account.** Sign-up
+writes nothing (better-auth's `createCustomerOnSignUp` gives the account a Polar *customer*,
+not a subscription), so a fresh account has **no row**, and no row is `none` — the paywall, with
+the trial still ahead of it rather than behind. The reader starts the trial by going through
+checkout, which is also what makes the trial enforceable: Polar owns the clock, the card and the
+conversion to a paid period, and a webhook tells us. **The trial length lives on the Polar
+product**, not here; `TRIAL_DAYS` is the number the copy advertises and has to be kept in step
+with it.
 
-Three consequences worth knowing:
+Four consequences worth knowing:
 
+- **A trial ends on `trialEndsAt`, and we do not wait for Polar to say so.** The status is still
+  `trialing` for however long it takes the webhook to arrive, so the rule refuses a `trialing`
+  row whose trial end has passed rather than trusting the status alone.
 - **`past_due` still grants access**, bounded by `currentPeriodEnd`: Polar keeps dunning a
   failed renewal, and the period already paid for is what that date measures. When it passes
-  with the status unchanged the reader falls through to the trial and then to the paywall, so
-  **nothing has to run on a schedule** to shut an unpaid account off. A `canceled` subscription
-  is refused immediately; a subscription merely *set* to cancel (`cancelAtPeriodEnd`) is not.
-- **The row is written at sign-up** by `ensureTrialSubscription`, in the same
-  `databaseHooks.user.create.after` the default categories use and with the same bargain — a
-  failure is logged, not thrown, because the `user` row is already committed. `SubscriptionService`
-  writes a missing row on first read instead, anchored on the user's own `createdAt`, so
-  repairing one can never hand out a second fortnight. Migration `0010` backfills existing
-  accounts the same way, which means an account older than the trial is locked out the moment
-  it applies. That is the feature, not a regression.
+  with the status unchanged the reader falls to the paywall, so **nothing has to run on a
+  schedule** to shut an unpaid account off. A `canceled` subscription is refused immediately; a
+  subscription merely *set* to cancel (`cancelAtPeriodEnd`) is not.
 - **The paywall is a middleware, and the routers are what carry it.** `subscribedProcedure`
   is `protectedProcedure` plus `SubscriptionService.requireAccess`, and every feature router —
   wallet, category, transaction, credit-card, recurring, budget, dashboard — is built from it.
   Deliberately *not* behind it: better-auth's own routes (which is how a locked-out reader still
   signs in and pays), `privateData`, and `subscription.status` itself — the paywall cannot be
   behind the paywall, or an expired account has no way to learn why it is expired.
+- **An unconfigured deployment lets through the accounts Polar has never reported on, and only
+  those.** With the trial living in Polar, a machine with no Polar organisation behind it can no
+  longer *start* one, so refusing every account would leave `bun run dev`, `apps/e2e` and
+  `apps/demo-seed` with an app nobody can open. So `SubscriptionService` answers a missing row
+  with `unmanaged` when `isBillingConfigured` is false. The escape hatch is deliberately
+  narrow — a row that *does* exist is honoured either way, which is what keeps the gate itself
+  testable without Polar credentials — and the server warns on boot when it is taken in
+  production.
 
 **The refusal is a `FORBIDDEN` the client can act on rather than merely report.** A tenant-scoped
 miss is forbidden too, so `SubscriptionRequiredError` is flagged onto the payload by the error
@@ -615,24 +623,30 @@ nothing to reconcile between events and no order they have to arrive in. **Polar
 on a gated request** — the webhooks keep the row current, and asking it per request would put a
 third-party round trip in front of every screen.
 
-**Billing is optional configuration, never an optional rule.** `POLAR_ACCESS_TOKEN`,
-`POLAR_WEBHOOK_SECRET` and `POLAR_PRODUCT_ID` are all-or-nothing (`isBillingConfigured`); with
-none of them set the plugin is not registered and the deployment loses the ability to *sell*,
-not the ability to refuse. That is what keeps `bun run dev`, `apps/e2e` and `apps/demo-seed`
-working on a machine with no Polar organisation behind it — each of those signs up a fresh
-account, so each is on the trial. `billingEnabled` rides on the status payload so the paywall
-can say so instead of offering a button that 404s.
+**Nothing about the trial is sent from a client.** Polar's checkout accepts `allowTrial`,
+`trialInterval` and `trialIntervalCount` on the request body, which means a caller could ask for
+one — so the app passes none of them and lets the product's own configuration decide. A trial
+length a browser could name is a trial length a browser could change.
+
+**Billing is optional configuration.** `POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET` and
+`POLAR_PRODUCT_ID` are all-or-nothing (`isBillingConfigured`); with none of them set the plugin is
+not registered, there is nothing to sell, and the narrow escape hatch above is what keeps the dev
+stack usable. `billingEnabled` rides on the status payload so the paywall can say so instead of
+offering a button that 404s.
 
 On the client, `subscription.status` is the one query the guard, the paywall and the banner all
 read (`staleTime: 0` — a reader coming back from Polar's checkout has just changed the answer).
-The web's `/billing` route is a **sibling** of `_auth` rather than a child: the layout's
-`beforeLoad` sends a locked-out reader there, and a paywall inside the thing it guards would
-redirect to itself. `useSubscriptionGuard` covers the other case that `beforeLoad` cannot — the
-reader *sitting* on a screen when the trial runs out. The phone does the same two things from
-`AuthGate`, which is also where its `enabled` flag matters: the status route is protected, so it
-must not be asked before there is a session. `TrialBanner` (one per app, same rule via
-`subscriptionNeedsAttention`) speaks only in the last `TRIAL_WARNING_DAYS`, on a failed renewal,
-or on a subscription already set to end — a banner that is always there is a banner nobody reads.
+`subscriptionCopy` and `subscriptionAction` (`@budget-manager/client`) are what turn a status into
+*which* words and *which* button, so the two paywalls cannot drift into disagreeing about what a
+state means; each app still writes its own rendering. The web's `/billing` route is a **sibling**
+of `_auth` rather than a child: the layout's `beforeLoad` sends a locked-out reader there, and a
+paywall inside the thing it guards would redirect to itself. `useSubscriptionGuard` covers the
+other case that `beforeLoad` cannot — the reader *sitting* on a screen when the trial runs out.
+The phone does the same two things from `AuthGate`, which is also where its `enabled` flag
+matters: the status route is protected, so it must not be asked before there is a session.
+`TrialBanner` (one per app, same rule via `subscriptionNeedsAttention`) speaks only in the last
+`TRIAL_WARNING_DAYS`, on a failed renewal, or on a subscription already set to end — a banner
+that is always there is a banner nobody reads.
 
 Checkout and the portal are Polar's own web pages on both platforms. The web lets better-auth's
 redirect fetch plugin follow the `{ url, redirect }` payload; the phone has no `window` for that

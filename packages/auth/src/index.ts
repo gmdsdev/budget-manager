@@ -1,6 +1,5 @@
 import { db as sharedDb, type Db } from "@budget-manager/db";
 import { ensureDefaultCategories } from "@budget-manager/db/defaults/categories";
-import { ensureTrialSubscription } from "@budget-manager/db/subscription/store";
 import * as schema from "@budget-manager/db/schema/auth";
 import { env } from "@budget-manager/env/server";
 import { USER_ADDITIONAL_FIELDS } from "@budget-manager/schemas";
@@ -62,19 +61,6 @@ export function createAuth(db: Db = sharedDb) {
             } catch (error) {
               console.error(
                 `Failed to create default categories for user ${createdUser.id}`,
-                error,
-              );
-            }
-
-            try {
-              await ensureTrialSubscription({
-                db,
-                userId: createdUser.id,
-                startedAt: createdUser.createdAt,
-              });
-            } catch (error) {
-              console.error(
-                `Failed to start the trial for user ${createdUser.id}`,
                 error,
               );
             }

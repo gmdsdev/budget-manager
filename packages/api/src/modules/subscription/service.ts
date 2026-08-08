@@ -1,39 +1,35 @@
 import { isBillingConfigured } from "@budget-manager/env/server";
-import { SubscriptionAccessState, TRIAL_DAYS } from "@budget-manager/schemas";
+import { TRIAL_DAYS } from "@budget-manager/schemas";
 
 import { SubscriptionRequiredError } from "../../errors";
-import { deriveSubscriptionAccess, type SubscriptionAccess } from "./access";
+import {
+  deriveSubscriptionAccess,
+  type SubscriptionAccess,
+  UNMANAGED,
+} from "./access";
 import type { SubscriptionRepository } from "./repository";
 
 export type SubscriptionStatusView = Omit<
   SubscriptionAccess,
   "trialEndsAt" | "currentPeriodEnd"
 > & {
-  trialEndsAt: string;
+  trialEndsAt: string | null;
   currentPeriodEnd: string | null;
   trialDays: number;
   billingEnabled: boolean;
-};
-
-const NO_ACCESS: SubscriptionAccess = {
-  state: SubscriptionAccessState.EXPIRED,
-  hasAccess: false,
-  status: null,
-  trialEndsAt: new Date(0),
-  trialDaysRemaining: 0,
-  currentPeriodEnd: null,
-  cancelAtPeriodEnd: false,
 };
 
 export class SubscriptionService {
   constructor(private readonly repository: SubscriptionRepository) {}
 
   async getAccess({ userId }: { userId: string }): Promise<SubscriptionAccess> {
-    const row =
-      (await this.repository.findByUserId(userId)) ??
-      (await this.repository.startTrial(userId));
+    const row = await this.repository.findByUserId(userId);
 
-    return row ? deriveSubscriptionAccess(row, new Date()) : NO_ACCESS;
+    if (!row && !isBillingConfigured) {
+      return UNMANAGED;
+    }
+
+    return deriveSubscriptionAccess(row, new Date());
   }
 
   async requireAccess({
@@ -59,7 +55,7 @@ export class SubscriptionService {
 
     return {
       ...access,
-      trialEndsAt: access.trialEndsAt.toISOString(),
+      trialEndsAt: access.trialEndsAt?.toISOString() ?? null,
       currentPeriodEnd: access.currentPeriodEnd?.toISOString() ?? null,
       trialDays: TRIAL_DAYS,
       billingEnabled: isBillingConfigured,

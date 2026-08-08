@@ -32,6 +32,12 @@ export function polarPlugin(db: Db) {
   const productId = env.POLAR_PRODUCT_ID;
 
   if (!accessToken || !webhookSecret || !productId) {
+    if (env.NODE_ENV === "production") {
+      console.warn(
+        "Polar is not configured: POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET and POLAR_PRODUCT_ID are all required to sell a subscription, and accounts Polar has never reported on are let through while they are unset.",
+      );
+    }
+
     return null;
   }
 

@@ -11,10 +11,12 @@ export enum SubscriptionStatus {
 export const SUBSCRIPTION_STATUSES = Object.values(SubscriptionStatus);
 
 export enum SubscriptionAccessState {
+  NONE = "none",
   TRIALING = "trialing",
   ACTIVE = "active",
   PAST_DUE = "past_due",
   EXPIRED = "expired",
+  UNMANAGED = "unmanaged",
 }
 
 export const TRIAL_DAYS = 14;
@@ -27,6 +29,8 @@ export const PAID_ACCESS_STATUSES: readonly SubscriptionStatus[] = [
   SubscriptionStatus.PAST_DUE,
 ];
 
+export const SUBSCRIPTION_ACCESS_STATES = Object.values(SubscriptionAccessState);
+
 export function isSubscriptionStatus(
   value: string,
 ): value is SubscriptionStatus {
@@ -37,8 +41,4 @@ export function toSubscriptionStatus(
   value: string | null | undefined,
 ): SubscriptionStatus | null {
   return value && isSubscriptionStatus(value) ? value : null;
-}
-
-export function trialEndsAtFrom(startedAt: Date): Date {
-  return new Date(startedAt.getTime() + TRIAL_DAYS * DAY_MS);
 }

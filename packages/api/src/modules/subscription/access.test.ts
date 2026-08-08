@@ -15,20 +15,33 @@ function daysFromNow(days: number) {
 
 function row(overrides: Partial<SubscriptionRow> = {}): SubscriptionRow {
   return {
-    trialEndsAt: daysFromNow(7),
-    status: null,
-    currentPeriodEnd: null,
+    status: SubscriptionStatus.ACTIVE,
+    trialStartsAt: null,
+    trialEndsAt: null,
+    currentPeriodEnd: daysFromNow(30),
     cancelAtPeriodEnd: false,
-    polarCustomerId: null,
-    polarSubscriptionId: null,
+    polarCustomerId: "cus_1",
+    polarSubscriptionId: "sub_1",
     ...overrides,
   };
 }
 
 describe("deriveSubscriptionAccess", () => {
-  test("a running trial grants access and counts whole days down", () => {
+  test("an account Polar has never reported on has nothing to go on", () => {
+    const access = deriveSubscriptionAccess(null, NOW);
+
+    expect(access.state).toBe(SubscriptionAccessState.NONE);
+    expect(access.hasAccess).toBe(false);
+    expect(access.trialEndsAt).toBeNull();
+  });
+
+  test("a running Polar trial grants access and counts whole days down", () => {
     const access = deriveSubscriptionAccess(
-      row({ trialEndsAt: daysFromNow(7) }),
+      row({
+        status: SubscriptionStatus.TRIALING,
+        trialStartsAt: daysFromNow(-7),
+        trialEndsAt: daysFromNow(7),
+      }),
       NOW,
     );
 
@@ -39,7 +52,10 @@ describe("deriveSubscriptionAccess", () => {
 
   test("a trial with hours left still grants access, and reads as zero days", () => {
     const access = deriveSubscriptionAccess(
-      row({ trialEndsAt: new Date(NOW.getTime() + 3 * 60 * 60 * 1000) }),
+      row({
+        status: SubscriptionStatus.TRIALING,
+        trialEndsAt: new Date(NOW.getTime() + 3 * 60 * 60 * 1000),
+      }),
       NOW,
     );
 
@@ -47,62 +63,33 @@ describe("deriveSubscriptionAccess", () => {
     expect(access.trialDaysRemaining).toBe(0);
   });
 
-  test("an expired trial with nothing paid is the paywall", () => {
+  test("a trial whose end date has passed is refused, even before Polar says so", () => {
     const access = deriveSubscriptionAccess(
-      row({ trialEndsAt: daysFromNow(-1) }),
+      row({
+        status: SubscriptionStatus.TRIALING,
+        trialEndsAt: daysFromNow(-1),
+      }),
       NOW,
     );
 
     expect(access.state).toBe(SubscriptionAccessState.EXPIRED);
     expect(access.hasAccess).toBe(false);
+  });
+
+  test("an active subscription grants access and counts no trial days", () => {
+    const access = deriveSubscriptionAccess(
+      row({ status: SubscriptionStatus.ACTIVE, trialEndsAt: daysFromNow(-30) }),
+      NOW,
+    );
+
+    expect(access.state).toBe(SubscriptionAccessState.ACTIVE);
+    expect(access.hasAccess).toBe(true);
     expect(access.trialDaysRemaining).toBe(0);
-  });
-
-  test("an active subscription outranks the trial that is still running", () => {
-    const access = deriveSubscriptionAccess(
-      row({
-        trialEndsAt: daysFromNow(3),
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodEnd: daysFromNow(30),
-      }),
-      NOW,
-    );
-
-    expect(access.state).toBe(SubscriptionAccessState.ACTIVE);
-    expect(access.hasAccess).toBe(true);
-  });
-
-  test("an active subscription outlives the trial", () => {
-    const access = deriveSubscriptionAccess(
-      row({
-        trialEndsAt: daysFromNow(-100),
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodEnd: daysFromNow(12),
-      }),
-      NOW,
-    );
-
-    expect(access.hasAccess).toBe(true);
-  });
-
-  test("a Polar trial counts as paid access", () => {
-    const access = deriveSubscriptionAccess(
-      row({
-        trialEndsAt: daysFromNow(-100),
-        status: SubscriptionStatus.TRIALING,
-        currentPeriodEnd: daysFromNow(5),
-      }),
-      NOW,
-    );
-
-    expect(access.state).toBe(SubscriptionAccessState.ACTIVE);
-    expect(access.hasAccess).toBe(true);
   });
 
   test("past_due keeps access inside the period it was paid for", () => {
     const access = deriveSubscriptionAccess(
       row({
-        trialEndsAt: daysFromNow(-100),
         status: SubscriptionStatus.PAST_DUE,
         currentPeriodEnd: daysFromNow(2),
       }),
@@ -113,10 +100,9 @@ describe("deriveSubscriptionAccess", () => {
     expect(access.hasAccess).toBe(true);
   });
 
-  test("past_due past its period falls through to the paywall, with nothing scheduled to shut it off", () => {
+  test("past_due past its period falls through, with nothing scheduled to shut it off", () => {
     const access = deriveSubscriptionAccess(
       row({
-        trialEndsAt: daysFromNow(-100),
         status: SubscriptionStatus.PAST_DUE,
         currentPeriodEnd: daysFromNow(-1),
       }),
@@ -130,7 +116,6 @@ describe("deriveSubscriptionAccess", () => {
   test("a cancelled subscription is refused even inside its old period", () => {
     const access = deriveSubscriptionAccess(
       row({
-        trialEndsAt: daysFromNow(-100),
         status: SubscriptionStatus.CANCELED,
         currentPeriodEnd: daysFromNow(20),
       }),
@@ -142,12 +127,7 @@ describe("deriveSubscriptionAccess", () => {
 
   test("a subscription cancelled at period end keeps access until that date", () => {
     const access = deriveSubscriptionAccess(
-      row({
-        trialEndsAt: daysFromNow(-100),
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodEnd: daysFromNow(9),
-        cancelAtPeriodEnd: true,
-      }),
+      row({ currentPeriodEnd: daysFromNow(9), cancelAtPeriodEnd: true }),
       NOW,
     );
 
@@ -155,13 +135,18 @@ describe("deriveSubscriptionAccess", () => {
     expect(access.cancelAtPeriodEnd).toBe(true);
   });
 
-  test("an incomplete checkout grants nothing on its own", () => {
+  test("an abandoned checkout grants nothing", () => {
     const access = deriveSubscriptionAccess(
-      row({
-        trialEndsAt: daysFromNow(-1),
-        status: SubscriptionStatus.INCOMPLETE,
-        currentPeriodEnd: daysFromNow(30),
-      }),
+      row({ status: SubscriptionStatus.INCOMPLETE }),
+      NOW,
+    );
+
+    expect(access.hasAccess).toBe(false);
+  });
+
+  test("an unpaid subscription grants nothing", () => {
+    const access = deriveSubscriptionAccess(
+      row({ status: SubscriptionStatus.UNPAID }),
       NOW,
     );
 
@@ -170,14 +155,25 @@ describe("deriveSubscriptionAccess", () => {
 
   test("a paid subscription with no period end is open-ended", () => {
     const access = deriveSubscriptionAccess(
-      row({
-        trialEndsAt: daysFromNow(-100),
-        status: SubscriptionStatus.ACTIVE,
-        currentPeriodEnd: null,
-      }),
+      row({ currentPeriodEnd: null }),
       NOW,
     );
 
     expect(access.hasAccess).toBe(true);
+  });
+
+  test("a trial reports its own end date, not the billing period's", () => {
+    const trialEndsAt = daysFromNow(4);
+    const access = deriveSubscriptionAccess(
+      row({
+        status: SubscriptionStatus.TRIALING,
+        trialEndsAt,
+        currentPeriodEnd: daysFromNow(34),
+      }),
+      NOW,
+    );
+
+    expect(access.trialEndsAt).toEqual(trialEndsAt);
+    expect(access.currentPeriodEnd).toEqual(daysFromNow(34));
   });
 });

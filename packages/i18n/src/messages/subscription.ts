@@ -8,24 +8,34 @@ export const subscription = {
 
   "subscription.title": { en: "Subscription", "pt-BR": "Assinatura" },
   "subscription.description": {
-    en: "Kivo is a subscription app, with a {days}-day free trial on every new account.",
+    en: "Kivo is a subscription app. Your first {days} days are free, and you can cancel any time.",
     "pt-BR":
-      "O Kivo é um app por assinatura, com {days} dias grátis em toda conta nova.",
+      "O Kivo é um app por assinatura. Os primeiros {days} dias são grátis e você pode cancelar quando quiser.",
   },
 
+  "subscription.state.none": { en: "Not started", "pt-BR": "Não iniciada" },
   "subscription.state.trialing": { en: "Free trial", "pt-BR": "Teste grátis" },
   "subscription.state.active": { en: "Active", "pt-BR": "Ativa" },
   "subscription.state.past_due": { en: "Payment failed", "pt-BR": "Pagamento falhou" },
   "subscription.state.expired": { en: "Expired", "pt-BR": "Expirada" },
 
   "subscription.paywall.title": {
-    en: "Your free trial has ended",
-    "pt-BR": "Seu teste grátis terminou",
+    en: "Your subscription has ended",
+    "pt-BR": "Sua assinatura terminou",
   },
   "subscription.paywall.description": {
     en: "Subscribe to get your wallets, cards, budgets and history back. Nothing was deleted.",
     "pt-BR":
       "Assine para recuperar suas carteiras, cartões, orçamentos e histórico. Nada foi excluído.",
+  },
+  "subscription.paywall.startTitle": {
+    en: "Start your {days}-day free trial",
+    "pt-BR": "Comece seu teste grátis de {days} dias",
+  },
+  "subscription.paywall.startDescription": {
+    en: "Wallets, cards, bills and budgets, on every device. We won't charge you until the trial ends.",
+    "pt-BR":
+      "Carteiras, cartões, faturas e orçamentos, em todos os dispositivos. Não cobramos nada até o teste terminar.",
   },
   "subscription.paywall.activeTitle": {
     en: "You're all set",
@@ -65,6 +75,10 @@ export const subscription = {
   "subscription.endsOn": { en: "Ends on {date}", "pt-BR": "Termina em {date}" },
 
   "subscription.action.subscribe": { en: "Subscribe", "pt-BR": "Assinar" },
+  "subscription.action.startTrial": {
+    en: "Start free trial",
+    "pt-BR": "Começar teste grátis",
+  },
   "subscription.action.manage": {
     en: "Manage subscription",
     "pt-BR": "Gerenciar assinatura",
