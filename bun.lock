@@ -119,6 +119,7 @@
         "@budget-manager/auth": "workspace:*",
         "@budget-manager/db": "workspace:*",
         "@budget-manager/env": "workspace:*",
+        "@budget-manager/schemas": "workspace:*",
         "@hono/trpc-server": "^0.4.2",
         "@trpc/server": "catalog:",
         "better-auth": "catalog:",

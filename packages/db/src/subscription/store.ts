@@ -1,4 +1,8 @@
-import { toSubscriptionStatus } from "@budget-manager/schemas";
+import {
+  shouldApplyPolarSubscription,
+  toSubscriptionStatus,
+} from "@budget-manager/schemas";
+import { eq } from "drizzle-orm";
 
 import type { Db } from "../index";
 import { subscriptions } from "../schema/subscription";
@@ -6,6 +10,7 @@ import { subscriptions } from "../schema/subscription";
 export type PolarSubscriptionPayload = {
   id: string;
   status: string;
+  modifiedAt?: Date | string | null;
   productId?: string | null;
   currentPeriodEnd?: Date | string | null;
   cancelAtPeriodEnd?: boolean | null;
@@ -37,17 +42,46 @@ export async function applyPolarSubscription({
     polarSubscriptionId: payload.id,
     polarCustomerId: payload.customer?.id ?? payload.customerId ?? null,
     polarProductId: payload.productId ?? null,
+    polarModifiedAt: toDate(payload.modifiedAt),
     currentPeriodEnd: toDate(payload.currentPeriodEnd),
     cancelAtPeriodEnd: payload.cancelAtPeriodEnd ?? false,
     trialStartsAt: toDate(payload.trialStart),
     trialEndsAt: toDate(payload.trialEnd),
   };
 
-  const [row] = await db
-    .insert(subscriptions)
-    .values({ userId, ...values })
-    .onConflictDoUpdate({ target: subscriptions.userId, set: values })
-    .returning();
+  return await db.transaction(async (tx) => {
+    const [stored] = await tx
+      .select({
+        polarSubscriptionId: subscriptions.polarSubscriptionId,
+        polarModifiedAt: subscriptions.polarModifiedAt,
+        status: subscriptions.status,
+      })
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId))
+      .limit(1)
+      .for("update");
 
-  return row ?? null;
+    const applies = shouldApplyPolarSubscription(
+      stored
+        ? { ...stored, status: toSubscriptionStatus(stored.status) }
+        : null,
+      {
+        polarSubscriptionId: values.polarSubscriptionId,
+        polarModifiedAt: values.polarModifiedAt,
+        status: values.status,
+      },
+    );
+
+    if (!applies) {
+      return null;
+    }
+
+    const [row] = await tx
+      .insert(subscriptions)
+      .values({ userId, ...values })
+      .onConflictDoUpdate({ target: subscriptions.userId, set: values })
+      .returning();
+
+    return row ?? null;
+  });
 }

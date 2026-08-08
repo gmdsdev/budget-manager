@@ -1,4 +1,4 @@
-import { isBillingConfigured } from "@budget-manager/env/server";
+import { env, isBillingConfigured } from "@budget-manager/env/server";
 import { TRIAL_DAYS } from "@budget-manager/schemas";
 
 import { SubscriptionRequiredError } from "../../errors";
@@ -29,7 +29,7 @@ export class SubscriptionService {
       return UNMANAGED;
     }
 
-    return deriveSubscriptionAccess(row, new Date());
+    return deriveSubscriptionAccess(row, new Date(), env.POLAR_PRODUCT_ID);
   }
 
   async requireAccess({

@@ -623,10 +623,32 @@ nothing to reconcile between events and no order they have to arrive in. **Polar
 on a gated request** — the webhooks keep the row current, and asking it per request would put a
 third-party round trip in front of every screen.
 
-**Nothing about the trial is sent from a client.** Polar's checkout accepts `allowTrial`,
-`trialInterval` and `trialIntervalCount` on the request body, which means a caller could ask for
-one — so the app passes none of them and lets the product's own configuration decide. A trial
-length a browser could name is a trial length a browser could change.
+**A webhook may not move the row backwards.** Polar retries failed deliveries and promises no
+order, and one row per user means the last write wins — so a retried `subscription.updated` landing
+after `subscription.active` would regress a paying account to the paywall. `shouldApplyPolarSubscription`
+(`packages/schemas`, unit tested) is the guard: an event for the subscription already stored is
+applied only when its `modifiedAt` is not older, and an event for a *different* subscription is
+refused when the stored one is granting access and the incoming one is not — which is what stops a
+cancelled subscription's late revocation from killing the replacement the reader has already paid
+for. It reads under `SELECT … FOR UPDATE` inside a transaction, so two deliveries racing cannot
+both win. The rule is in TypeScript rather than a `setWhere` clause for the reason the balances
+note gives: there is no test database, so logic pushed into SQL is logic nothing verifies.
+
+**The checkout body is an allowlist, enforced in front of better-auth.** `@polar-sh/better-auth`
+forwards most of its request body straight to Polar: `products` is used unvalidated when no `slug`
+is given, and `allowTrial` / `trialInterval` / `trialIntervalCount` / `discountId` / `successUrl`
+pass through as sent. Left open, any signed-in reader could POST a thousand-year trial, a cheaper
+product from the same organisation, or a comp discount whose id they had seen. So `apps/server`
+owns `POST /api/auth/checkout` itself, runs `rejectCheckoutBody` (`packages/schemas`, unit tested)
+and only hands the request on when the body is exactly `{ slug: "subscription" }` — `redirect` is
+the one other key allowed. **A new field the app wants to send has to be allowed here first**,
+which is the point: the default is refusal.
+
+**Access requires *our* product, not any subscription.** `polarProductId` is compared against
+`POLAR_PRODUCT_ID` in `deriveSubscriptionAccess`, because an organisation that sells anything else
+— a second tier, a test product, a free one — would otherwise have every one of them unlock Kivo.
+The check is skipped when no product is configured, which is what keeps the dev stack and the unit
+tests free of Polar credentials.
 
 **Billing is optional configuration.** `POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET` and
 `POLAR_PRODUCT_ID` are all-or-nothing (`isBillingConfigured`); with none of them set the plugin is

@@ -1,0 +1,1 @@
+ALTER TABLE "subscriptions" ADD COLUMN "polar_modified_at" timestamp;

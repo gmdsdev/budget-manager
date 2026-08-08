@@ -4,10 +4,9 @@ import {
   type PolarSubscriptionPayload,
 } from "@budget-manager/db/subscription/store";
 import { env } from "@budget-manager/env/server";
+import { SUBSCRIPTION_SLUG } from "@budget-manager/schemas";
 import { checkout, polar, portal, webhooks } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
-
-export const SUBSCRIPTION_SLUG = "subscription";
 
 function billingUrl() {
   return new URL("/billing", env.CORS_ORIGIN).toString();

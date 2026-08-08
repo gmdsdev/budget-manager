@@ -1,11 +1,10 @@
 import { useTranslate } from "@budget-manager/i18n/react";
+import { SUBSCRIPTION_SLUG } from "@budget-manager/schemas";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useState } from "react";
 
 import { authClient } from "@/lib/auth-client";
 import { toast } from "@/lib/toast";
-
-export const SUBSCRIPTION_SLUG = "subscription";
 
 type Destination = "checkout" | "portal";
 

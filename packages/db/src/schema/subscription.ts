@@ -46,6 +46,7 @@ export const subscriptions = pgTable(
     polarProductId: text("polar_product_id"),
 
     currentPeriodEnd: timestamp("current_period_end"),
+    polarModifiedAt: timestamp("polar_modified_at"),
     cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),

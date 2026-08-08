@@ -1,10 +1,9 @@
 import { useTranslate } from "@budget-manager/i18n/react";
+import { SUBSCRIPTION_SLUG } from "@budget-manager/schemas";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-
-export const SUBSCRIPTION_SLUG = "subscription";
 
 type Destination = "checkout" | "portal";
 

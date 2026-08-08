@@ -2,6 +2,7 @@ import { createContext } from "@budget-manager/api/context";
 import { appRouter } from "@budget-manager/api/routers/index";
 import { auth } from "@budget-manager/auth";
 import { env } from "@budget-manager/env/server";
+import { rejectCheckoutBody } from "@budget-manager/schemas";
 import { trpcServer } from "@hono/trpc-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -26,6 +27,34 @@ app.use(
     credentials: true,
   }),
 );
+
+app.post("/api/auth/checkout", async (c) => {
+  const raw = await c.req.raw.text();
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    parsed = null;
+  }
+
+  const rejection = rejectCheckoutBody(parsed);
+
+  if (rejection) {
+    console.warn("Rejected a checkout body", rejection);
+
+    return c.json({ message: "Invalid checkout request" }, 400);
+  }
+
+  return auth.handler(
+    new Request(c.req.raw.url, {
+      method: "POST",
+      headers: c.req.raw.headers,
+      body: raw,
+    }),
+  );
+});
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 

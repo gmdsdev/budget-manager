@@ -7,6 +7,7 @@ import {
 
 export type SubscriptionRow = {
   status: SubscriptionStatus | null;
+  polarProductId: string | null;
   trialStartsAt: Date | null;
   trialEndsAt: Date | null;
   currentPeriodEnd: Date | null;
@@ -41,8 +42,19 @@ export const UNMANAGED: SubscriptionAccess = {
   hasAccess: true,
 };
 
-function stateFor(row: SubscriptionRow, now: Date): SubscriptionAccessState {
+function stateFor(
+  row: SubscriptionRow,
+  now: Date,
+  expectedProductId: string | undefined,
+): SubscriptionAccessState {
   if (row.status === null || !PAID_ACCESS_STATUSES.includes(row.status)) {
+    return SubscriptionAccessState.EXPIRED;
+  }
+
+  if (
+    expectedProductId !== undefined &&
+    row.polarProductId !== expectedProductId
+  ) {
     return SubscriptionAccessState.EXPIRED;
   }
 
@@ -68,12 +80,13 @@ function stateFor(row: SubscriptionRow, now: Date): SubscriptionAccessState {
 export function deriveSubscriptionAccess(
   row: SubscriptionRow | null,
   now: Date,
+  expectedProductId?: string,
 ): SubscriptionAccess {
   if (!row) {
     return NONE;
   }
 
-  const state = stateFor(row, now);
+  const state = stateFor(row, now, expectedProductId);
 
   return {
     state,

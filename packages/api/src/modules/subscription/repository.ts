@@ -7,6 +7,7 @@ import type { SubscriptionRow } from "./access";
 
 const SUBSCRIPTION_PUBLIC_COLUMNS = {
   status: subscriptions.status,
+  polarProductId: subscriptions.polarProductId,
   trialStartsAt: subscriptions.trialStartsAt,
   trialEndsAt: subscriptions.trialEndsAt,
   currentPeriodEnd: subscriptions.currentPeriodEnd,
@@ -17,6 +18,7 @@ const SUBSCRIPTION_PUBLIC_COLUMNS = {
 
 function toDomainRow(row: {
   status: string | null;
+  polarProductId: string | null;
   trialStartsAt: Date | null;
   trialEndsAt: Date | null;
   currentPeriodEnd: Date | null;
