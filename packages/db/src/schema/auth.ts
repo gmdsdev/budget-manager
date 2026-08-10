@@ -19,6 +19,9 @@ export const user = pgTable("user", {
   // changes far more often than a pg type should, and `toLocale` already
   // narrows a stored value that is no longer offered.
   preferredLocale: text("preferred_locale").notNull().default("en"),
+  // Defaults false for accounts created from here on; migration 0010 hand-adds
+  // an UPDATE marking every account that predates onboarding as completed.
+  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

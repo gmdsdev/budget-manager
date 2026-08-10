@@ -149,6 +149,47 @@ export class CategoryRepository {
     return rows.map(toDomainRow);
   }
 
+  /**
+   * Every category the account has, archived included: the defaults must never
+   * resurrect or double a row the user already dealt with.
+   */
+  async listIdentities({ userId }: { userId: string }) {
+    const rows = await this.db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        type: categories.type,
+      })
+      .from(categories)
+      .where(eq(categories.userId, userId));
+
+    return rows.map((row) => ({ ...row, type: row.type as CategoryType }));
+  }
+
+  async createMany({
+    userId,
+    categories: rows,
+  }: {
+    userId: string;
+    categories: readonly CategoryFormDto[];
+  }) {
+    if (rows.length === 0) {
+      return [];
+    }
+
+    return this.db
+      .insert(categories)
+      .values(
+        rows.map((category) => ({
+          userId,
+          name: category.name,
+          type: category.type,
+          color: category.color,
+        })),
+      )
+      .returning({ id: categories.id });
+  }
+
   async findById({ id, userId }: { id: string; userId: string }) {
     const rows = await this.db
       .select(CATEGORY_PUBLIC_COLUMNS)

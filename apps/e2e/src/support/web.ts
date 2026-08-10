@@ -59,8 +59,25 @@ export async function closeApp(session: Session | undefined) {
   await session?.context.close();
 }
 
-/** Signs up through the real form so the app owns its own session cookie. */
+/**
+ * Signs up through the real form so the app owns its own session cookie, then
+ * walks the onboarding gate every fresh account now lands on: saving step one
+ * (English, the default) is what creates the default categories the suites
+ * count on, and skipping the rest is what lets the app out of `/onboarding`.
+ */
 export async function signUpThroughUi(page: Page) {
+  const email = await signUpFormOnly(page);
+
+  await completeOnboardingThroughUi(page);
+
+  return email;
+}
+
+/**
+ * Just the sign-up form, leaving the account parked on `/onboarding` — for the
+ * suite that is about the onboarding flow itself.
+ */
+export async function signUpFormOnly(page: Page) {
   const email = `ui-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.com`;
 
   await page.goto(`${WEB_URL}/login`, { waitUntil: "networkidle" });
@@ -74,11 +91,22 @@ export async function signUpThroughUi(page: Page) {
   await page.locator("#password").fill("SuperSecret123!");
   await page.getByRole("button", { name: "Sign Up", exact: true }).click();
 
-  await page.waitForURL((url) => !url.pathname.startsWith("/login"), {
+  await page.waitForURL((url) => url.pathname.startsWith("/onboarding"), {
     timeout: 20_000,
   });
 
   return email;
+}
+
+/** Saves step one with the defaults and skips the rest of the flow. */
+export async function completeOnboardingThroughUi(page: Page) {
+  await page
+    .getByRole("button", { name: "Save and continue", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Skip for now", exact: true }).click();
+  await page.waitForURL((url) => !url.pathname.startsWith("/onboarding"), {
+    timeout: 20_000,
+  });
 }
 
 /**

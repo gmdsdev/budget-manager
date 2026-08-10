@@ -129,8 +129,8 @@ describe("paginated list envelope", () => {
     expect(walletPage.rows.length).toBe(2);
     expect(walletPage.total).toBe(3);
 
-    // Sign-up seeds the default categories, so the three created here land at
-    // the end of the list.
+    // `signUpClient` walks onboarding's `ensureDefaults`, so the three created
+    // here land at the end of the list.
     const categoryTotal = DEFAULT_CATEGORIES.length + 3;
     const categoryPage = await client.category.getAll.query({
       limit: 2,

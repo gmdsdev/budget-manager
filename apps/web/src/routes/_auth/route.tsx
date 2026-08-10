@@ -1,3 +1,4 @@
+import { toOnboardingCompleted } from "@budget-manager/schemas";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
 import Header, { Sidebar } from "@/components/header";
@@ -11,6 +12,12 @@ export const Route = createFileRoute("/_auth")({
     if (!session.data) {
       throw redirect({
         to: "/login",
+      });
+    }
+
+    if (!toOnboardingCompleted(session.data.user.onboardingCompleted)) {
+      throw redirect({
+        to: "/onboarding",
       });
     }
 

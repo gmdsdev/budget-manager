@@ -1,4 +1,5 @@
 import type { AppRouter } from "@budget-manager/api/routers/index";
+import { Locale } from "@budget-manager/i18n";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { SeedConfig } from "./config";
 
@@ -46,9 +47,11 @@ export async function requireServer(serverUrl: string) {
 }
 
 /**
- * Signs the demo user up through better-auth rather than inserting a row, which
- * is also what gives the account its default categories (the `user.create`
- * hook runs `ensureDefaultCategories`).
+ * Signs the demo user up through better-auth rather than inserting a row, then
+ * walks the two writes onboarding makes: `category.ensureDefaults` (sign-up no
+ * longer seeds them — the flow does, in the language the user picked) and the
+ * completion flag, so opening the demo account lands on the dashboard rather
+ * than on the onboarding gate.
  */
 export async function signUp(config: SeedConfig) {
   const response = await fetch(`${config.serverUrl}/api/auth/sign-up/email`, {
@@ -76,5 +79,25 @@ export async function signUp(config: SeedConfig) {
     throw new Error("Sign-up returned no session cookie");
   }
 
-  return createClient({ serverUrl: config.serverUrl, cookie });
+  const client = createClient({ serverUrl: config.serverUrl, cookie });
+
+  await client.category.ensureDefaults.mutate({ locale: Locale.EN });
+
+  const completed = await fetch(`${config.serverUrl}/api/auth/update-user`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Origin: config.webUrl,
+      cookie,
+    },
+    body: JSON.stringify({ onboardingCompleted: true }),
+  });
+
+  if (!completed.ok) {
+    throw new Error(
+      `Completing onboarding failed (${completed.status}): ${await completed.text()}`,
+    );
+  }
+
+  return client;
 }

@@ -1,4 +1,9 @@
+import type { Locale } from "@budget-manager/i18n";
 import type { CategoryFormDto, CategoryType } from "@budget-manager/schemas";
+import {
+  defaultCategoriesForLocale,
+  defaultCategoryRenames,
+} from "@budget-manager/schemas";
 import { ConflictError, NotFoundError } from "../../errors";
 import type {
   CategoryFilters,
@@ -43,6 +48,51 @@ export class CategoryService {
     type?: CategoryType;
   }) {
     return await this.repository.listOptions({ userId, type });
+  }
+
+  /**
+   * Writes the default set in the language onboarding saved, and is safe to
+   * save again: an account that already has categories gets nothing inserted.
+   * The one re-run that still acts is a language change over a set the user
+   * has not touched — that renames the defaults in place rather than laying a
+   * second language beside them, and the moment the user has renamed, added or
+   * removed anything the set is theirs and re-runs leave it alone.
+   */
+  async ensureDefaults({ userId, locale }: { userId: string; locale: Locale }) {
+    const existing = await this.repository.listIdentities({ userId });
+
+    if (existing.length === 0) {
+      const created = await this.repository.createMany({
+        userId,
+        categories: defaultCategoriesForLocale(locale),
+      });
+
+      return { created: created.length, renamed: 0 };
+    }
+
+    const renames = defaultCategoryRenames(existing, locale);
+    const idByKey = new Map(
+      existing.map((row) => [
+        `${row.type}:${row.name.trim().toLowerCase()}`,
+        row.id,
+      ]),
+    );
+
+    for (const rename of renames) {
+      const id = idByKey.get(
+        `${rename.from.type}:${rename.from.name.trim().toLowerCase()}`,
+      );
+
+      if (id) {
+        await this.repository.update({
+          id,
+          userId,
+          patch: { name: rename.toName },
+        });
+      }
+    }
+
+    return { created: 0, renamed: renames.length };
   }
 
   async create({

@@ -3,6 +3,7 @@ import {
   CategoryIdInput,
   CategoryOptionsInput,
   CreateCategoryInput,
+  EnsureDefaultCategoriesInput,
   ListCategoriesInput,
   UpdateCategoryInput,
 } from "./validators";
@@ -29,6 +30,18 @@ export const categoryRouter = router({
       return await ctx.services.category.getOptions({
         userId: ctx.session.user.id,
         type: input.type,
+      });
+    }),
+
+  // The locale is an explicit input rather than `ctx.locale`: onboarding calls
+  // this the moment the language is saved, before the request header has
+  // caught up with the choice.
+  ensureDefaults: protectedProcedure
+    .input(EnsureDefaultCategoriesInput)
+    .mutation(async ({ input, ctx }) => {
+      return await ctx.services.category.ensureDefaults({
+        userId: ctx.session.user.id,
+        locale: input.locale,
       });
     }),
 

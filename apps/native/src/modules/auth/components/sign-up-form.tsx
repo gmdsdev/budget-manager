@@ -1,5 +1,9 @@
-import { fieldErrors, isFieldInvalid } from "@budget-manager/client/react";
-import { useTranslate } from "@budget-manager/i18n/react";
+import {
+  fieldErrors,
+  isFieldInvalid,
+  useEnsureDefaultCategoriesMutation,
+} from "@budget-manager/client/react";
+import { useLocale, useTranslate } from "@budget-manager/i18n/react";
 import { SignUpFormSchema } from "@budget-manager/schemas";
 import { useForm, useSelector } from "@tanstack/react-form";
 import { useRouter } from "expo-router";
@@ -16,6 +20,8 @@ import { SPACING } from "@/theme/tokens";
 export function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
   const t = useTranslate();
   const router = useRouter();
+  const locale = useLocale();
+  const ensureDefaults = useEnsureDefaultCategoriesMutation();
 
   const form = useForm({
     defaultValues: { email: "", password: "", name: "" },
@@ -24,6 +30,7 @@ export function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void 
         { email: value.email, password: value.password, name: value.name },
         {
           onSuccess: () => {
+            ensureDefaults.mutate({ locale });
             router.replace("/");
             toast.success(t("auth.signUpSuccessful"));
           },

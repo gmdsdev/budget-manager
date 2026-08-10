@@ -8,6 +8,7 @@ import { dates } from "./dates";
 import { enums } from "./enums";
 import { errors } from "./errors";
 import { nav } from "./nav";
+import { onboarding } from "./onboarding";
 import { pagination } from "./pagination";
 import { recurring } from "./recurring";
 import { settings } from "./settings";
@@ -33,6 +34,7 @@ export const messages = {
   ...enums,
   ...errors,
   ...nav,
+  ...onboarding,
   ...pagination,
   ...recurring,
   ...settings,

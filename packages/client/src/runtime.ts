@@ -45,6 +45,7 @@ export type AuthActions = {
     name?: string;
     preferredCurrency?: string;
     preferredLocale?: string;
+    onboardingCompleted?: boolean;
   }) => Promise<AuthActionResult>;
   changePassword: (values: {
     currentPassword: string;

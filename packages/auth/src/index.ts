@@ -1,5 +1,4 @@
 import { db as sharedDb, type Db } from "@budget-manager/db";
-import { ensureDefaultCategories } from "@budget-manager/db/defaults/categories";
 import * as schema from "@budget-manager/db/schema/auth";
 import { env } from "@budget-manager/env/server";
 import { USER_ADDITIONAL_FIELDS } from "@budget-manager/schemas";
@@ -48,22 +47,9 @@ export function createAuth(db: Db = sharedDb) {
     user: {
       additionalFields: USER_ADDITIONAL_FIELDS,
     },
-    databaseHooks: {
-      user: {
-        create: {
-          after: async (createdUser) => {
-            try {
-              await ensureDefaultCategories({ db, userId: createdUser.id });
-            } catch (error) {
-              console.error(
-                `Failed to create default categories for user ${createdUser.id}`,
-                error,
-              );
-            }
-          },
-        },
-      },
-    },
+    // No `user.create` hook seeding categories any more: the default set is
+    // written by `category.ensureDefaults` when onboarding saves the language,
+    // so it can carry the names of the language the user actually picked.
     advanced: {
       database: {
         generateId: false,

@@ -96,8 +96,8 @@ export async function seedDemoAccount({
     count("categories", 1);
   }
 
-  // The default set arrives with the account (better-auth's `user.create` hook
-  // runs `ensureDefaultCategories`), so it is read back rather than written.
+  // The default set was written by `ensureDefaults` during sign-up (the same
+  // write the onboarding flow makes), so it is read back rather than written.
   const categoryOptions = await client.category.options.query({});
   const categoryIds = new Map<string, string>();
 

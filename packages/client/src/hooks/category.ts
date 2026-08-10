@@ -45,7 +45,7 @@ export function useCategoryOptionsQuery(type?: CategoryType) {
  * so renaming or recolouring one has to reach them too — otherwise the ledger and the
  * budget screen keep painting the old label.
  */
-function categoryInvalidations() {
+export function categoryInvalidations() {
   const trpc = api();
 
   return [

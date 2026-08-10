@@ -3,7 +3,15 @@ import type { BetterFetchError } from "better-auth/react";
 
 import { authClient } from "@/lib/auth-client";
 
-export type SessionData = { session: Session; user: User };
+/**
+ * `better-auth`'s core `User` predates the additional fields, and this cache
+ * wraps the raw `getSession` call rather than the typed client hook — so the
+ * one additional field the router reads is stated here. Everything else reads
+ * the session through `authClient.useSession`, which infers the full set.
+ */
+export type SessionUser = User & { onboardingCompleted?: boolean | null };
+
+export type SessionData = { session: Session; user: SessionUser };
 
 export type SessionResult =
   | { data: SessionData; error: null }

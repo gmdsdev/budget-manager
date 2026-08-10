@@ -89,6 +89,19 @@ export const PreferencesFormSchema = z.object({
 
 export type PreferencesFormDto = z.infer<typeof PreferencesFormSchema>;
 
+/**
+ * The one onboarding step that cannot be skipped: saving it is what creates the
+ * account's default categories, in the language it names.
+ */
+export const OnboardingPreferencesFormSchema = z.object({
+  preferredLocale: PreferredLocaleSchema,
+  preferredCurrency: PreferredCurrencySchema,
+});
+
+export type OnboardingPreferencesFormDto = z.infer<
+  typeof OnboardingPreferencesFormSchema
+>;
+
 export const LanguageFormSchema = z.object({
   preferredLocale: PreferredLocaleSchema,
 });
@@ -119,6 +132,18 @@ export const USER_ADDITIONAL_FIELDS = {
     defaultValue: DEFAULT_LOCALE,
     validator: { input: PreferredLocaleSchema },
   },
+  /**
+   * Flipped by the user finishing (or skipping) onboarding, never by the
+   * server: there is no rule to enforce, only a screen not to show twice.
+   * Existing accounts are backfilled to `true` by migration 0010, so only
+   * accounts created after this field exists ever see the flow.
+   */
+  onboardingCompleted: {
+    type: "boolean",
+    required: false,
+    defaultValue: false,
+    validator: { input: z.boolean() },
+  },
 } as const;
 
 const PREFERRED_CURRENCIES = new Set<string>(Object.values(WalletCurrency));
@@ -137,3 +162,14 @@ export function toPreferredCurrency(
  * `<Select>` as a value with no matching item.
  */
 export const toPreferredLocale = toLocale;
+
+/**
+ * Narrows the session's flag the way {@link toPreferredCurrency} narrows a
+ * stored currency: a session from a build that predates the field reads as
+ * not-completed, which costs a skippable screen rather than hiding one.
+ */
+export function toOnboardingCompleted(
+  value: boolean | null | undefined,
+): boolean {
+  return value === true;
+}

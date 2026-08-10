@@ -2,11 +2,16 @@ import {
   CategoryFormSchema,
   CategorySchema,
   CategoryType,
+  PreferredLocaleSchema,
 } from "@budget-manager/schemas";
 import { z } from "zod";
 import { SearchTermInput } from "../../search";
 
 export const CreateCategoryInput = CategoryFormSchema;
+
+export const EnsureDefaultCategoriesInput = z.object({
+  locale: PreferredLocaleSchema,
+});
 
 export const UpdateCategoryInput = CategoryFormSchema.extend({ id: z.uuid() });
 

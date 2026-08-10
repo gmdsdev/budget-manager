@@ -7,6 +7,7 @@ import {
   ChangePasswordFormSchema,
   CreditCardFormSchema,
   LanguageFormSchema,
+  OnboardingPreferencesFormSchema,
   PreferencesFormSchema,
   ProfileFormSchema,
   RecurringFormSchema,
@@ -21,6 +22,7 @@ import {
   type ChangePasswordFormDto,
   type CreditCardFormDto,
   type LanguageFormDto,
+  type OnboardingPreferencesFormDto,
   type PreferencesFormDto,
   type ProfileFormDto,
   type RecurringFormDto,
@@ -134,6 +136,12 @@ export type UsePreferencesFormReturnType = ReturnType<typeof usePreferencesForm>
 
 export const useLanguageForm = formHook<LanguageFormDto>(LanguageFormSchema);
 export type UseLanguageFormReturnType = ReturnType<typeof useLanguageForm>;
+
+export const useOnboardingPreferencesForm =
+  formHook<OnboardingPreferencesFormDto>(OnboardingPreferencesFormSchema);
+export type UseOnboardingPreferencesFormReturnType = ReturnType<
+  typeof useOnboardingPreferencesForm
+>;
 
 export const EMPTY_PASSWORD_FORM: ChangePasswordFormDto = {
   currentPassword: "",

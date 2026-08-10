@@ -41,6 +41,16 @@ function monthsFromToday(months: number, day = 5) {
   return `${target.getFullYear()}-${`${target.getMonth() + 1}`.padStart(2, "0")}-${`${day}`.padStart(2, "0")}`;
 }
 
+/**
+ * A day-of-month about two weeks from today, for the series that straddle
+ * "today". This process is pinned to UTC while the server keeps the machine's
+ * own zone, so for the hours around midnight the two disagree about the date —
+ * and a series whose occurrence lands on that contested day is counted as past
+ * by one clock and pruned as future by the other. Fourteen days out, both
+ * clocks classify every row the same way.
+ */
+const STRADDLE_SAFE_DAY = ((new Date().getDate() + 13) % 28) + 1;
+
 async function seriesRows(client: ApiClient, name: string) {
   const rows = await listTransactions(client, { limit: 100 });
 
@@ -504,7 +514,7 @@ describe("pausing a series", () => {
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
         // Straddles today so there is both history and a schedule ahead.
-        startsOn: monthsFromToday(-6, 12),
+        startsOn: monthsFromToday(-6, STRADDLE_SAFE_DAY),
       }),
     );
 
@@ -622,7 +632,7 @@ describe("deleting a series", () => {
         recurrenceType: RecurrenceType.MONTHLY,
         installments: null,
         // Straddles today so there is both history and a future.
-        startsOn: monthsFromToday(-6, 8),
+        startsOn: monthsFromToday(-6, STRADDLE_SAFE_DAY),
       }),
     );
 

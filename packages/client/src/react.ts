@@ -29,6 +29,8 @@ export {
   type UseCreditCardFormReturnType,
   useLanguageForm,
   type UseLanguageFormReturnType,
+  useOnboardingPreferencesForm,
+  type UseOnboardingPreferencesFormReturnType,
   usePasswordForm,
   type UsePasswordFormReturnType,
   usePreferencesForm,
@@ -48,6 +50,7 @@ export * from "./hooks/budget";
 export * from "./hooks/category";
 export * from "./hooks/credit-card";
 export * from "./hooks/dashboard";
+export * from "./hooks/onboarding";
 export * from "./hooks/recurring";
 export * from "./hooks/session";
 export * from "./hooks/settings";
