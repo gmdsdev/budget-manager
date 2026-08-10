@@ -28,6 +28,21 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     CORS_ORIGIN: z.url(),
+    // Comma-separated origins or app schemes trusted beyond `CORS_ORIGIN` and the
+    // native app's own — a deployment that a locally bundled client has to reach
+    // (`exp://` for Expo Go) says so here rather than in code, so the default
+    // posture stays closed and widening it costs no deploy.
+    EXTRA_TRUSTED_ORIGINS: z
+      .string()
+      .optional()
+      .transform((value) =>
+        value
+          ? value
+              .split(",")
+              .map((origin) => origin.trim())
+              .filter(Boolean)
+          : [],
+      ),
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },
   runtimeEnv: runtimeEnv,

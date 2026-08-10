@@ -22,13 +22,18 @@ const NATIVE_SCHEME = "kivo://";
  * in this repo sets it; `packages/env` only *defaults* its own `NODE_ENV` to that
  * value. Trusted here instead so the allowance keys off the validated env rather
  * than a variable the dev scripts would have to remember to export.
+ *
+ * A deployed server does *not* get it for free: pointing Expo Go at production is
+ * a deliberate act, so it is `EXTRA_TRUSTED_ORIGINS` that says so. Widening the
+ * list costs little against a browser — `Origin` is a forbidden header name, so no
+ * page can claim a scheme of its own — but it should still be a choice on record.
  */
 const EXPO_GO_SCHEME = "exp://";
 
 function trustedOrigins() {
-  return env.NODE_ENV === "development"
-    ? [env.CORS_ORIGIN, NATIVE_SCHEME, EXPO_GO_SCHEME]
-    : [env.CORS_ORIGIN, NATIVE_SCHEME];
+  const base = [env.CORS_ORIGIN, NATIVE_SCHEME, ...env.EXTRA_TRUSTED_ORIGINS];
+
+  return env.NODE_ENV === "development" ? [...base, EXPO_GO_SCHEME] : base;
 }
 
 export function createAuth(db: Db = sharedDb) {
