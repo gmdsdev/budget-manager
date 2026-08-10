@@ -71,8 +71,12 @@ export function AppI18nProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Derived, not state: the session is the source of truth once it lands, and deriving
-  // during render means no effect has to catch up to it.
-  const locale = session
+  // during render means no effect has to catch up to it. Read through the optional
+  // chain, though: better-auth nulls a session payload out only when it is exactly
+  // `{ session: null, user: null }`, so anything else the endpoint answers with lands
+  // here as `data` — and this provider wraps the whole app, so an unexpected shape
+  // would take it down at render instead of degrading to the last language read.
+  const locale = session?.user
     ? toPreferredLocale(session.user.preferredLocale)
     : storedFallback;
 
