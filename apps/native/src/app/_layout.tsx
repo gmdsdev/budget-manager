@@ -13,13 +13,12 @@ import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { AccountMenuButton } from "@/components/account-menu-sheet";
+import { AppBar, PushedHeader } from "@/components/app-bar";
 import { Toaster } from "@/components/toaster";
 import { authClient } from "@/lib/auth-client";
 import { AppI18nProvider } from "@/lib/i18n";
 import { useCreateTransactionActions } from "@/modules/transaction/components/create-transaction-actions";
 import { ThemeProvider, useColors, useTheme } from "@/theme/theme-provider";
-import { FONTS } from "@/theme/tokens";
 import { queryClient } from "@/utils/trpc";
 
 export default function RootLayout() {
@@ -82,53 +81,32 @@ function AuthGate() {
 }
 
 /**
- * Every bar in this app is a **native** one, which is what lets iOS draw it in its own
- * material rather than having React Native paint an imitation.
+ * **The screen transitions stay native; the bars do not.** A pushed screen still slides
+ * the way the platform slides one, because that is behaviour rather than appearance —
+ * but every header is a view this app draws (`header`, which is what turns the native
+ * one off), so the two platforms show one design instead of two.
  *
- * `headerTransparent` is what makes a navigation bar a *material* rather than a fill:
- * left opaque it takes a solid background, and since this app's mode is its own rather
- * than the system's, that background resolved light while the app was dark — a white
- * band across the top. `Appearance.setColorScheme` does not reach it (see
- * `theme-provider.tsx`), so the tone is chosen here from the mode we are actually in,
- * which is also why the effect is named per mode rather than left to `systemDefault`.
+ * That also retires a whole class of bug the material cost. A translucent bar has to be
+ * told its own tone, because this app's mode is its own rather than the system's and
+ * `Appearance.setColorScheme` reaches neither bar (see `theme-provider.tsx`) — get it
+ * wrong and a phone in light mode draws a white band across a dark app. An opaque bar
+ * on `colors.background` cannot be wrong. It also contributes layout height, so
+ * nothing scrolls underneath and no screen has to reason about content insets.
  *
- * The tab group carries the account mark and the create action as its header, so that
- * bar is a real `UINavigationBar` shared by all three tabs. The four screens pushed
- * from the account menu keep their own, because a pushed screen needs the back
- * affordance the system already knows how to draw.
+ * The tab group carries the account mark and the create action as its header, declared
+ * once for all three tabs. The five pushed screens each get `PushedHeader`.
  */
 function AppStack() {
   const t = useTranslate();
-  const { mode, colors } = useTheme();
+  const colors = useColors();
   const createTransaction = useCreateTransactionActions();
 
-  const headerText = {
-    headerTransparent: true,
-    headerBlurEffect:
-      mode === "dark"
-        ? ("systemChromeMaterialDark" as const)
-        : ("systemChromeMaterialLight" as const),
-    headerTintColor: colors.foreground,
-    headerTitleStyle: {
-      fontFamily: FONTS.semibold,
-      fontSize: 18,
-      letterSpacing: -0.27,
-    },
-  };
-
-  const pushedOptions = {
-    ...headerText,
-    headerShown: true,
-    // Without this the back button reads `(tabs)`: the label falls back to the
-    // previous route's title, and the previous route is the tab group, whose
-    // `Stack.Screen` has no title to give. All four of these are pushed from the
-    // account menu, so that is where back goes and what it should say.
-    headerBackTitle: t("common.menu"),
-    headerBackTitleStyle: {
-      fontFamily: FONTS.regular,
-      fontSize: 16,
-    },
-  };
+  function pushed(title: string) {
+    return {
+      headerShown: true,
+      header: () => <PushedHeader title={title} />,
+    };
+  }
 
   return (
     <>
@@ -142,49 +120,26 @@ function AppStack() {
         <Stack.Screen
           name="(tabs)"
           options={{
-            ...headerText,
             headerShown: true,
-            // No title: the tab bar below already says which screen this is, so the
-            // row is spent on the two things worth reaching instead.
-            title: "",
-            headerLeft: () => <AccountMenuButton />,
-            unstable_headerRightItems: () => createTransaction.items,
+            header: () => <AppBar actions={createTransaction.actions} />,
           }}
         />
         <Stack.Screen name="login" />
-        <Stack.Screen
-          name="wallet"
-          options={{ ...pushedOptions, title: t("nav.wallets") }}
-        />
+        <Stack.Screen name="wallet" options={pushed(t("nav.wallets"))} />
         <Stack.Screen
           name="credit-card"
-          options={{ ...pushedOptions, title: t("nav.creditCards") }}
+          options={pushed(t("nav.creditCards"))}
         />
-        <Stack.Screen
-          name="category"
-          options={{ ...pushedOptions, title: t("nav.categories") }}
-        />
-        <Stack.Screen
-          name="settings"
-          options={{ ...pushedOptions, title: t("nav.settings") }}
-        />
+        <Stack.Screen name="category" options={pushed(t("nav.categories"))} />
+        <Stack.Screen name="settings" options={pushed(t("nav.settings"))} />
         <Stack.Screen
           name="transaction-import"
-          options={{
-            ...headerText,
-            headerShown: true,
-            // The only pushed screen with no place to name on its back button: it is
-            // reached from the create affordance, which rides the bar on all three
-            // tabs, so whichever tab back returns to is not knowable here. The
-            // chevron on its own is the honest label.
-            headerBackButtonDisplayMode: "minimal",
-            title: t("transaction.import.title"),
-          }}
+          options={pushed(t("transaction.import.title"))}
         />
       </Stack>
-      {/* A native bar button hands back a callback and nothing else, so the sheets it
-          opens have to be mounted by something that renders — and staying mounted is
-          what keeps their reset-on-open behaviour. */}
+      {/* The header hands back elements, but the sheets they open have to be mounted by
+          something that outlives a screen — and staying mounted is what keeps their
+          reset-on-open behaviour. */}
       {createTransaction.sheets}
     </>
   );

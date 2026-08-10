@@ -40,7 +40,7 @@ export function ListTransactionsScreen() {
 
   return (
     <Screen onRefresh={() => void refetch()} refreshing={isRefetching}>
-      {/* No page title: the screen is named by the bar above it — the native header
+      {/* No page title: the screen is named by the bar above it — `PushedHeader`
           on a pushed screen, the tab bar on a tab. Repeating it costs a 32px row at
           the top of a phone and says nothing the reader cannot already see. */}
 

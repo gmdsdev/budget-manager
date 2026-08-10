@@ -1,4 +1,7 @@
+import { BottomTabBarHeightContext } from "expo-router/js-tabs";
+import { use } from "react";
 import { RefreshControl, ScrollView, View, type ViewStyle } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Text } from "@/components/ui/text";
 import { useColors } from "@/theme/theme-provider";
@@ -8,15 +11,17 @@ import { SPACING } from "@/theme/tokens";
  * The page shell. Horizontal padding is not optional: without it text sits flush
  * against the screen edge on a phone.
  *
- * It pays **no safe-area inset of its own** — `contentInsetAdjustmentBehavior` hands
- * that to iOS, which knows where the bars are. Both are native and both are
- * translucent, so content has to scroll *under* them while still starting below them,
- * and only the platform can reconcile that.
+ * **The top inset is nobody's business here.** Every bar this app draws is opaque and
+ * sits in flow, so the scene already starts below it — which is what let
+ * `contentInsetAdjustmentBehavior` go. That prop was iOS reconciling content that had
+ * to scroll *under* a translucent bar while still starting below it; it did nothing on
+ * Android, so a pushed screen there ran under the gesture bar.
  *
- * It has to be asked for explicitly. A tab screen gets the adjustment from the native
- * tab host for free, but a pushed screen does not, and a transparent navigation bar
- * contributes no layout height — so wallets, cards, categories and settings each lost
- * the top of their content behind the glass until this was set.
+ * The **bottom** one still has an owner, and which owner depends on where the screen
+ * is. Inside the tab group `AppTabBar` pays it and the scene ends where the bar starts;
+ * a pushed screen has no bar below it and pays it here. `BottomTabBarHeightContext` is
+ * the honest test of which — it is a number inside the tab navigator and `undefined`
+ * everywhere else.
  */
 export function Screen({
   children,
@@ -30,11 +35,12 @@ export function Screen({
   contentStyle?: ViewStyle;
 }) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const inTabs = use(BottomTabBarHeightContext) !== undefined;
 
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
-      contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       refreshControl={
         onRefresh ? (
@@ -49,7 +55,7 @@ export function Screen({
       contentContainerStyle={[
         {
           paddingHorizontal: SPACING.lg,
-          paddingBottom: SPACING.xl,
+          paddingBottom: SPACING.xl + (inTabs ? 0 : insets.bottom),
           gap: SPACING.lg,
         },
         contentStyle,

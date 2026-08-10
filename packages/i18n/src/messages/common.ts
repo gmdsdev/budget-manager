@@ -82,4 +82,5 @@ export const common = {
   "common.nextPeriod": { en: "Next period", "pt-BR": "Próximo período" },
   "common.clear": { en: "Clear", "pt-BR": "Limpar" },
   "common.close": { en: "Close", "pt-BR": "Fechar" },
+  "common.back": { en: "Back", "pt-BR": "Voltar" },
 } as const satisfies MessageTable;

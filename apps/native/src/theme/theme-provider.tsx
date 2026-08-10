@@ -56,10 +56,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
    * platform's own surfaces keep resolving against the system appearance — a phone in
    * light mode showing this app in dark would draw light chrome over dark content.
    *
-   * This is necessary but **not sufficient**: it does not reach the navigation bar or
-   * the tab bar, which is why both name their material's tone from `mode` themselves
-   * (`app/_layout.tsx`, `app/(tabs)/_layout.tsx`). It is still worth doing for the
-   * surfaces that have no prop to set — the keyboard, action sheets, native pickers.
+   * It does not reach every surface — it never reached the navigation bar or the tab
+   * bar, which is one reason both are drawn by this app now rather than by the platform
+   * — but it is what keeps the surfaces with no prop to set in step: the keyboard,
+   * action sheets, native pickers.
    */
   useEffect(() => {
     Appearance.setColorScheme(mode);

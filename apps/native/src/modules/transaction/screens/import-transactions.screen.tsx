@@ -27,7 +27,7 @@ import { SPACING } from "@/theme/tokens";
  * "which step" is simply whether a file has been read into drafts yet, and nothing
  * is written until the reader confirms the whole list.
  *
- * No page title: the native header above already says what this screen is.
+ * No page title: `PushedHeader` above already says what this screen is.
  */
 export function ImportTransactionsScreen() {
   const t = useTranslate();

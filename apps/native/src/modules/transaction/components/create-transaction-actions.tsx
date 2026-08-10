@@ -1,11 +1,10 @@
 import { useTranslate } from "@budget-manager/i18n/react";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import type { NativeStackHeaderItem } from "expo-router/build/react-navigation/native-stack/types";
 import { useState } from "react";
 import { InteractionManager, Pressable, View } from "react-native";
 
-import { Button, IconButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { Text } from "@/components/ui/text";
 import { CreateCardPaymentSheet } from "@/modules/transaction/components/create-card-payment-sheet";
@@ -48,34 +47,26 @@ const SECONDARY = [
  * second, quieter one beside it — never four peers of equal weight, which made the
  * everyday income or expense as hard to find as a card payment.
  *
- * The primary is a **native bar button item**, not a React view in the header.
+ * Both are this app's own controls, and the hierarchy is stated in the two variants the
+ * design language already has: the primary is the filled `primary` pill, the secondary
+ * is the outlined icon chip. They used to be **native bar button items**, which cost
+ * more than it sounds — a prominent item *is* Liquid Glass, and glass is translucent, so
+ * `tintColor` tinted the material rather than filling it and the brand ink resolved
+ * darker over this app's dark plane than it would have over a pale one. A colour that
+ * changes with its backdrop is not the brand colour, so the primary already had to opt
+ * out with `hidesSharedBackground`. Drawing both ourselves is the same hierarchy without
+ * the escape hatch, and it is the same on Android.
  *
- * A prominent item *is* Liquid Glass, and glass is translucent: `tintColor` tints the
- * material rather than filling it, so what you see is the brand ink composited over
- * whatever is behind the bar. On this app's dark plane that resolved several steps
- * darker than `--primary`, and it would have resolved lighter on a pale one — a brand
- * colour that changes with its backdrop is not the brand colour. `hidesSharedBackground`
- * drops the grey capsule iOS 26 otherwise wraps a React header view in, so this is the
- * button on its own: exactly `--primary` with its own ink, matching the hero below it.
- * The cost is that this one control is flat rather than glass — the bars around it
- * still are.
- *
- * The ellipsis beside it **keeps** that shared background, which is the cheapest way to
- * state the hierarchy: the primary is our own filled pill, the secondary is a system
- * bar item in the system's own capsule. Two weights drawn by two mechanisms, so they
- * cannot read as peers however the bar is themed.
- *
- * It opens a **bottom sheet**, not a `UIMenu` anchored to the bar. A menu drops its
- * items at the top-right corner, which is the least reachable point on a phone, and
+ * The second one opens a **bottom sheet**, not a menu anchored to the bar. A menu drops
+ * its items at the top-right corner, which is the least reachable point on a phone, and
  * this app already answers that question the same way one row to the left: the account
  * mark opens a sheet of destinations, so the create mark opens a sheet of shapes. A
  * dialog is a sheet here.
  *
- * The sheets are still React and still **stay mounted**, which is what keeps their
- * reset-on-open behaviour: the date defaults to today and the wallet to the first one,
- * both read from outside the form. That is why this is a hook returning the items
- * *and* the sheets — the header can only hand back a callback, so the state has to
- * live with something that renders.
+ * The sheets **stay mounted**, which is what keeps their reset-on-open behaviour: the
+ * date defaults to today and the wallet to the first one, both read from outside the
+ * form. That is why this is a hook returning the actions *and* the sheets — the header
+ * is remounted per screen, so the state has to live above it.
  */
 export function useCreateTransactionActions() {
   const t = useTranslate();
@@ -97,33 +88,29 @@ export function useCreateTransactionActions() {
     void InteractionManager.runAfterInteractions(next);
   }
 
-  const items: NativeStackHeaderItem[] = [
-    {
-      type: "custom",
-      hidesSharedBackground: true,
-      element: (
-        <Button
-          size="sm"
-          label={t("transaction.create.trigger")}
-          leading={
-            <Feather name="plus" size={16} color={colors.primaryForeground} />
-          }
-          onPress={() => setSheet("transaction")}
-        />
-      ),
-    },
-    {
-      type: "custom",
-      element: (
-        <IconButton
-          label={t("transaction.create.moreTypes")}
-          onPress={() => setMenuOpen(true)}
-        >
-          <Feather name="more-horizontal" size={20} color={colors.foreground} />
-        </IconButton>
-      ),
-    },
-  ];
+  const actions = (
+    <View
+      style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}
+    >
+      <Button
+        size="sm"
+        label={t("transaction.create.trigger")}
+        leading={
+          <Feather name="plus" size={16} color={colors.primaryForeground} />
+        }
+        onPress={() => setSheet("transaction")}
+      />
+      <Button
+        variant="outline"
+        size="icon-sm"
+        accessibilityLabel={t("transaction.create.moreTypes")}
+        leading={
+          <Feather name="more-horizontal" size={18} color={colors.foreground} />
+        }
+        onPress={() => setMenuOpen(true)}
+      />
+    </View>
+  );
 
   const sheets = (
     <>
@@ -172,7 +159,7 @@ export function useCreateTransactionActions() {
     </>
   );
 
-  return { items, sheets };
+  return { actions, sheets };
 }
 
 /** The account menu's row, so a menu in a sheet reads the same wherever it opens from. */

@@ -1,7 +1,9 @@
 import { useTranslate } from "@budget-manager/i18n/react";
-import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { Feather } from "@expo/vector-icons";
+import { Tabs } from "expo-router/js-tabs";
 
-import { useTheme } from "@/theme/theme-provider";
+import { AppTabBar } from "@/components/tab-bar";
+import { useColors } from "@/theme/theme-provider";
 
 /**
  * **Three tabs, not five.** Dashboard, Transactions and Budgets are what the app is
@@ -11,54 +13,55 @@ import { useTheme } from "@/theme/theme-provider";
  * content was a list of other destinations — and the remaining four were narrow enough
  * that the labels were the only way to tell them apart.
  *
- * **`NativeTabs`, not `Tabs`.** This is a real `UITabBarController` through
- * `react-native-screens`, which is the only way to get the system's own bar — Liquid
- * Glass, the scroll-edge treatment and `minimizeBehavior` are drawn by iOS, and a bar
- * that React Native paints itself can never have them however closely it is styled.
+ * **A JS navigator with a tab bar of our own**, not `NativeTabs`. A real
+ * `UITabBarController` is the only way to get Liquid Glass — and the only way to get it
+ * is to accept that it exists on one platform, takes SF Symbols instead of Feather, the
+ * system face instead of Inter, and refuses a `backgroundColor` or a `labelStyle`
+ * because either would replace the material with a flat fill. That is one app on iOS
+ * and a different one on Android. `AppTabBar` is the same bar on both.
  *
- * The trade is deliberate: the bar reads as **iOS rather than as Neptune**. It takes
- * SF Symbols instead of the app's Feather set and the system font instead of Inter,
- * and no `backgroundColor` or `labelStyle` — either would replace the material with a
- * flat fill and undo the point of using it. Everything above the bar is still the
- * app's own design language.
- *
- * Two things are named explicitly, and neither touches the material:
- *
- * - The **tone** of the glass. This app's mode is its own rather than the system's,
- *   and `Appearance.setColorScheme` does not reach either bar, so leaving the effect
- *   to `systemDefault` puts light glass under a dark app on a phone in light mode.
- * - The **tint**, so the selected tab is the app's own ink rather than iOS blue. It
- *   reads `link`, not `primary`: `primary` is the brand *surface*, and `link` is the
- *   colour already defined as ink in both modes.
+ * The header comes from the stack above this one, so the account mark and the create
+ * action are declared once for all three tabs rather than per screen.
  */
 export default function TabsLayout() {
   const t = useTranslate();
-  const { mode, colors } = useTheme();
+  const colors = useColors();
 
   return (
-    // `automatic` lets iOS shrink the bar out of the way on a long scroll, which is
-    // its own reason to be native: the ledger gets the height back.
-    <NativeTabs
-      minimizeBehavior="automatic"
-      tintColor={colors.link}
-      blurEffect={
-        mode === "dark" ? "systemChromeMaterialDark" : "systemChromeMaterialLight"
-      }
+    <Tabs
+      tabBar={(props) => <AppTabBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+        sceneStyle: { backgroundColor: colors.background },
+      }}
     >
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Icon sf="square.grid.2x2" />
-        <NativeTabs.Trigger.Label>{t("nav.dashboard")}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="transaction">
-        <NativeTabs.Trigger.Icon sf="list.bullet" />
-        <NativeTabs.Trigger.Label>
-          {t("nav.transactions")}
-        </NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="budget">
-        <NativeTabs.Trigger.Icon sf="chart.pie" />
-        <NativeTabs.Trigger.Label>{t("nav.budgets")}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: t("nav.dashboard"),
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="grid" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="transaction"
+        options={{
+          title: t("nav.transactions"),
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="list" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="budget"
+        options={{
+          title: t("nav.budgets"),
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="target" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }

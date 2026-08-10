@@ -872,17 +872,50 @@ the detail sheet and a `<feature>-list/` with the rows and the filter bar, and
 place here. There are no `queries.ts` or `mutations.ts` under a native module — that layer is
 `packages/client`.
 
+**Every bar is drawn by this app, not by the platform.** The chrome was briefly the system's own —
+a `UITabBarController` through `NativeTabs` and a `UINavigationBar`, both in Liquid Glass — and the
+cost was two apps: an iOS one wearing translucent material, SF Symbols and the system face, and an
+Android one wearing none of it. A design language stated in `theme/tokens.ts` cannot reach a bar the
+platform paints. So the bars are plain views on `background`, carrying Feather icons and Inter like
+everything else, and they are identical on both platforms.
+
+What is still native is **behaviour**: `Stack` remains the native stack, so a pushed screen slides
+the way the platform slides one. Only its `header` is ours.
+
+Three consequences worth not undoing:
+
+- **The bars are opaque and sit in flow**, so nothing scrolls under them. That is what retired
+  `contentInsetAdjustmentBehavior` from `Screen` — a prop that only ever worked on iOS, and left
+  pushed screens on Android running under the gesture bar.
+- **A translucent bar has to be told its own tone.** This app's mode is its own rather than the
+  system's and `Appearance.setColorScheme` reaches neither bar, so a phone in light mode drew a
+  white band across a dark app until every material was named per mode. An opaque bar on
+  `colors.background` cannot be wrong.
+- The **top** inset is paid by the bar and the **bottom** one by whatever is at the bottom:
+  `AppTabBar` inside the tab group, `Screen` on a pushed screen. `BottomTabBarHeightContext` is how
+  `Screen` tells the two apart — a number inside the tab navigator, `undefined` everywhere else.
+
 **Three tabs and an app bar, not seven tabs.** Dashboard, Transactions and Budgets are what the app
 is opened for and earn one each. Wallets, credit cards, categories and settings are things you visit
-to set something up, so they are pushed from the **account menu** and keep a native header, because
-a pushed screen needs the back affordance the system already draws.
+to set something up, so they are pushed from the **account menu**.
 
-`components/app-bar.tsx` is the tab group's `header`, not something a screen renders: the account
-mark on the left opens `account-menu-sheet.tsx`, and `CreateTransactionMenu` sits on the right. Both
-are therefore fixed on every tab rather than scrolling away with the page — the primary action of a
-finance app should not be a scroll position — and it is `AppBar` that pays the status-bar inset, so
-`sceneStyle` must not pay it again. The bar deliberately carries **no title**: the tab bar already
-says which screen this is.
+`components/tab-bar.tsx` is the tab bar `expo-router/js-tabs` renders through its `tabBar` prop:
+Feather icons over Inter labels, and the **active tab in the `secondary` pill** the web's sidebar
+wears for the same job, so which screen you are on is answered by a shape and not only by an ink.
+
+`components/app-bar.tsx` holds both headers. `AppBar` is the tab group's, not something a screen
+renders: the account mark on the left opens `account-menu-sheet.tsx`, and the create actions sit on
+the right. Both are therefore fixed on every tab rather than scrolling away with the page — the
+primary action of a finance app should not be a scroll position. The bar deliberately carries **no
+title**: the tab bar already says which screen this is, and **no rule under it**, since it is the
+same plane as the page it heads. The tab bar keeps its own hairline, because there a real edge is
+being stated.
+
+`PushedHeader` is the other: a chevron and the screen's name, left-aligned like every other title in
+this app. **The chevron carries no label and the title is not centred** — both are iOS conventions
+Android has never had, so honouring either puts the two platforms back out of step. Naming the back
+button mattered while the system drew it (it read `(tabs)` otherwise); every screen it heads is
+reachable from exactly one place, so the chevron alone is already unambiguous.
 
 Two things that used to be in the bar are gone for the same reason — a tab is for a destination you
 return to, not for reaching other destinations. A **More** tab spent a fifth of the bar on
@@ -973,21 +1006,20 @@ than a menu: there are at most two actions, and a menu would put them one tap fu
 reintroducing the thing the listings dropped.
 
 **Recording something is one action on the bar, with the rarer shapes behind a second one beside
-it.** `create-transaction-actions.tsx` is a hook returning the header's two items *and* the sheets,
-because the header can only hand back a callback and the state has to live with something that
-renders. The primary is a **native bar button item** with `hidesSharedBackground` — a React view
-placed in an iOS 26 header is wrapped in the grey glass capsule that groups bar items, so a filled
-pill of our own drew as a rectangle inside a grey capsule. The ellipsis beside it deliberately
-**keeps** that shared background: the primary is our own filled pill, the secondary is a system bar
-item in the system's own capsule, so the two weights are drawn by two mechanisms and cannot read as
-peers however the bar is themed. Its sheets are controlled from there and **stay mounted**, which is
-what keeps their reset-on-open behaviour. `unstable_headerRightItems` is reversed by expo-router
-before it reaches both the custom views and the bar button items, so the authored array reads
-left-to-right: `[create, more]` puts the pill first and the ellipsis at the edge, mirroring the web's
-`Create Transaction | caret`.
+it.** `create-transaction-actions.tsx` is a hook returning the header's actions *and* the sheets,
+because the header is remounted per screen and the state has to live above it. Both are this app's
+own controls and the hierarchy is stated in the two variants the design language already has: the
+filled `primary` pill, then the outlined icon chip, in the web's own `Create Transaction | caret`
+order. They were briefly **native bar button items**, which cost more than it sounds — a prominent
+item *is* Liquid Glass, and glass is translucent, so `tintColor` tinted the material rather than
+filling it and the brand ink resolved darker over this app's dark plane than it would have over a
+pale one. A colour that changes with its backdrop is not the brand colour, so the primary already
+had to opt out with `hidesSharedBackground`; drawing both ourselves is the same hierarchy without
+the escape hatch. The sheets are controlled from there and **stay mounted**, which is what keeps
+their reset-on-open behaviour.
 
-**That ellipsis opens a bottom sheet, not a `UIMenu` anchored to the bar.** A menu drops its items at
-the top-right corner, which is the least reachable point on a phone, and one row to the left the
+**That second action opens a bottom sheet, not a menu anchored to the bar.** A menu drops its items
+at the top-right corner, which is the least reachable point on a phone, and one row to the left the
 account mark already answers the same question with a sheet — a dialog is a sheet here. It offers
 card purchase, pay card and transfer in the web's own order, then the CSV import, which **pushes
 `/transaction-import`** rather than opening a sheet and so carries the chevron the account menu's own
@@ -1001,9 +1033,10 @@ screen. The label remains the accessible name — `Button` gives `leading` no te
 the month/period steppers are deliberately left alone; neither creates anything.
 
 **A CSV of history is imported on the phone too, and the review step is a listing rather than a
-table.** `/transaction-import` is a pushed screen, and the only one whose back button carries no
-label (`headerBackButtonDisplayMode: "minimal"`) — it is reached from the create affordance that
-rides the bar on all three tabs, so which tab back returns to is not knowable there. The parsing,
+table.** `/transaction-import` is a pushed screen like the four behind the account menu, and wears
+the same `PushedHeader` — which is one of the things a header of our own settled, since it is
+reached from the create affordance that rides the bar on all three tabs and so had no tab to name on
+its back button while the system was labelling one. The parsing,
 column matching and row validation are `packages/client`'s `transaction-import.ts`, shared with the
 web; what is native is the picking and the review. The web lays a row out as six editable columns,
 which a phone cannot hold, so a row here is a `RecordRow` stating **what it will create** —

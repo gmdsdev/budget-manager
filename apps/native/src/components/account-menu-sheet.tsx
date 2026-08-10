@@ -30,9 +30,8 @@ const LINKS = [
 ] as const;
 
 /**
- * The account mark, as `headerLeft` on the stack screen holding the tab group. It sits
- * in a real `UINavigationBar` rather than a bar this app draws, which is what gets it
- * the system material — and it is declared once for all three tabs.
+ * The account mark, on the left of `AppBar`. It is declared once there rather than per
+ * screen, so it is fixed across all three tabs instead of scrolling away with the page.
  */
 export function AccountMenuButton() {
   const t = useTranslate();
