@@ -11,6 +11,7 @@ export * from "./budget";
 export * from "./budget-repeats";
 export * from "./category";
 export * from "./credit-card";
+export * from "./currency-typing";
 export * from "./dashboard";
 export * from "./date-range";
 export * from "./errors";

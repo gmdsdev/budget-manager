@@ -24,6 +24,8 @@ export function CreditCardDetailSheet({
   const t = useTranslate();
   const [sheet, setSheet] = useState<NestedSheet>(null);
 
+  const hasPending = card.projectedOutstandingCents !== card.outstandingCents;
+
   /** Dismissing a nested sheet ends the whole interaction, as the row menu did. */
   function closeNested(next: boolean) {
     if (!next) onClose();
@@ -82,6 +84,16 @@ export function CreditCardDetailSheet({
             {formatMinorUnits(card.availableCents, card.currencyCode)}
           </Text>
         </DetailRow>
+        {hasPending ? (
+          <DetailRow label={t("creditCard.column.outstanding")}>
+            {t("creditCard.projected", {
+              amount: formatMinorUnits(
+                card.projectedOutstandingCents,
+                card.currencyCode,
+              ),
+            })}
+          </DetailRow>
+        ) : null}
       </DetailSheet>
 
       {sheet === "bills" && (

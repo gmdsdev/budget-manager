@@ -39,10 +39,16 @@ export function BudgetRows({
               </RecordGlyph>
             }
             primary={budget.categoryName}
+            // The schedule leads, then the month it started, then the currency. The
+            // line clips to one line rather than wrapping, so the parts a phone
+            // actually shows have to be the telling ones — and the currency is the
+            // least telling of the three, since the limit beside it already carries
+            // that currency's own symbol. It is still stated, which is what the
+            // Currency filter reads as.
             meta={[
-              budget.currencyCode,
               repeatsLabel(t, budget),
               formatMonthString(budget.startsOn, "monthYear"),
+              budget.currencyCode,
             ]}
             tag={
               <RecordTag tone={budget.isActive ? "neutral" : "warning"}>

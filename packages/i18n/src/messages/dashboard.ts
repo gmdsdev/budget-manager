@@ -39,14 +39,6 @@ export const dashboard = {
   },
 
   "dashboard.stat.inWallets": { en: "In wallets", "pt-BR": "Nas carteiras" },
-  "dashboard.stat.inWallets.settled": {
-    en: "Settled rows only",
-    "pt-BR": "Apenas lançamentos liquidados",
-  },
-  "dashboard.stat.inWallets.projected": {
-    en: "{amount} once pending rows settle",
-    "pt-BR": "{amount} quando os pendentes forem liquidados",
-  },
   "dashboard.stat.income": { en: "Income", "pt-BR": "Receitas" },
   "dashboard.stat.income.hint": {
     en: "Earned in {month}",

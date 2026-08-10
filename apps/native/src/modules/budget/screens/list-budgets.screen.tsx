@@ -14,6 +14,7 @@ import {
   usePreferredCurrency,
 } from "@budget-manager/client/react";
 import { useI18n } from "@budget-manager/i18n/react";
+import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import { View } from "react-native";
 
@@ -30,6 +31,7 @@ import { BudgetFilters } from "@/modules/budget/components/budget-list/budget-fi
 import { BudgetRows } from "@/modules/budget/components/budget-list/budget-rows";
 import { BudgetMonthCard } from "@/modules/budget/components/budget-month-card";
 import { CreateBudgetSheet } from "@/modules/budget/components/create-budget-sheet";
+import { useColors } from "@/theme/theme-provider";
 import { SPACING } from "@/theme/tokens";
 
 /** Wide enough for a currency code and its chevron, so the chip never reflows. */
@@ -37,6 +39,7 @@ const CURRENCY_CHIP_WIDTH = 96;
 
 export function ListBudgetsScreen() {
   const { t, formatMonthString } = useI18n();
+  const colors = useColors();
   const [creating, setCreating] = useState(false);
   const [selected, setSelected] = useState<BudgetRow | null>(null);
   const [month, setMonth] = useState(currentMonth());
@@ -103,6 +106,9 @@ export function ListBudgetsScreen() {
         </View>
         <Button
           label={t("budget.create.trigger")}
+          leading={
+            <Feather name="plus" size={16} color={colors.primaryForeground} />
+          }
           onPress={() => setCreating(true)}
         />
       </View>

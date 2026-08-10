@@ -6,6 +6,7 @@ import {
 } from "@budget-manager/client";
 import { usePagedFilters, useWalletsQuery } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
+import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import { View } from "react-native";
 
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
 import { Pagination } from "@/components/ui/pagination";
 import { Screen } from "@/components/ui/screen";
+import { useColors } from "@/theme/theme-provider";
 import { SPACING } from "@/theme/tokens";
 
 import { CreateWalletSheet } from "../components/create-wallet-sheet";
@@ -23,6 +25,7 @@ import { WalletRows } from "../components/wallet-list/wallet-rows";
 
 export function ListWalletsScreen() {
   const t = useTranslate();
+  const colors = useColors();
   const [creating, setCreating] = useState(false);
   const [selected, setSelected] = useState<WalletRow | null>(null);
   const { filters, page, setFilters, setPage } =
@@ -41,6 +44,9 @@ export function ListWalletsScreen() {
       <View style={{ paddingTop: SPACING.md }}>
         <Button
           label={t("wallet.create.trigger")}
+          leading={
+            <Feather name="plus" size={16} color={colors.primaryForeground} />
+          }
           onPress={() => setCreating(true)}
         />
       </View>

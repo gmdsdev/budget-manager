@@ -43,6 +43,14 @@ export const transactionImport = {
     en: "kivo-transactions-template.csv",
     "pt-BR": "kivo-modelo-transacoes.csv",
   },
+  "transaction.import.template.share": {
+    en: "Share template CSV",
+    "pt-BR": "Compartilhar modelo CSV",
+  },
+  "transaction.import.template.shareFailed": {
+    en: "The template could not be shared",
+    "pt-BR": "Não foi possível compartilhar o modelo",
+  },
 
   "transaction.import.upload.title": {
     en: "2. Upload the filled file",
@@ -118,6 +126,47 @@ export const transactionImport = {
   "transaction.import.review.removeRow": {
     en: "Remove row {number}",
     "pt-BR": "Remover linha {number}",
+  },
+  "transaction.import.review.editRow": {
+    en: "Edit row {number}",
+    "pt-BR": "Editar linha {number}",
+  },
+  "transaction.import.review.done": {
+    en: "Done",
+    "pt-BR": "Pronto",
+  },
+  "transaction.import.review.filterAll": {
+    en: "All rows ({count})",
+    "pt-BR": "Todas as linhas ({count})",
+  },
+  "transaction.import.review.filterIssues": {
+    en: "Need attention ({count})",
+    "pt-BR": "Precisam de atenção ({count})",
+  },
+  "transaction.import.review.rowReady": {
+    en: "Ready",
+    "pt-BR": "Pronta",
+  },
+  "transaction.import.review.rowIssues": {
+    en: "Fix",
+    "pt-BR": "Corrigir",
+  },
+  "transaction.import.review.rowIssuesTitle": {
+    en: "Needs attention",
+    "pt-BR": "Precisa de atenção",
+  },
+  "transaction.import.review.removeConfirm.title": {
+    en: "Remove this row?",
+    "pt-BR": "Remover esta linha?",
+  },
+  "transaction.import.review.removeConfirm.description": {
+    en: "It is dropped from this import. Nothing has been saved yet, so uploading the file again brings it back.",
+    "pt-BR":
+      "Ela sai desta importação. Nada foi salvo ainda, então enviar o arquivo de novo a traz de volta.",
+  },
+  "transaction.import.review.removeConfirm.submit": {
+    en: "Remove row",
+    "pt-BR": "Remover linha",
   },
 
   "transaction.import.issue.missingDescription": {

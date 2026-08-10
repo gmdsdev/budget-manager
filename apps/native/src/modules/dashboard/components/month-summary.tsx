@@ -93,7 +93,11 @@ function Row({
       <Text variant="meta" tone="muted" style={{ flex: 1 }} numberOfLines={1}>
         {label}
       </Text>
-      <Amount cents={cents} currencyCode={currencyCode} variant="cardTitle" />
+      {/* A figure step, not a title step. `cardTitle` is semibold, so these read
+          lighter than the 18px bold amounts on a ledger row — a month's totals
+          cannot be quieter than one transaction. `figureLine` is the step for a
+          figure closing a line, the same one the net row and the hero splits take. */}
+      <Amount cents={cents} currencyCode={currencyCode} variant="figureLine" />
     </View>
   );
 }

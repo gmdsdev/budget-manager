@@ -6,6 +6,7 @@ import {
 } from "@budget-manager/client";
 import { useCreditCardsQuery, usePagedFilters } from "@budget-manager/client/react";
 import { useTranslate } from "@budget-manager/i18n/react";
+import { Feather } from "@expo/vector-icons";
 import { useState } from "react";
 import { View } from "react-native";
 
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Empty } from "@/components/ui/empty";
 import { Pagination } from "@/components/ui/pagination";
 import { Screen } from "@/components/ui/screen";
+import { useColors } from "@/theme/theme-provider";
 import { SPACING } from "@/theme/tokens";
 import {
   CreateCreditCardSheet,
@@ -30,6 +32,7 @@ import {
 
 export function ListCreditCardsScreen() {
   const t = useTranslate();
+  const colors = useColors();
   const [creating, setCreating] = useState(false);
   const [selected, setSelected] = useState<CreditCardRow | null>(null);
   const { filters, page, setFilters, setPage } =
@@ -48,6 +51,9 @@ export function ListCreditCardsScreen() {
       <View style={{ paddingTop: SPACING.md }}>
         <Button
           label={t("creditCard.create.trigger")}
+          leading={
+            <Feather name="plus" size={16} color={colors.primaryForeground} />
+          }
           onPress={() => setCreating(true)}
         />
       </View>

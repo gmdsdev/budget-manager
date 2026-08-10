@@ -168,6 +168,19 @@ function AppStack() {
           name="settings"
           options={{ ...pushedOptions, title: t("nav.settings") }}
         />
+        <Stack.Screen
+          name="transaction-import"
+          options={{
+            ...headerText,
+            headerShown: true,
+            // The only pushed screen with no place to name on its back button: it is
+            // reached from the create affordance, which rides the bar on all three
+            // tabs, so whichever tab back returns to is not knowable here. The
+            // chevron on its own is the honest label.
+            headerBackButtonDisplayMode: "minimal",
+            title: t("transaction.import.title"),
+          }}
+        />
       </Stack>
       {/* A native bar button hands back a callback and nothing else, so the sheets it
           opens have to be mounted by something that renders — and staying mounted is

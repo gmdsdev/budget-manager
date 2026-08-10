@@ -111,10 +111,12 @@ export function TransactionRows({
                   </RecordGlyph>
                 }
                 primary={transaction.name}
-                // What it spends and where it sits — and nothing else. The repeats
-                // label was a third entry that wrapped the line onto a second row on
-                // every recurring transaction, which is most of them; it is stated in
-                // the detail sheet the row opens.
+                // What it spends and where it sits, in that order — and nothing else.
+                // The meta line is one line that clips, and a phone shows about two
+                // parts of it, so the kind and the repeats label would be words the
+                // reader never sees at the cost of the account name they do. Both are
+                // stated in the detail sheet the row opens, and the kind is already
+                // the glyph.
                 meta={[
                   transaction.categoryName ?? t("category.uncategorized"),
                   transaction.walletName ??

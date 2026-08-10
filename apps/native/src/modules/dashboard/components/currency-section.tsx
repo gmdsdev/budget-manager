@@ -1,6 +1,5 @@
 import { type CurrencySummary } from "@budget-manager/client";
 import { useTranslate } from "@budget-manager/i18n/react";
-import { formatMinorUnits } from "@budget-manager/money";
 import { View } from "react-native";
 
 import { BalanceHero } from "@/modules/dashboard/components/balance-hero";
@@ -64,7 +63,6 @@ export function CurrencySection({
   children?: React.ReactNode;
 }) {
   const t = useTranslate();
-  const hasPending = summary.projectedBalanceCents !== summary.balanceCents;
   const hasCards = summary.cardCount > 0;
 
   return (
@@ -77,21 +75,12 @@ export function CurrencySection({
       <BalanceHero
         label={t("dashboard.stat.inWallets")}
         amountCents={summary.balanceCents}
+        projectedAmountCents={summary.projectedBalanceCents}
         currencyCode={summary.currencyCode}
-        note={[
-          // The currency the figures are in is not decoration: nothing here is
-          // ever summed across currencies, so the plane has to say which one it
-          // is reporting.
-          `${summary.currencyCode} · ${accountsLine(t, summary)} · ${monthLabel}`,
-          hasPending
-            ? t("dashboard.stat.inWallets.projected", {
-                amount: formatMinorUnits(
-                  summary.projectedBalanceCents,
-                  summary.currencyCode,
-                ),
-              })
-            : t("dashboard.stat.inWallets.settled"),
-        ]}
+        // The currency the figures are in is not decoration: nothing here is ever
+        // summed across currencies, so the card has to say which one it is reporting.
+        // Whether the balance is settled or still projecting is the card's own job now.
+        context={`${summary.currencyCode} · ${accountsLine(t, summary)} · ${monthLabel}`}
         // Two splits, not three. Three wrapped 2+1 on a phone and the third was
         // `Credit available`, which is a reading of the two beside it and lives on
         // the cards screen — where a limit is something you can act on.

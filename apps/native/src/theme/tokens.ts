@@ -288,6 +288,15 @@ export const TYPE = {
   tag: { fontSize: 12, fontFamily: FONTS.semibold },
   figureHero: { fontSize: 60, fontFamily: FONTS.bold, letterSpacing: -2.7 },
   figureTile: { fontSize: 32, fontFamily: FONTS.bold, letterSpacing: -1.28 },
+  /**
+   * The two steps between a tile and a row, mirroring the web's `text-2xl` and
+   * `text-xl`: a figure on an inset plane inside a card (the ledger totals' flow
+   * tiles) and one closing a line (the net, a hero split). Without them every
+   * figure that was not a hero or a tile collapsed to the 18px row step, which is
+   * why those panels read three sizes flatter than the web's.
+   */
+  figurePanel: { fontSize: 24, fontFamily: FONTS.bold, letterSpacing: -0.72 },
+  figureLine: { fontSize: 20, fontFamily: FONTS.bold, letterSpacing: -0.5 },
   figureRow: { fontSize: 18, fontFamily: FONTS.bold, letterSpacing: -0.45 },
 } as const;
 

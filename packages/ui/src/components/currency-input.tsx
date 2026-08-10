@@ -1,34 +1,8 @@
 import * as React from "react";
 
-import { formatMinorUnits, MONEY_MAX_MINOR_UNITS } from "@budget-manager/money";
+import { nextCurrencyValue } from "@budget-manager/client";
+import { formatMinorUnits } from "@budget-manager/money";
 import { Input } from "./input";
-
-function digitsOf(text: string) {
-  return text.replace(/\D/g, "");
-}
-
-function isDeletion(typed: string, display: string) {
-  if (typed.length >= display.length) {
-    return false;
-  }
-
-  let prefix = 0;
-
-  while (prefix < typed.length && typed[prefix] === display[prefix]) {
-    prefix++;
-  }
-
-  let suffix = 0;
-
-  while (
-    suffix < typed.length - prefix &&
-    typed[typed.length - 1 - suffix] === display[display.length - 1 - suffix]
-  ) {
-    suffix++;
-  }
-
-  return prefix + suffix === typed.length;
-}
 
 function caretToEnd(element: HTMLInputElement) {
   const end = element.value.length;
@@ -56,12 +30,24 @@ export type CurrencyInputProps = Omit<
   maxValue?: number;
 };
 
+/**
+ * Reads and writes integer **minor units**, the way a card machine reads a
+ * keypad: `nextCurrencyValue` (`@budget-manager/client`) turns the text the
+ * field holds into the next value, so the phone cannot read a keystroke
+ * differently from the browser. What is left here is the caret, which is pinned
+ * past the last character — digits shift in from the right, so there is nowhere
+ * else for it to be, and arrows, Home and End have nothing to do. Shift and
+ * Cmd+A are left alone so the field can still be selected and cleared, and
+ * nothing keys off focus: the browser's own select-all-on-tab and Playwright's
+ * `fill()` both select *before* they focus, so collapsing the caret there would
+ * turn every replacement into an append.
+ */
 export function CurrencyInput({
   value,
   onValueChange,
   currencyCode,
   allowNegative = false,
-  maxValue = MONEY_MAX_MINOR_UNITS,
+  maxValue,
   onMouseUp,
   onKeyDown,
   ...props
@@ -70,26 +56,13 @@ export function CurrencyInput({
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const element = event.currentTarget;
-    const typed = element.value;
-
-    const before = digitsOf(display);
-    const after = digitsOf(typed);
-    const signChanged =
-      allowNegative && typed.includes("-") !== display.includes("-");
-
-    const trimmedSeparator =
-      !signChanged &&
-      after.length === before.length &&
-      isDeletion(typed, display);
-
-    const magnitude = trimmedSeparator
-      ? Math.trunc(Number(before || "0") / 10)
-      : Number(after || "0");
-
-    const negative = allowNegative && typed.includes("-") && magnitude !== 0;
-    const parsed = negative ? -magnitude : magnitude;
-    const rejected = magnitude > maxValue || !Number.isSafeInteger(parsed);
-    const next = rejected ? value : parsed;
+    const next = nextCurrencyValue({
+      typed: element.value,
+      value,
+      currencyCode,
+      allowNegative,
+      maxValue,
+    });
 
     element.value = formatMinorUnits(next, currencyCode);
     caretToEnd(element);

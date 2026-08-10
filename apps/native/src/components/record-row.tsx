@@ -45,7 +45,12 @@ export function RecordRow({
   glyph?: React.ReactNode;
   /** The record's name, or whatever names it — a category renders its label. */
   primary: React.ReactNode;
-  /** Dot-separated; falsy entries drop out, so a screen can omit a field. */
+  /**
+   * Dot-separated; falsy entries drop out, so a screen can omit a field. It is
+   * one line at every width and clips rather than wrapping, so a row is always
+   * two lines tall: order the parts most-telling first, since a phone shows only
+   * the first few and the detail sheet restates them all.
+   */
   meta?: readonly (string | null | undefined | false)[];
   /** A status pill. Sits under the figure, where a phone has room for it. */
   tag?: React.ReactNode;
@@ -70,19 +75,20 @@ export function RecordRow({
           primary
         )}
         {parts.length > 0 ? (
-          <Text variant="meta" tone="muted" numberOfLines={2}>
+          <Text variant="meta" tone="muted" numberOfLines={1}>
             {parts.join(" · ")}
           </Text>
         ) : null}
       </View>
 
-      {/* Capped. The trailing column sizes to its content and would otherwise win
-          every argument with the name beside it — a labelled figure like
-          "R$ 11.769,11 available" is wider than most record names, so the figure
-          stayed whole and the name truncated. Past half the row it wraps instead,
-          which is the right thing to lose. */}
+      {/* Capped at the web's own share, and a phone is the screen that needs the
+          cap most rather than least: the rail sizes to its content and would
+          otherwise win every argument with the name beside it — a labelled figure
+          like "R$ 11.769,11 available" is wider than most record names, so the
+          figure stayed whole and the name truncated. Past the cap it wraps
+          instead, which is the right thing to lose. */}
       {trailing || tag ? (
-        <View style={{ maxWidth: "50%", alignItems: "flex-end", gap: 2 }}>
+        <View style={{ maxWidth: "45%", alignItems: "flex-end", gap: 2 }}>
           {trailing}
           {tag}
         </View>

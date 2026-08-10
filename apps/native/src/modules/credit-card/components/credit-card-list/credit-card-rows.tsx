@@ -42,16 +42,22 @@ export function CreditCardRows({
             // stays — but on the *meta* line, not opposite the name. Anything in the
             // trailing column is measured against the name for width and wins, and
             // "R$ 11.769,11 available" is wider than "Nubank Mastercard": the figure
-            // column kept the amount and the name was cut to "Nubank Master…". The
-            // meta line is allowed to wrap; the name is not allowed to truncate.
+            // column kept the amount and the name was cut to "Nubank Master…".
+            //
+            // `available` leads, and the currency code follows it. The line clips to
+            // one line rather than wrapping, so a phone shows only the first part or
+            // two — and with the code first, the one figure that gives `outstanding`
+            // its meaning was the half that got cut. The code is still stated, which
+            // is what the Currency filter reads as, but it is the part worth losing:
+            // the figure beside it already carries the currency's own symbol.
             //
             // The cycle days, the limit and the billing wallet are configuration
             // rather than a reading, and live in the detail sheet.
             meta={[
-              card.currencyCode,
               t("creditCard.column.availableValue", {
                 amount: formatMinorUnits(card.availableCents, card.currencyCode),
               }),
+              card.currencyCode,
             ]}
             trailing={
               <>

@@ -625,21 +625,37 @@ returned (they arrive sorted by code), which is what covers the first render and
 stops existing. Spending, wallet and meter bars are plain HTML rather than recharts:
 they carry long category names and their own value labels, which an SVG bar would clip.
 
-**The transaction list closes with a totals table, between the rows and the pagination.**
-`transaction-summary.tsx` is a plain shadcn `<Table>` rather than a `DataTable`: its rows are the
-*figures* (`In wallets`, `Income`, `Expenses`, `Net`) and its columns are `Effective` /
-`Projected` per currency, under a two-level header naming each currency. That way the common case
-— one currency — is three columns wide and needs no card fallback, and a second currency costs two
-columns instead of doubling the rows. Totals are still never summed across currencies. It has its
-own query hook keyed on the filters alone (`useTransactionSummaryQuery`), with
+**The transaction list closes with its totals, between the rows and the pagination, and the
+balance leads them.** `transaction-summary.tsx` is no longer a table of eight figures: the balance
+the period ends on comes first, `Income` and `Expenses` follow as two tiles on a `muted` plane, and
+`Net` closes the card above a hairline rule. **Wherever settled and projected disagree the two are
+stated as labelled peers with a split bar between them**, so the comparison is visible before a
+single digit is read; wherever they agree the block collapses to one figure and the `Fully settled`
+line, which is what keeps a fully settled past month as quiet as it used to be. A grid of
+`Effective` / `Projected` columns made every month read like a spreadsheet, and demoting the
+projection to a caption made a pending-heavy month lead with the least informative number. The
+wallet block skips the bar when pending expenses project the balance *below* the settled figure: a
+settled share of that projection means nothing, and the pair plus the waiting caption still state
+both readings.
+
+Totals are still never summed across currencies, but **one currency is in view at a time**, picked
+from a pill group beside the heading that only appears once there is a second currency — the same
+reading the dashboard takes, and switching costs no refetch because the payload already carries
+every currency. A picked currency wins, then the account's `preferredCurrency`, then the first the
+API returned, so a currency that stops existing can never blank the panel. `summary-figures.tsx`
+holds the pieces the panel shares with the dashboard hero — `EYEBROW`, `HATCH_FILL`, `amountClass`,
+`projectedClass`, `SplitBar`, `PairCell` — because those two are the same grammar and a second copy
+is how they would drift. The hatch is a *pattern* rather than a second hue, so the bar adds no
+colour pairing to keep colourblind-safe, and every figure it decorates is stated in full beside it.
+
+It has its own query hook keyed on the filters alone (`useTransactionSummaryQuery`), with
 `keepPreviousData` so a new filter holds the previous figures at reduced opacity instead of
-dropping the table out and shoving the pagination around; the route loader prefetches it beside
-the list. Two details are load-bearing: the explanatory note lives in a `<p>` *outside* the
-`<Table>`, because with two currencies the table scrolls sideways in its own container and would
-carry the note off-screen; and the row-label column is `sticky left-0` with `bg-card`, since a
-figure whose row label has scrolled away is unreadable (its `group-hover` is what keeps the row
-highlight whole). Mutations on transactions, series and wallets all invalidate
-`trpc.transaction.summary` — every figure is derived.
+dropping the panel out and shoving the pagination around; the route loader prefetches it beside
+the list. The note about the two scopes that meet in this payload is folded into a `<details>`
+rather than always printed — it has to be stated somewhere but is read once. Mutations on
+transactions, series and wallets all invalidate `trpc.transaction.summary` — every figure is
+derived. The `data-summary-figure` / `-effective` / `-projected` attributes are what `apps/e2e`
+reads, since the figures no longer sit in table cells.
 
 **Every field a listing shows gets a filter for it.** All five list pages follow this: wallets
 (name, type, currency), categories (name, type), cards (name, currency, billing wallet),
@@ -796,10 +812,13 @@ shape for its six-column statement table, since it is not a `DataTable`.
 over a `category · account · kind · repeats` meta line, a status pill, the amount opposite —
 grouped under a date heading, at every breakpoint. Eight nowrap columns wanted about 1000px and
 put the figure a reader is scanning for at the far edge; a row is one thing that happened, so it
-reads as a block. Below `sm` the kind and repeats drop out of the meta line (it already wraps to
-two rows without them) and the status pill hides, since both are restated in the detail dialog
-the row opens. It carries the same `data-list-*` markers a `DataTable` does, so the e2e row
-helpers do not care which one they are looking at.
+reads as a block. **The meta line is one line at every width and clips rather than wrapping**, so a
+row is always exactly two lines tall — order the parts most-telling first, since a phone shows only
+the first few and the detail dialog restates them all. It used to wrap, and each separator travelled
+with the part behind it, so on a phone a wallet read as four lines each opening with a stray `·`.
+The status pill sits under the figure on the trailing rail, which is where it becomes readable on a
+phone rather than being dropped below `sm`. It carries the same `data-list-*` markers a `DataTable`
+does, so the e2e row helpers do not care which one they are looking at.
 
 The one `ColumnMeta` flag the **table** layout reads is `grow`, and each listing marks exactly
 one column with it — Name on wallets, cards and categories. A
@@ -917,15 +936,28 @@ The primitives keep the invariants their web counterparts have:
 - **A create sheet whose defaults are read from outside the form resets on open as well as close**
   — the date is today, the wallet is the first one, the currency is the account's preference, and
   all three can move while the sheet is shut.
-- `CurrencyInput` reads and writes **minor units**, digits shifting in from the right.
+- `CurrencyInput` reads and writes **minor units**, digits shifting in from the right, through the
+  same `nextCurrencyValue` the web reads — so a deleted separator trims a digit and the `int4`
+  ceiling refuses a keystroke on the phone exactly as in a browser. The caret is **derived from the
+  display, never held in state**: `selection` sits at the end of the formatted string on every
+  render, so React Native pushes text and caret in one `setTextAndSelection` rather than a frame
+  apart, which is the shape of controlled selection an Android IME does not fight (a number pad has
+  no composing region to lose either). Holding it in state buys nothing — a tap re-renders the input
+  and the effect pushes the stale pin back anyway. The trade-off is that a selection inside the field
+  cannot survive, so clearing an amount is backspace rather than select-all; on the web the
+  browser's own select-all-on-tab and Playwright's `fill()` are exactly why nothing there keys off
+  focus.
 
 **A listing is a list of records, and no listing carries a row menu.** `components/record-row.tsx`
 is the native twin of the web's own — `RecordList` / `RecordRow` / `RecordGlyph` / `RecordTag` — a
 rounded, borderless item that only shows its edges on press: a leading glyph, the name over a
 dot-separated meta line, an optional status tag, the figure opposite. **The row opens the record
 and every action lives in its detail sheet**, because a menu in a list of hundreds of rows puts an
-irreversible action one mis-tap from a reversible one. The one adaptation to a phone is that the
-tag sits *under* the figure rather than beside it, where there is room for it.
+irreversible action one mis-tap from a reversible one. The row is the same two lines the web's is: a
+meta line that clips to one line rather than wrapping, and a trailing rail capped at **45%** of the
+row with the figure over the status tag. A phone is the screen that needs that cap most — the rail
+sizes to its content and does not shrink, so every point it takes comes off the name — which is why
+the wider 50% it used to carry was the wrong way round.
 
 Two things about a detail sheet are load-bearing, and missing either costs a debugging pass:
 
@@ -940,15 +972,59 @@ The exception is the budget month card, which carries two direct icon affordance
 than a menu: there are at most two actions, and a menu would put them one tap further away while
 reintroducing the thing the listings dropped.
 
-**Recording something is one action on the bar.** `create-transaction-actions.tsx` is a hook
-returning the header's `Create transaction` item *and* the sheets, because the header can only hand
-back a callback and the state has to live with something that renders. It is a **native bar button
-item** with `variant: 'prominent'` — a React view placed in an iOS 26 header is wrapped in the grey
-glass capsule that groups bar items, so a filled pill of our own drew as a rectangle inside a
-grey capsule. Its sheets are controlled from there and **stay mounted**, which is what keeps their
-reset-on-open behaviour. Card purchase, pay card and transfer still have sheets in that hook but
-**no affordance opens them** — the ellipsis `UIMenu` that used to sit beside the button is gone, and
-nothing has replaced it yet.
+**Recording something is one action on the bar, with the rarer shapes behind a second one beside
+it.** `create-transaction-actions.tsx` is a hook returning the header's two items *and* the sheets,
+because the header can only hand back a callback and the state has to live with something that
+renders. The primary is a **native bar button item** with `hidesSharedBackground` — a React view
+placed in an iOS 26 header is wrapped in the grey glass capsule that groups bar items, so a filled
+pill of our own drew as a rectangle inside a grey capsule. The ellipsis beside it deliberately
+**keeps** that shared background: the primary is our own filled pill, the secondary is a system bar
+item in the system's own capsule, so the two weights are drawn by two mechanisms and cannot read as
+peers however the bar is themed. Its sheets are controlled from there and **stay mounted**, which is
+what keeps their reset-on-open behaviour. `unstable_headerRightItems` is reversed by expo-router
+before it reaches both the custom views and the bar button items, so the authored array reads
+left-to-right: `[create, more]` puts the pill first and the ellipsis at the edge, mirroring the web's
+`Create Transaction | caret`.
+
+**That ellipsis opens a bottom sheet, not a `UIMenu` anchored to the bar.** A menu drops its items at
+the top-right corner, which is the least reachable point on a phone, and one row to the left the
+account mark already answers the same question with a sheet — a dialog is a sheet here. It offers
+card purchase, pay card and transfer in the web's own order, then the CSV import, which **pushes
+`/transaction-import`** rather than opening a sheet and so carries the chevron the account menu's own
+pushes do. Every hop out of that sheet waits on `InteractionManager.runAfterInteractions`:
+dismissing one modal while presenting another in the same frame is the case iOS drops on the floor.
+
+**Every primary create action carries a leading plus.** Wallets, categories, cards, budgets and
+`Create transaction` all take `<Feather name="plus" size={16} />` inked from the variant's own
+foreground, so the same action stops reading as two different kinds of button depending on the
+screen. The label remains the accessible name — `Button` gives `leading` no text. Retry buttons and
+the month/period steppers are deliberately left alone; neither creates anything.
+
+**A CSV of history is imported on the phone too, and the review step is a listing rather than a
+table.** `/transaction-import` is a pushed screen, and the only one whose back button carries no
+label (`headerBackButtonDisplayMode: "minimal"`) — it is reached from the create affordance that
+rides the bar on all three tabs, so which tab back returns to is not knowable there. The parsing,
+column matching and row validation are `packages/client`'s `transaction-import.ts`, shared with the
+web; what is native is the picking and the review. The web lays a row out as six editable columns,
+which a phone cannot hold, so a row here is a `RecordRow` stating **what it will create** —
+description, `date · category · account`, the amount opposite, and where a cell could not be read the
+file's own text stands in rather than nothing. A failing row is a red alert glyph and a `Fix` tag
+instead of the category's hue and `Ready`, with its issues named in words directly beneath it, and it
+stays in the list in file order: nothing is dropped silently. Two chips above the list carry both
+counts and filter to the failing rows, because three bad rows in five hundred are not findable by
+paging; rows page at the shared `PAGE_SIZE`. The row opens the sheet where every field is corrected,
+and its `Remove row` is confirmed like any destructive action. There is no TanStack form here on
+either platform: the draft list is the state and `revalidateImportRow` is the one validation cause,
+so an issue can never outlive the field it names. The one native-only trap is that `Select` empties
+itself, so an empty category value is the primitive dropping a stale choice, **not** an edit —
+marking it edited would stop the file's own category being re-matched when the type is fixed.
+
+**A phone has no downloads folder**, so step one hands the template to the share sheet
+(`expo-sharing`) rather than downloading it — the same file under the same localized name, written to
+the cache. `expo-document-picker` picks the filled file and `expo-file-system`'s `new File(uri).text()`
+reads it; the file itself never travels, because tRPC speaks JSON and only the reviewed rows are
+sent. All three modules ship in Expo Go and need no config plugin, so the parked prebuild below is
+unaffected — `expo-document-picker`'s plugin only exists for iCloud entitlements.
 
 **The native dashboard is not the web one made narrow — it answers four questions and stops.** How
 much have I got, what did this month do, what needs paying, and where did it go, in that order: the
@@ -956,10 +1032,18 @@ two that can be *acted* on come before the two that can only be read. `currency-
 where that order lives, and the two lists arrive as its `children` because the screen owns them (the
 payload carries them at the top level, filtered to the currency in view).
 
-- `balance-hero.tsx` — the `primary` plane: the balance, a `currency · accounts · month` line,
-  the settled-or-projected line, and **two** card splits (`Net position`, `On cards`). Splits take an
-  even share of the row rather than a `flexBasis`, which is what made a third one wrap to a line of
-  its own; `Credit available` was that third one and is a reading of the two beside it.
+- `balance-hero.tsx` — an **ordinary card**, in the ledger totals' grammar rather than on the
+  `primary` plane: the balance and its projection as labelled peers, the split bar and the waiting
+  caption between them, and a lone figure plus `Fully settled` when the two agree — then a
+  `currency · accounts · month` line and **two** card splits (`Net position`, `On cards`) on a muted
+  plane. Monochrome chrome is why: a high-contrast plane no longer reads as "the important one", it
+  reads as a second theme, and it forced every label on it into a dimmed `onPrimary` ink. **The pair
+  stacks rather than sitting side by side** — two `figureTile` figures across a phone leave each about
+  145pt, which `R$ 121.293,98` cannot hold, and `adjustsFontSizeToFit` shrinks each figure
+  independently, so side by side the two peers would come down to different sizes and stop reading as
+  peers. Splits take an even share of the row rather than a `flexBasis`, which is what made a third one
+  wrap to a line of its own; `Credit available` was that third one and is a reading of the two beside
+  it.
 - `month-summary.tsx` — Income / Expenses / Net as **rows in one card**, label left and figure right,
   under the month as the card's title. Three full-width stat tiles spent most of the first scroll on
   three numbers, and three tiles *across* is worse: at ~110pt `R$ 121.293,98` has nowhere to go but
@@ -972,6 +1056,53 @@ below it), wallet balances and card utilisation (a meter per account, behind the
 figure the hero already states), and the stat tiles. The screen went from about eight scrolls to a
 screen and a half. **There is no page title either** — the tab bar names the screen and the hero
 states the currency and month.
+
+**The native ledger totals are the web panel's reading, stacked.** `transaction-summary.tsx` is no
+longer a table of eight figures: the balance the period ends on leads, Income and Expenses follow as
+two tiles on a `muted` plane, and Net closes the card above a hairline rule, with the same
+pair-or-collapse rule the web uses and the same skipped bar where pending expenses project the
+balance *below* the settled figure. Three things depart from the web deliberately, all of them width.
+**The two flow tiles stack** one per row: two ~160pt columns have nowhere to put a 32pt figure, let
+alone a pair of them, and a phone has scroll to spare where it has no horizontal room. **A flow
+figure takes the row step in both states** rather than being sized to its own box — a paired figure
+has half the tile and a collapsed one has all of it, so sizing each to fit would leave Income and
+Expenses at two different weights whenever only one of them had something still to come. And **the
+long note about the two scopes is a disclosure**, not a `<details>`: a `useState` row whose caret
+swaps direction, tappable at the 36pt chip height, because it has to stay reachable but is read once.
+**One currency is in view**, picked from a scrollable pill row that only appears once there is a
+second currency; the pills are the filter bar's own chip and carry `radiogroup` / `radio` semantics
+rather than the web's `aria-pressed`.
+
+`components/summary-figures.tsx` is where the shared pieces live — `amountTone`/`projectedTone`,
+`RHYTHM`, `SplitBar`, `SplitLegend`, `Pair`, `PairCell` and `SoloFigure` — the native twin of the
+web's own file, read by both the hero and the ledger totals. Its waiting share is the same hue at
+reduced alpha rather than the web's hatch, because RN has no repeating gradient and a second colour
+would be a new pairing to keep colourblind-safe. **A pair states its two halves in two weights**: the
+settled figure bold in the body ink, the projection semibold in the secondary ink. Same weight on both
+is how the ranking between "already real" and "expected" disappears while every figure is still
+technically on screen.
+
+**Vertical rhythm is explicit margins (`RHYTHM`), not a container `gap`** — the web's own spacing is
+per-element (`mt-0.5` inside a pair, `mt-2` to it, `mt-3` to the bar, `mt-6` to the splits), and one
+uniform gap cannot reproduce four different values: the block reads compressed and flat.
+
+**Two React Native layout traps live here, and both rendered a panel that compiled, linted, bundled
+and passed every test while being unreadable on screen.** Neither is catchable without looking at a
+simulator, which is the point.
+
+- **A `Text` in a `flexWrap: "wrap"` row with insufficient width has its *box* shrunk, not its font**,
+  and `numberOfLines` does not stop it: the cell collapses to min-content and the glyphs stack one per
+  line. `adjustsFontSizeToFit` is the only thing that avoids it in a wrapping row, and it shrinks per
+  `Text` — so the longer figure comes out *smaller* than the one it is being compared against, which
+  inverts the reading. **So `Pair` is a column.** That is also what the web resolves to at phone
+  width, since a figure at this step is wider than half of 375pt.
+- **A horizontal `ScrollView` must never sit inside a shrink-to-fit parent** (`alignSelf:
+  "flex-start"`, or any `auto` cross size). The parent sizes to the content, the content sizes to the
+  parent, and the resolution is degenerate: the currency track grew to hundreds of points tall with
+  the codes stacked one character per line, and the whole totals card read as two tall grey columns
+  under an intact heading. `CurrencyPills` is a plain row for this reason — the track still hugs its
+  content the way the web's `inline-flex` does, and an account with an implausible number of
+  currencies would overflow rather than degenerate.
 
 **Charts are plain views, and `react-native-svg` is only there for the logo.** Recharts is a DOM
 library, so the cash-flow chart is a pair of bars per month. Every chart rule
@@ -1012,7 +1143,8 @@ an Android `adaptiveIcon` over `#111111`; its foreground is padded so the K clea
 which the kit's own square icon does not.
 
 There is no `test` script, so `turbo run test` stays hermetic and fast: the logic worth
-unit-testing lives in `packages/client`, and its tests live there too — that package registers its
+unit-testing lives in `packages/client` — the CSV import's reader, matcher and validator among it,
+and `nextCurrencyValue` — and its tests live there too; that package registers its
 own happy-dom preload rather than borrowing an app's, because a test belongs beside the code it
 pins. `check-types` runs in CI like every other workspace. The bundle is the other check worth
 running by hand — `bunx expo export --platform ios` fails on an unresolved import or a broken
@@ -1221,7 +1353,22 @@ user may already have edited would be worse than leaving it.
 
 ### Money
 
-Amounts are integer **minor units** everywhere — DB column, tRPC payload, form state, React state (`openingBalanceCents`, `int4`, hence the `MONEY_MIN/MAX_MINOR_UNITS` bounds in `MoneyMinorUnitsSchema`). Never introduce floats. `packages/money` owns `minorUnitDigits` (zero- and three-decimal currencies), `formatMinorUnits`, `formatCompactMinorUnits`, and `parseMinorUnits`; `packages/ui/src/lib/currency.ts` just re-exports them, and `apps/native` imports the package directly. Both apps' `CurrencyInput` reads/writes minor units directly.
+Amounts are integer **minor units** everywhere — DB column, tRPC payload, form state, React state (`openingBalanceCents`, `int4`, hence the `MONEY_MIN/MAX_MINOR_UNITS` bounds in `MoneyMinorUnitsSchema`). Never introduce floats. `packages/money` owns `minorUnitDigits` (zero- and three-decimal currencies), `formatMinorUnits`, `formatCompactMinorUnits`, and `parseMinorUnits`; `packages/ui/src/lib/currency.ts` just re-exports them, and `apps/native` imports the package directly.
+
+**Typing an amount is one shared function on both platforms.** `nextCurrencyValue`
+(`packages/client/src/currency-typing.ts`) takes the text a field now holds plus the value it was
+showing and returns the next value: digits shift in from the right the way a card machine reads a
+keypad, so the decimal point is never something the user aims at and the formatter places the
+separators. Two cases the digit count cannot decide on its own are why it is shared rather than
+copied. A **deleted separator leaves the digits untouched** — backspacing over the `,` in `1,23`
+yields `123` — so a shorter string that is a *contiguous cut* of the old one is read as the deletion
+it was meant to be and the magnitude loses its rightmost digit instead; digit count alone cannot tell
+that from a replacement, since filling `250000` over `R$ 2.000,00` also keeps six digits. That is the
+same mechanism that makes backspace work where the last character is the currency symbol rather than
+a digit, as in `1.234,56 €`. And an amount past `MONEY_MAX_MINOR_UNITS` is **refused rather than
+clamped**: the keystroke does not land and the value stays where it was, because `int4` is what the
+column can hold. `currency-typing.test.ts` pins all of it across BRL, JPY (zero-decimal) and BHD
+(three-decimal), so each app's `CurrencyInput` is now only the caret and the keyboard.
 
 `formatCompactMinorUnits` is for **axis ticks only**, where the full figure would collide with
 its neighbours. It keeps anything under one thousand exact — a rounded tick the user cannot find
@@ -1236,9 +1383,10 @@ Primitives in `packages/ui/src/components` are shadcn (`style: base-lyra`, `icon
 recurring classes — but the UI palette is monochrome.** Chrome carries no hue: `--primary` is
 **the ink pair, and it flips with the theme** — `#111111` with a white label in light mode,
 `#f4f4f4` with an ink label in dark — so the primary action reads as the boldest
-neutral on the page rather than a brand colour. The web dashboard hero is a plain card in the
-transaction totals' grammar (settled/projected pairs, the hatched split bar), not a `primary`
-plane; the native hero still sits on `primary`. `--secondary` is the grey pill the active nav
+neutral on the page rather than a brand colour. **Both dashboard heroes are plain cards** in the
+transaction totals' grammar (settled/projected pairs with a split bar between them), not `primary`
+planes — the web hatches the waiting share, and native, which has no repeating gradient, washes the
+same hue instead. `--secondary` is the grey pill the active nav
 and an applied filter wear. Surfaces are plain white over `#121212`/`#1e1e1e`, `--border` is a
 hairline (`#e4e4e4` / `#333333`) rather than ink, and `--ring` is `--foreground`, because focus
 is a dark ring not a glow. Colour survives only where it *is* data: categories, charts, and the
@@ -1248,7 +1396,8 @@ Four rules follow from that and are easy to undo by accident:
 
 - **Nothing is square and nothing casts a hard shadow.** The radius scale is Wise's — `--radius-md`
   10px (inputs, select triggers), `--radius-lg` 16px (menus, popovers, tooltips), `--radius-xl`
-  24px (cards, dialogs, sheets, listings), `--radius-2xl` 32px (the native hero) — and
+  24px (cards, dialogs, sheets, listings), `--radius-2xl` 32px (part of the scale, drawn by nothing
+  now that the native hero is a card) — and
   **buttons, chips, nav pills, swatches, meters and glyphs are `rounded-full`**. `--shadow-brutal-*`
   is gone; elevation is `--shadow-menu` on things that float over the page and nothing at all on
   a card, which reads as elevated by its border alone. In dark mode a card drops its border
